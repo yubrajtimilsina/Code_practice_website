@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { login } from "../slice/authslice";
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const dispatch = useDispatch();
-  const { loading, error } = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  const { loading, error, user } = useSelector(state => state.auth);
   const [form, setForm] = useState({ email: "", password: "" });
   const [focused, setFocused] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect based on user role after login
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/dashboard/admin");
+      } else {
+        navigate("/dashboard/learner");
+      }
+    }
+  }, [user, navigate]);
 
   const onChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   

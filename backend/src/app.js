@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./features/auth/routes/authRoutes.js";
 import protectedRoutes from "./routes/protected.js";
+import dashboardRoutes from "./features/dashboard/routes/dashboardRoutes.js";
+
 
 const app = express();
 
@@ -10,7 +12,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api", protectedRoutes);
-
+app.use("/api/dashboard", dashboardRoutes);
 
 
 export default app;
