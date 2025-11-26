@@ -20,7 +20,7 @@ export const register = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await registerApi(payload);
-      if (data.user.token) {
+      if (data.user?.token && typeof data.user.token === 'string' && data.user.token.trim() !== '') {
         localStorage.setItem("token", data.user.token);
         localStorage.setItem("user", JSON.stringify(data.user));
       }
@@ -45,7 +45,7 @@ export const login = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await loginApi(payload);
-      if (data.user.token) {
+      if (data.user?.token && typeof data.user.token === 'string' && data.user.token.trim() !== '') {
         localStorage.setItem("token", data.user.token);
         localStorage.setItem("user", JSON.stringify(data.user));
       }
@@ -95,6 +95,7 @@ const authSlice = createSlice({
         // backend returns { message, user }
         state.user = action.payload;
         state.token = action.payload.token;
+        state.error = null;
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;

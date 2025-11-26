@@ -14,14 +14,17 @@ export default function Login() {
 
   // Redirect based on user role after login
   useEffect(() => {
-    if (user) {
-      if (user.role === "admin") {
-        navigate("/dashboard/admin");
-      } else {
-        navigate("/dashboard/learner");
-      }
+  if (user) {
+    if (user.role === "super-admin") {
+      navigate("/dashboard/super-admin");
+    } else if (user.role === "admin") {
+      navigate("/dashboard/admin");
+    } else {
+      navigate("/dashboard/learner");
     }
-  }, [user, navigate]);
+  }
+}, [user, navigate]);
+
 
   const onChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   

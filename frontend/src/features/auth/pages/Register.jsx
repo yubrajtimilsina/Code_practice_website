@@ -30,16 +30,17 @@ export default function Register() {
         dispatch(register(formData));
     };
 
-    // navigate after successful registration
     useEffect(() => {
-        if (user) {
-            if (user.role === "admin") {
-                navigate("/dashboard/admin");
-            } else {
-                navigate("/dashboard/learner");
-            }
-        }
-    }, [user, navigate]);
+   if (user) {
+    if (user.role === "super-admin") {
+      navigate("/dashboard/super-admin");
+    } else if (user.role === "admin") {
+      navigate("/dashboard/admin");
+    } else {
+      navigate("/dashboard/learner");
+    }
+  }
+}, [user, navigate]);
 
     const isFormValid = formData.name && formData.email && formData.password;
 
@@ -125,20 +126,48 @@ export default function Register() {
                         </div>
 
                         {/* ROLE SELECT */}
-                        <div>
-                            <label className="block text-sm font-medium text-purple-200 mb-2">
-                                Role
-                            </label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={onChange}
-                                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white"
-                            >
-                                <option value="learner">Learner</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                        {/* ROLE SWITCH */}
+{/* ROLE SLIDING TOGGLE */}
+<div>
+  <label className="block text-sm font-medium text-purple-200 mb-2">
+    Select Role
+  </label>
+
+  <div className="relative w-full bg-white/5 border border-white/10 rounded-full p-1 flex items-center">
+
+    {/* Sliding Background */}
+    <div
+      className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300 ease-in-out
+        ${formData.role === "admin" ? "translate-x-full" : "translate-x-0"}
+      `}
+    />
+
+    {/* Learner Button */}
+    <button
+      type="button"
+      onClick={() => setFormData({ ...formData, role: "learner" })}
+      className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
+        ${formData.role === "learner" ? "text-white" : "text-purple-300"}
+      `}
+    >
+      Learner
+    </button>
+
+    {/* Admin Button */}
+    <button
+      type="button"
+      onClick={() => setFormData({ ...formData, role: "admin" })}
+      className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
+        ${formData.role === "admin" ? "text-white" : "text-purple-300"}
+      `}
+    >
+      Admin
+    </button>
+
+  </div>
+</div>
+
+
 
                         {/* ERROR */}
                         {error && (

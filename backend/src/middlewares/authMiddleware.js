@@ -15,14 +15,16 @@ export const authMiddleware = async (req, res, next) => {
 
       req.user = await findUserById(decoded.id);
 
+      if( ! req.user){
+        return res.status(401).json({ error: "User not found"});
+      }
+
       next();
     } catch (error) {
-      console.error(error);
+      console.error("Auth error:", error.message);
       res.status(401).json({ error: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ error: "Not authorized, no token" });
   }
 };

@@ -12,6 +12,10 @@ app.use(express.json());
 app.use("/api", publicRoutes);
 app.use("/api", protectedRoutes);
 
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ 
