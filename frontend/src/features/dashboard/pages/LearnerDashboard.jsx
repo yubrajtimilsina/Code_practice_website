@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { getLearnerDashboardApi } from "../api/dashboardApi";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target } from "lucide-react";
+import { logout } from '../../auth/slice/authSlice';
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     getLearnerDashboardApi().then(res => {
@@ -39,13 +45,26 @@ export default function LearnerDashboard() {
 
   const stats = data.dashboard.stats;
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Welcome Back, <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{data.user.name}</span></h1>
-          <p className="text-purple-200 text-lg">Keep pushing your coding skills to new heights</p>
+          <div className="flex items-center justify-between">
+            <p className="text-purple-200 text-lg">Keep pushing your coding skills to new heights</p>
+            <button
+              onClick={handleLogout}
+              className="ml-4 px-4 py-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded-lg transition-colors duration-300"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}

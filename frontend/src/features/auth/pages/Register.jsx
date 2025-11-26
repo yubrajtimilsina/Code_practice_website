@@ -6,11 +6,14 @@ import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
 export default function Register() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
+
     const [formData, setFormData] = useState({
-        username: "",
+        name: "",
         email: "",
-        password: ""
+        password: "",
+        role: "learner",
     });
+
     const [focused, setFocused] = useState(null);
 
     const onChange = (e) => {
@@ -25,14 +28,15 @@ export default function Register() {
         dispatch(register(formData));
     };
 
-    const isFormValid = formData.username && formData.email && formData.password;
+    const isFormValid = formData.name && formData.email && formData.password;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                {/* Card Container */}
+
                 <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/20">
-                    {/* Header */}
+
+                    {/* HEADER */}
                     <div className="text-center mb-8">
                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 mb-4">
                             <CheckCircle2 className="w-7 h-7 text-white" />
@@ -41,31 +45,36 @@ export default function Register() {
                         <p className="text-purple-200 text-sm">Join us and get started today</p>
                     </div>
 
-                    {/* Form */}
+                    {/* FORM */}
                     <form onSubmit={onSubmit} className="space-y-5">
-                        {/* Username Field */}
+
+                        {/* NAME */}
                         <div>
-                            <label className="block text-sm font-medium text-purple-200 mb-2">Username</label>
-                            <div className={`relative transition-all duration-300 ${focused === "username" ? "ring-2 ring-purple-500" : ""}`}>
+                            <label className="block text-sm font-medium text-purple-200 mb-2">
+                                Name
+                            </label>
+                            <div className={`relative ${focused === "name" ? "ring-2 ring-purple-500" : ""}`}>
                                 <User className="absolute left-4 top-3.5 w-5 h-5 text-purple-400" />
                                 <input
                                     type="text"
-                                    name="username"
-                                    value={formData.username}
+                                    name="name"
+                                    value={formData.name}
                                     onChange={onChange}
-                                    onFocus={() => setFocused("username")}
+                                    onFocus={() => setFocused("name")}
                                     onBlur={() => setFocused(null)}
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-purple-300/50 focus:outline-none transition-all duration-300 hover:border-white/20"
-                                    placeholder="Choose your username"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none"
+                                    placeholder="Enter your name"
                                 />
                             </div>
                         </div>
 
-                        {/* Email Field */}
+                        {/* EMAIL */}
                         <div>
-                            <label className="block text-sm font-medium text-purple-200 mb-2">Email Address</label>
-                            <div className={`relative transition-all duration-300 ${focused === "email" ? "ring-2 ring-purple-500" : ""}`}>
+                            <label className="block text-sm font-medium text-purple-200 mb-2">
+                                Email
+                            </label>
+                            <div className={`relative ${focused === "email" ? "ring-2 ring-purple-500" : ""}`}>
                                 <Mail className="absolute left-4 top-3.5 w-5 h-5 text-purple-400" />
                                 <input
                                     type="email"
@@ -75,16 +84,18 @@ export default function Register() {
                                     onFocus={() => setFocused("email")}
                                     onBlur={() => setFocused(null)}
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-purple-300/50 focus:outline-none transition-all duration-300 hover:border-white/20"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none"
                                     placeholder="Enter your email"
                                 />
                             </div>
                         </div>
 
-                        {/* Password Field */}
+                        {/* PASSWORD */}
                         <div>
-                            <label className="block text-sm font-medium text-purple-200 mb-2">Password</label>
-                            <div className={`relative transition-all duration-300 ${focused === "password" ? "ring-2 ring-purple-500" : ""}`}>
+                            <label className="block text-sm font-medium text-purple-200 mb-2">
+                                Password
+                            </label>
+                            <div className={`relative ${focused === "password" ? "ring-2 ring-purple-500" : ""}`}>
                                 <Lock className="absolute left-4 top-3.5 w-5 h-5 text-purple-400" />
                                 <input
                                     type="password"
@@ -94,49 +105,59 @@ export default function Register() {
                                     onFocus={() => setFocused("password")}
                                     onBlur={() => setFocused(null)}
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-purple-300/50 focus:outline-none transition-all duration-300 hover:border-white/20"
+                                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none"
                                     placeholder="Create a strong password"
                                 />
                             </div>
                         </div>
 
-                        {/* Error Message */}
+                        {/* ROLE SELECT */}
+                        <div>
+                            <label className="block text-sm font-medium text-purple-200 mb-2">
+                                Role
+                            </label>
+                            <select
+                                name="role"
+                                value={formData.role}
+                                onChange={onChange}
+                                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white"
+                            >
+                                <option value="learner">Learner</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+
+                        {/* ERROR */}
                         {error && (
-                            <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-pulse">
-                                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                            <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                <AlertCircle className="w-5 h-5 text-red-400" />
                                 <p className="text-sm text-red-200">{error}</p>
                             </div>
                         )}
 
-                        {/* Submit Button */}
+                        {/* SUBMIT */}
                         <button
                             type="submit"
                             disabled={loading || !isFormValid}
-                            className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                            className={`w-full py-3 rounded-lg font-semibold transition-all ${
                                 loading || !isFormValid
-                                    ? "bg-purple-500/50 text-white/50 cursor-not-allowed"
-                                    : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-purple-500/50"
+                                    ? "bg-purple-500/50 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
                             }`}
                         >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Registering...
-                                </>
-                            ) : (
-                                "Create Account"
-                            )}
+                            {loading ? "Registering..." : "Create Account"}
                         </button>
                     </form>
 
-                    {/* Footer */}
+                    {/* FOOTER */}
                     <p className="text-center text-purple-200 text-sm mt-6">
                         Already have an account?{" "}
-                        <a href="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+                        <a href="/login" className="text-purple-400 font-semibold">
                             Sign in
                         </a>
                     </p>
                 </div>
+
             </div>
         </div>
     );

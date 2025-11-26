@@ -10,4 +10,7 @@ export const loginApi = (playload) => {
 export const protectedApi = () => {
   return api.get("/protected");
 }
+export const meApi = () => {
+  return api.get("/auth/me");
+}
 

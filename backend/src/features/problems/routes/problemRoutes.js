@@ -6,5 +6,4 @@ import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 
 const router = Router();
 
-router.get("/", listProblemsController);
 
