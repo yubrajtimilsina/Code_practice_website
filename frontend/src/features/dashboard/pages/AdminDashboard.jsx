@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAdminDashboardApi } from "../api/dashboardApi";
-import { logout } from '../../auth/slice/authSlice';
+import { logout } from '../../auth/slice/authSlice.js';
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);

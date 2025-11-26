@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getLearnerDashboardApi } from "../api/dashboardApi";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target } from "lucide-react";
-import { logout } from '../../auth/slice/authSlice';
+import { logout } from '../../auth/slice/authSlice.js'; 
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);

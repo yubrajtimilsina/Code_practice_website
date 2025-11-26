@@ -6,49 +6,28 @@ import { useSelector } from "react-redux";
 import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
 import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
-import { useEffect, useState } from "react";
 
+const Spinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+  </div>
+);
 
+const Private = ({ children, roles = [] }) => {
+  const { user, token, loading } = useSelector((state) => state.auth);
 
+  if (loading) return <Spinner />;
 
-
-const Private = ({ children, roles }) => {
-  const { token, user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(true);
-  const { data: profile, isLoading } = useGetProfileQuery(undefined, {
-    skip: !token || !!user,
-  });
-
-  useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    if (user || profile) {
-      setLoading(false);
-    } else if (!isLoading) {
-      setLoading(false);
-    }
-  }, [token, user, profile, isLoading]);
-
-  if (loading) {
-    return <Spinner />;
+  if (!user || !token) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (!token) return <Navigate to="/login" />;
-
-  const currentUser = user || profile?.user;
-
-  if (roles && roles.length > 0) {
-    if (!currentUser) return <Navigate to="/login" />; // ensure user loaded
-    if (!roles.includes(currentUser.role)) return <Navigate to="/" />; // unauthorized
+  if (roles.length > 0 && !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
 };
-
-
 
 export default function AppRoutes() {
   return (
@@ -56,6 +35,8 @@ export default function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
+
+      {/* Learner Dashboard */}
       <Route
         path="/dashboard/learner"
         element={
@@ -64,6 +45,8 @@ export default function AppRoutes() {
           </Private>
         }
       />
+
+      {/* Admin Dashboard */}
       <Route
         path="/dashboard/admin"
         element={
@@ -72,6 +55,8 @@ export default function AppRoutes() {
           </Private>
         }
       />
+
+      {/* Profile */}
       <Route
         path="/learner/profile"
         element={
@@ -80,7 +65,9 @@ export default function AppRoutes() {
           </Private>
         }
       />
+
+      {/* 404 fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-};
-
+}

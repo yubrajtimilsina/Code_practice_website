@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { findUserByEmail } from "../repository/userRepository.js";
+import generateToken from '../../../utils/token.js';
 
 export const loginUser = async ({ email, password }) => {
   const user = await findUserByEmail(email);
@@ -15,6 +16,7 @@ export const loginUser = async ({ email, password }) => {
         name: user.name,
         email: user.email,
         role: user.role,    
+        token: generateToken(user._id),
     };  
 };
 

@@ -1,11 +1,18 @@
 import bcrypt from 'bcryptjs';
-
-import {createUser, findUserByEmail} from '../repository/userRepository.js';
+import { createUser, findUserByEmail } from '../repository/userRepository.js';
+import generateToken from '../../../utils/token.js';
 
 const validRoles = ["learner", "admin", "super-admin"];
 
-export const registerUser = async ({name, email, password, role}) => {
-    // Validate role explicitly
+export const registerUser = async ({ name, email, password, role = "learner" }) => {
+    // Validate required fields
+    if (!name || !email || !password) {
+        const error = new Error('Name, email, and password are required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Validate role if provided
     if (role && !validRoles.includes(role)) {
         const error = new Error('Invalid role specified');
         error.statusCode = 400;
@@ -20,19 +27,24 @@ export const registerUser = async ({name, email, password, role}) => {
         throw error;
     }
 
+    // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await createUser({
         name,
-        email,
+        email: email.toLowerCase(),
         password: hashed,
         role: role || "learner",
+        isActive: true,
     });
 
     return {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,    
+        role: user.role,
+        isActive: user.isActive,
+        token: generateToken(user._id),
     };
 };

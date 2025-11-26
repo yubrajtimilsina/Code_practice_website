@@ -11,6 +11,11 @@ export const protectedApi = () => {
   return api.get("/protected");
 }
 export const meApi = () => {
-  return api.get("/auth/me");
-}
+  const token = localStorage.getItem('token');
+  return api.get("/auth/me", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
 

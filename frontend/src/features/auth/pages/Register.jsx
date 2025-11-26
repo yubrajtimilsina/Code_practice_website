@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "../slice/authslice";
+import { Link, useNavigate } from "react-router-dom";
+import { register } from "../slice/authSlice.js";
 import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function Register() {
     const dispatch = useDispatch();
-    const { loading, error } = useSelector((state) => state.auth);
+    const { loading, error, user } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -27,6 +29,17 @@ export default function Register() {
         e.preventDefault();
         dispatch(register(formData));
     };
+
+    // navigate after successful registration
+    useEffect(() => {
+        if (user) {
+            if (user.role === "admin") {
+                navigate("/dashboard/admin");
+            } else {
+                navigate("/dashboard/learner");
+            }
+        }
+    }, [user, navigate]);
 
     const isFormValid = formData.name && formData.email && formData.password;
 
@@ -152,9 +165,9 @@ export default function Register() {
                     {/* FOOTER */}
                     <p className="text-center text-purple-200 text-sm mt-6">
                         Already have an account?{" "}
-                        <a href="/login" className="text-purple-400 font-semibold">
+                        <Link to="/login" className="text-purple-400 font-semibold">
                             Sign in
-                        </a>
+                        </Link>
                     </p>
                 </div>
 

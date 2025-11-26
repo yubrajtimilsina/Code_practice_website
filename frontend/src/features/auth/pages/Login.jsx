@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { login } from "../slice/authslice";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../slice/authSlice.js";  
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
@@ -47,7 +47,7 @@ export default function Login() {
           </div>
 
           {/* Form */}
-          <div className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-purple-200 mb-2">Email Address</label>
@@ -110,7 +110,7 @@ export default function Login() {
 
             {/* Submit Button */}
             <button
-              onClick={onSubmit}
+              type="submit"
               disabled={loading || !isFormValid}
               className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
                 loading || !isFormValid
@@ -130,14 +130,14 @@ export default function Login() {
                 </>
               )}
             </button>
-          </div>
+          </form>
 
           {/* Footer */}
           <p className="text-center text-purple-200 text-sm mt-6">
             Don't have an account?{" "}
-            <a href="/register" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+            <Link to="/register" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
               Create one
-            </a>
+            </Link>
           </p>
         </div>
       </div>
