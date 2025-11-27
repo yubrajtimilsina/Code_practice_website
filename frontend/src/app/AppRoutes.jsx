@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "../pages/Home";
 import Register from "../features/auth/pages/Register.jsx";
 import Login from "../features/auth/pages/Login.jsx";
-import Unauthorized from "../pages/Unauthorized.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import PublicRoute from "../components/PublicRoute.jsx";
 import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
@@ -74,11 +73,7 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Access Denied Page
-       <Route path="/unauthorized" element={<Unauthorized />} /> */}
      
-
-      {/* 404 Fallback */}
       <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
   );
