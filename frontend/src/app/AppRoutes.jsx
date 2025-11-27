@@ -13,10 +13,10 @@ import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes - Accessible by everyone */}
+      
       <Route path="/" element={<Home />} />
       
-      {/* Auth Routes - Only accessible when not logged in */}
+      
       <Route
         path="/register"
         element={
@@ -34,27 +34,27 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Protected Routes - Learner Dashboard */}
+     
       <Route
         path="/dashboard/learner"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+          <ProtectedRoute requiredRoles={["learner"]}>
             <LearnerDashboard />
           </ProtectedRoute>
         }
       />
 
-      {/* Protected Routes - Admin Dashboard */}
+      
       <Route
         path="/dashboard/admin"
         element={
-          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
+          <ProtectedRoute requiredRoles={["admin"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
       />
 
-      {/* Protected Routes - Super Admin Dashboard */}
+    
       <Route
         path="/dashboard/super-admin"
         element={
@@ -64,21 +64,22 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Protected Routes - Learner Profile */}
+     
       <Route
         path="/learner/profile"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+          <ProtectedRoute requiredRoles={["learner"]}>
             <LearnerProfile />
           </ProtectedRoute>
         }
       />
 
-      {/* Access Denied Page */}
-      <Route path="/unauthorized" element={<Unauthorized />} />
+      {/* Access Denied Page
+       <Route path="/unauthorized" element={<Unauthorized />} /> */}
+     
 
       {/* 404 Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

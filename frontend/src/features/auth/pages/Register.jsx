@@ -125,8 +125,7 @@ export default function Register() {
                             </div>
                         </div>
 
-                        {/* ROLE SELECT */}
-                        {/* ROLE SWITCH */}
+                       
 {/* ROLE SLIDING TOGGLE */}
 <div>
   <label className="block text-sm font-medium text-purple-200 mb-2">

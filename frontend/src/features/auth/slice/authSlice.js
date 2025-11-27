@@ -1,12 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, registerApi, meApi } from "../api/authApi";
 
-const user = localStorage.getItem("user")
-  ? JSON.parse(localStorage.getItem("user"))
-  : null;
-const token = localStorage.getItem("token")
-  ? localStorage.getItem("token")
-  : null;
+const rawUser = localStorage.getItem("user");
+const user = rawUser && rawUser !== "null" ? JSON.parse(rawUser) : null;
+const rawToken = localStorage.getItem("token");
+const token = rawToken && rawToken !== "null" && rawToken !== "undefined" ? rawToken : null;
 
 const initialState = {
   user: user,
@@ -92,7 +90,7 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        // backend returns { message, user }
+        
         state.user = action.payload;
         state.token = action.payload.token;
         state.error = null;
@@ -121,7 +119,7 @@ const authSlice = createSlice({
         state.token = null;
       })
 
-      // Get Me (Fetch user on app load)
+      
       .addCase(getMe.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -129,12 +127,12 @@ const authSlice = createSlice({
       .addCase(getMe.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-        // Ensure token is still in localStorage for subsequent requests
+       
         const storedToken = localStorage.getItem("token");
         if (storedToken && !state.token) {
           state.token = storedToken;
         }
-        localStorage.setItem("user", JSON.stringify(action.payload)); // Update user in localStorage in case of changes
+        localStorage.setItem("user", JSON.stringify(action.payload)); 
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loading = false;

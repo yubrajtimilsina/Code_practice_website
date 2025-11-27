@@ -12,7 +12,7 @@ export default function Login() {
   const [focused, setFocused] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect based on user role after login
+ 
   useEffect(() => {
   if (user) {
     if (user.role === "super-admin") {

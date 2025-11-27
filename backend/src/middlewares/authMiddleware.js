@@ -11,7 +11,13 @@ export const authMiddleware = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      if (!token || typeof token !== "string" || token.split('.').length !== 3) {
+        console.error("Auth error: invalid token format", token);
+        return res.status(401).json({ error: "Not authorized, invalid token format" });
+      }
+
+      const decoded = jwt.verify(token.trim(), process.env.JWT_SECRET);
 
       req.user = await findUserById(decoded.id);
 

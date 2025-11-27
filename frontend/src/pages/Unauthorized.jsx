@@ -8,7 +8,7 @@ export default function Unauthorized() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/20 mb-6">
           <AlertCircle className="w-8 h-8 text-red-400" />
         </div>
-        <h1 className="text-4xl font-bold text-white mb-2">Access Denied</h1>
+        <h1 className="text-4xl font-bold text-white mb-2">Unauthorized Access Denied</h1>
         <p className="text-purple-200 mb-8">
           You don't have permission to access this page. Please contact an administrator if you believe this is a mistake.
         </p>

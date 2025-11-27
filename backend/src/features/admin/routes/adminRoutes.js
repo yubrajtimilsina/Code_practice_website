@@ -6,6 +6,6 @@ import { getAdminDashboard } from "../controller/adminController.js";
 const router = Router();
 
 
-router.get("/dashboard", authMiddleware, role("admin", "super-admin"), getAdminDashboard);
+router.get("/dashboard", authMiddleware, role("admin"), getAdminDashboard);
 
 export default router;

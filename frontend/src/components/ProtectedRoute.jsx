@@ -13,17 +13,16 @@ const Spinner = () => (
 const ProtectedRoute = ({ children, requiredRoles = [] }) => {
   const { user, token, loading } = useSelector((state) => state.auth);
 
-  // Still loading
+  
   if (loading) {
     return <Spinner />;
   }
 
-  // Not authenticated
   if (!user || !token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role-based access
+  
   if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }

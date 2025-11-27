@@ -12,7 +12,7 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // Already logged in, redirect to appropriate dashboard
+
   if (user && token) {
     if (user.role === "super-admin") {
       return <Navigate to="/dashboard/super-admin" replace />;
