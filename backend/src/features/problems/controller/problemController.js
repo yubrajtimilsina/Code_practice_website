@@ -8,6 +8,13 @@ import { getProblemByIdUseCase } from "../use-cases/getProblemById.js";
 export const createProblemController = async (req, res) => {
   try {
     const payload = req.body;
+    console.log("CreateProblem called - user:", req.user ? { id: req.user._id, role: req.user.role } : null);
+    console.log("Payload:", payload);
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized: missing user (auth middleware did not set req.user)" });
+    }
+
     const problem = await createProblemUseCase(payload, req.user._id);
     res.status(201).json(problem);
   } catch (err) {

@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { memo } from 'react';
 
 const TestCaseSchema = new mongoose.Schema({
     input: { type: String, required: true },
@@ -23,9 +22,8 @@ const ProblemSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now },
 });
 
-ProblemSchema.pre('save', function (next) {
+ProblemSchema.pre('save', function () {
     this.updatedAt = Date.now();
-    next();
 });
 
 export default mongoose.model('Problem', ProblemSchema);

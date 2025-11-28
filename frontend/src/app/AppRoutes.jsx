@@ -8,6 +8,10 @@ import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
 import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminDashboard.jsx";
 import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
+import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
+import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
+import ProblemList from "../features/problems/pages/ProblemList.jsx";
+
 
 export default function AppRoutes() {
   return (
@@ -69,6 +73,42 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["learner"]}>
             <LearnerProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/problems"
+        element={<ProblemList />}
+      />
+      <Route
+        path="/problems/:id"
+        element={<ProblemDetails />}
+      />
+
+      <Route
+        path="/admin/problems"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <ProblemList adminView={true} />
+          </ProtectedRoute>
+        }
+      />
+      
+
+      <Route
+        path="/admin/problems/new"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminProblemForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/problems/:id/edit"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminProblemForm />
           </ProtectedRoute>
         }
       />

@@ -87,10 +87,10 @@ export default function SuperAdminDashboard() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-          <p className="text-purple-200 text-lg font-medium">Loading Super Admin Dashboard...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-blue-700 text-lg font-medium">Loading Super Admin Dashboard...</p>
         </div>
       </div>
     );
@@ -109,18 +109,18 @@ export default function SuperAdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 md:p-8">
+    <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Crown className="w-8 h-8 text-yellow-400" />
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
+              <Crown className="w-8 h-8 text-blue-600" />
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900">
                 Super Admin Dashboard
               </h1>
             </div>
-            <p className="text-purple-200">
+            <p className="text-slate-600">
               Welcome, <span className="font-semibold">{currentUser?.name}</span> • Full System Control
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function SuperAdminDashboard() {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50"
               title="Refresh all data"
             >
               <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`} />
@@ -138,7 +138,7 @@ export default function SuperAdminDashboard() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
             >
               <LogOut className="w-5 h-5" />
               Logout
@@ -148,12 +148,12 @@ export default function SuperAdminDashboard() {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-200 text-sm">{error}</p>
+          <div className="mb-6 bg-red-100 border border-red-300 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-red-700 text-sm">{error}</p>
             <button
               onClick={handleRefresh}
-              className="ml-auto px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-sm rounded transition-colors"
+              className="ml-auto px-3 py-1 bg-red-200 hover:bg-red-300 text-red-700 text-sm rounded transition-colors"
             >
               Retry
             </button>
@@ -163,79 +163,79 @@ export default function SuperAdminDashboard() {
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           {/* Total Users */}
-          <div className="group bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-blue-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20">
+          <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-blue-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-blue-600 rounded-lg group-hover:scale-110 transition-transform">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-purple-200 text-sm font-medium">Total Users</p>
-            <p className="text-4xl font-bold text-white mt-2">{stats.totalUsers}</p>
-            <p className="text-xs text-purple-300 mt-2">All registered users</p>
+            <p className="text-slate-600 text-sm font-medium">Total Users</p>
+            <p className="text-4xl font-bold text-slate-900 mt-2">{stats.totalUsers}</p>
+            <p className="text-xs text-slate-500 mt-2">All registered users</p>
           </div>
 
           {/* Active Users */}
-          <div className="group bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-green-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/20">
+          <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-green-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-green-500 rounded-lg group-hover:scale-110 transition-transform">
                 <UserCheck className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-purple-200 text-sm font-medium">Active Users</p>
-            <p className="text-4xl font-bold text-white mt-2">{userStats.activeUsers}</p>
-            <p className="text-xs text-purple-300 mt-2">Currently active</p>
+            <p className="text-slate-600 text-sm font-medium">Active Users</p>
+            <p className="text-4xl font-bold text-slate-900 mt-2">{userStats.activeUsers}</p>
+            <p className="text-xs text-slate-500 mt-2">Currently active</p>
           </div>
 
           {/* Total Problems */}
-          <div className="group bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-purple-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20">
+          <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-purple-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-purple-500 rounded-lg group-hover:scale-110 transition-transform">
                 <Code2 className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-purple-200 text-sm font-medium">Total Problems</p>
-            <p className="text-4xl font-bold text-white mt-2">{stats.totalProblems}</p>
-            <p className="text-xs text-purple-300 mt-2">In the system</p>
+            <p className="text-slate-600 text-sm font-medium">Total Problems</p>
+            <p className="text-4xl font-bold text-slate-900 mt-2">{stats.totalProblems}</p>
+            <p className="text-xs text-slate-500 mt-2">In the system</p>
           </div>
 
           {/* Active Admins */}
-          <div className="group bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-yellow-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-yellow-500/20">
+          <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-yellow-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-yellow-500 rounded-lg group-hover:scale-110 transition-transform">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-purple-200 text-sm font-medium">Active Admins</p>
-            <p className="text-4xl font-bold text-white mt-2">{userStats.admins}</p>
-            <p className="text-xs text-purple-300 mt-2">Admin accounts</p>
+            <p className="text-slate-600 text-sm font-medium">Active Admins</p>
+            <p className="text-4xl font-bold text-slate-900 mt-2">{userStats.admins}</p>
+            <p className="text-xs text-slate-500 mt-2">Admin accounts</p>
           </div>
 
           {/* System Health */}
-          <div className="group bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:border-red-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/20">
+          <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-red-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg group-hover:scale-110 transition-transform">
+              <div className="p-3 bg-green-500 rounded-lg group-hover:scale-110 transition-transform">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-purple-200 text-sm font-medium">System Health</p>
-            <p className="text-4xl font-bold text-green-400 mt-2">100%</p>
-            <p className="text-xs text-purple-300 mt-2">All systems running</p>
+            <p className="text-slate-600 text-sm font-medium">System Health</p>
+            <p className="text-4xl font-bold text-green-600 mt-2">100%</p>
+            <p className="text-xs text-slate-500 mt-2">All systems running</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-8 flex gap-4 border-b border-white/10">
+        <div className="mb-8 flex gap-4 border-b border-slate-200">
           <button
             onClick={() => setActiveTab("overview")}
             className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
               activeTab === "overview"
-                ? "border-yellow-400 text-yellow-400"
-                : "border-transparent text-purple-300 hover:text-purple-200"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-blue-600"
             }`}
           >
             <BarChart3 className="w-5 h-5 inline mr-2" />
@@ -246,8 +246,8 @@ export default function SuperAdminDashboard() {
             onClick={() => setActiveTab("admins")}
             className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
               activeTab === "admins"
-                ? "border-yellow-400 text-yellow-400"
-                : "border-transparent text-purple-300 hover:text-purple-200"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-blue-600"
             }`}
           >
             <Shield className="w-5 h-5 inline mr-2" />
@@ -258,8 +258,8 @@ export default function SuperAdminDashboard() {
             onClick={() => setActiveTab("users")}
             className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
               activeTab === "users"
-                ? "border-yellow-400 text-yellow-400"
-                : "border-transparent text-purple-300 hover:text-purple-200"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-500 hover:text-blue-600"
             }`}
           >
             <Users className="w-5 h-5 inline mr-2" />
@@ -272,26 +272,26 @@ export default function SuperAdminDashboard() {
           <div className="space-y-6">
             {/* System Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-xl rounded-2xl p-8 border border-blue-500/20">
-                <h3 className="text-xl font-bold text-white mb-4">User Statistics</h3>
-                <div className="space-y-4 text-purple-200">
+              <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">User Statistics</h3>
+                <div className="space-y-4 text-slate-600">
                   <div className="flex justify-between">
                     <span>Total Users</span>
-                    <span className="font-semibold text-white">{stats.totalUsers}</span>
+                    <span className="font-semibold text-slate-900">{stats.totalUsers}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Active Users</span>
-                    <span className="font-semibold text-green-400">{userStats.activeUsers}</span>
+                    <span className="font-semibold text-green-600">{userStats.activeUsers}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Admins</span>
-                    <span className="font-semibold text-yellow-400">{userStats.admins}</span>
+                    <span className="font-semibold text-yellow-600">{userStats.admins}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Learners</span>
-                    <span className="font-semibold text-blue-400">{userStats.learners}</span>
+                    <span className="font-semibold text-blue-600">{userStats.learners}</span>
                   </div>
-                  <div className="h-px bg-white/10 my-2"></div>
+                  <div className="h-px bg-slate-200 my-2"></div>
                   <div className="flex justify-between text-sm">
                     <span>Inactive Users</span>
                     <span className="font-semibold">{stats.totalUsers - userStats.activeUsers}</span>
@@ -299,26 +299,26 @@ export default function SuperAdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-xl rounded-2xl p-8 border border-purple-500/20">
-                <h3 className="text-xl font-bold text-white mb-4">System Information</h3>
-                <div className="space-y-4 text-purple-200">
+              <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">System Information</h3>
+                <div className="space-y-4 text-slate-600">
                   <div className="flex justify-between">
                     <span>Environment</span>
-                    <span className="font-semibold text-white">Development</span>
+                    <span className="font-semibold text-slate-900">Development</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Server Status</span>
-                    <span className="font-semibold text-green-400">✓ Running</span>
+                    <span className="font-semibold text-green-600">✓ Running</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Database</span>
-                    <span className="font-semibold text-green-400">✓ Connected</span>
+                    <span className="font-semibold text-green-600">✓ Connected</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Total Problems</span>
-                    <span className="font-semibold text-white">{stats.totalProblems}</span>
+                    <span className="font-semibold text-slate-900">{stats.totalProblems}</span>
                   </div>
-                  <div className="h-px bg-white/10 my-2"></div>
+                  <div className="h-px bg-slate-200 my-2"></div>
                   <div className="flex justify-between text-sm">
                     <span>Last Updated</span>
                     <span className="font-semibold">{new Date().toLocaleTimeString()}</span>
@@ -331,9 +331,9 @@ export default function SuperAdminDashboard() {
 
         {/* Admins Tab */}
         {activeTab === "admins" && (
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Shield className="w-6 h-6 text-yellow-400" />
+          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Shield className="w-6 h-6 text-blue-600" />
               Admin Management ({admins.length})
             </h2>
 
@@ -341,24 +341,24 @@ export default function SuperAdminDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-4 text-purple-200 font-semibold">Name</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Email</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Role</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Status</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Joined</th>
+                    <tr className="border-b border-slate-200">
+                      <th className="pb-4 text-slate-600 font-semibold">Name</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Email</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Role</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Status</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Joined</th>
                     </tr>
                   </thead>
                   <tbody>
                     {admins.map((admin, idx) => (
                       <tr
                         key={idx}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                       >
-                        <td className="py-4 text-white font-medium">{admin.name}</td>
-                        <td className="py-4 text-purple-200 text-sm">{admin.email}</td>
+                        <td className="py-4 text-slate-900 font-medium">{admin.name}</td>
+                        <td className="py-4 text-slate-600 text-sm">{admin.email}</td>
                         <td className="py-4">
-                          <span className="px-3 py-1 bg-yellow-500/20 text-yellow-200 rounded-full text-xs font-medium">
+                          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
                             {admin.role}
                           </span>
                         </td>
@@ -366,14 +366,14 @@ export default function SuperAdminDashboard() {
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
                               admin.isActive
-                                ? "bg-green-500/20 text-green-200"
-                                : "bg-red-500/20 text-red-200"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
                             }`}
                           >
                             {admin.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="py-4 text-purple-200 text-sm">
+                        <td className="py-4 text-slate-600 text-sm">
                           {new Date(admin.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -383,8 +383,8 @@ export default function SuperAdminDashboard() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Shield className="w-12 h-12 text-purple-400/30 mx-auto mb-3" />
-                <p className="text-purple-300">No admin users found</p>
+                <Shield className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                <p className="text-slate-500">No admin users found</p>
               </div>
             )}
           </div>
@@ -392,9 +392,9 @@ export default function SuperAdminDashboard() {
 
         {/* Users Tab */}
         {activeTab === "users" && (
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-400" />
+          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-600" />
               All Users ({allUsers.length})
             </h2>
 
@@ -402,30 +402,30 @@ export default function SuperAdminDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-4 text-purple-200 font-semibold">Name</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Email</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Role</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Status</th>
-                      <th className="pb-4 text-purple-200 font-semibold">Joined</th>
+                    <tr className="border-b border-slate-200">
+                      <th className="pb-4 text-slate-600 font-semibold">Name</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Email</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Role</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Status</th>
+                      <th className="pb-4 text-slate-600 font-semibold">Joined</th>
                     </tr>
                   </thead>
                   <tbody>
                     {allUsers.slice(0, 20).map((userItem, idx) => (
                       <tr
                         key={idx}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                        className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                       >
-                        <td className="py-4 text-white font-medium">{userItem.name}</td>
-                        <td className="py-4 text-purple-200 text-sm">{userItem.email}</td>
+                        <td className="py-4 text-slate-900 font-medium">{userItem.name}</td>
+                        <td className="py-4 text-slate-600 text-sm">{userItem.email}</td>
                         <td className="py-4">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
                               userItem.role === "admin"
-                                ? "bg-red-500/20 text-red-200"
+                                ? "bg-red-100 text-red-700"
                                 : userItem.role === "super-admin"
-                                ? "bg-yellow-500/20 text-yellow-200"
-                                : "bg-blue-500/20 text-blue-200"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-blue-100 text-blue-700"
                             }`}
                           >
                             {userItem.role}
@@ -435,14 +435,14 @@ export default function SuperAdminDashboard() {
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${
                               userItem.isActive
-                                ? "bg-green-500/20 text-green-200"
-                                : "bg-red-500/20 text-red-200"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
                             }`}
                           >
                             {userItem.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="py-4 text-purple-200 text-sm">
+                        <td className="py-4 text-slate-600 text-sm">
                           {new Date(userItem.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -452,17 +452,17 @@ export default function SuperAdminDashboard() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 text-purple-400/30 mx-auto mb-3" />
-                <p className="text-purple-300">No users found</p>
+                <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                <p className="text-slate-500">No users found</p>
               </div>
             )}
 
             {allUsers.length > 20 && (
               <div className="mt-4 text-center">
-                <p className="text-purple-300 text-sm">
+                <p className="text-slate-500 text-sm">
                   Showing 20 of {allUsers.length} users
                 </p>
-                <button className="mt-2 text-yellow-400 hover:text-yellow-300 text-sm font-medium">
+                <button className="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
                   View All Users →
                 </button>
               </div>
@@ -471,24 +471,24 @@ export default function SuperAdminDashboard() {
         )}
 
         {/* Quick Stats Footer */}
-        <div className="mt-8 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-xl rounded-2xl p-8 border border-yellow-500/20">
-          <h3 className="text-xl font-bold text-white mb-6">📊 Quick Summary</h3>
+        <div className="mt-8 bg-white border border-slate-200 shadow-sm rounded-2xl p-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">📊 Quick Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <p className="text-purple-300 text-sm mb-2">Total Users</p>
-              <p className="text-3xl font-bold text-white">{stats.totalUsers}</p>
+              <p className="text-slate-600 text-sm mb-2">Total Users</p>
+              <p className="text-3xl font-bold text-slate-900">{stats.totalUsers}</p>
             </div>
             <div>
-              <p className="text-purple-300 text-sm mb-2">Active Users</p>
-              <p className="text-3xl font-bold text-green-400">{userStats.activeUsers}</p>
+              <p className="text-slate-600 text-sm mb-2">Active Users</p>
+              <p className="text-3xl font-bold text-green-600">{userStats.activeUsers}</p>
             </div>
             <div>
-              <p className="text-purple-300 text-sm mb-2">Total Admins</p>
-              <p className="text-3xl font-bold text-yellow-400">{userStats.admins}</p>
+              <p className="text-slate-600 text-sm mb-2">Total Admins</p>
+              <p className="text-3xl font-bold text-yellow-600">{userStats.admins}</p>
             </div>
             <div>
-              <p className="text-purple-300 text-sm mb-2">Total Problems</p>
-              <p className="text-3xl font-bold text-purple-400">{stats.totalProblems}</p>
+              <p className="text-slate-600 text-sm mb-2">Total Problems</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.totalProblems}</p>
             </div>
           </div>
         </div>

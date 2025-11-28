@@ -9,7 +9,6 @@ import problemRoutes from "../features/problems/routes/problemRoutes.js";
 
 const router = Router();
 
-
 router.use(authMiddleware);
 
 router.use("/dashboard", dashboardRoutes);

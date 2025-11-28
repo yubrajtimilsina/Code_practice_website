@@ -1,4 +1,4 @@
-import { createProblem } from "../repository/problemRepository.js  ";
+import { createProblem } from "../repository/problemRepository.js";
 
 import slugify from "slugify";
 

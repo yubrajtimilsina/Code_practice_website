@@ -13,7 +13,7 @@ const router = Router();
 
 // Public routes
 router.get("/", listProblemsController);
-router.get("/:id", getProblemController);
+router.get("/:id", authMiddleware, getProblemController);
 
 // Protected routes - Admin/Super-admin only
 router.post(
