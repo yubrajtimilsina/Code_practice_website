@@ -5,7 +5,7 @@ import { learnerDashboard, adminDashboard } from "../controller/dashboardControl
 
 const router = Router();
 router.get("/learner", authMiddleware, role("learner"), learnerDashboard);
-router.get("/admin", authMiddleware, role("admin"), adminDashboard);
+router.get("/admin", authMiddleware, role("admin", "super-admin"), adminDashboard);
 
 
 

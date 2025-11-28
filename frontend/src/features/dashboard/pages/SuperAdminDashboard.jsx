@@ -1,10 +1,9 @@
-// FILE: frontend/src/features/dashboard/pages/SuperAdminDashboard.jsx
-// REPLACE ENTIRE FILE WITH THIS
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../auth/slice/authSlice.js";
+import { getAdminDashboardApi, getAdminsApi, setAdminApi, revokeAdminApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
 import {
   Shield,
@@ -21,7 +20,7 @@ import {
 } from "lucide-react";
 
 export default function SuperAdminDashboard() {
-  // State Management
+
   const [data, setData] = useState(null);
   const [admins, setAdmins] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -30,36 +29,25 @@ export default function SuperAdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // overview, admins, users
 
-  // Redux & Router
+ 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
 
-  // Fetch all dashboard data
   const fetchAllData = async () => {
     try {
       setRefreshing(true);
       setError(null);
 
-      // Fetch 1: Admin Dashboard Stats
-      const dashRes = await api.get("/dashboard/admin");
-      console.log("Dashboard stats:", dashRes.data);
+      const dashRes = await getAdminDashboardApi();
       setData(dashRes.data);
 
-      // Fetch 2: Admins List
-      const adminsRes = await api.get("/super-admin/manage-admins");
-      console.log("Admins list:", adminsRes.data);
+      const adminsRes = await getAdminsApi();
       setAdmins(adminsRes.data.admins || []);
 
-      // Fetch 3: All Users
-      try {
-        const usersRes = await api.get("/users/all");
-        console.log("All users:", usersRes.data);
-        setAllUsers(usersRes.data.users || []);
-      } catch (err) {
-        console.warn("Could not fetch all users:", err.message);
-        setAllUsers([]);
-      }
+      const usersRes = await api.get("/users/all");
+      setAllUsers(usersRes.data.filter(u => u.role !== "super-admin") || []);
+
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError(err.response?.data?.error || "Failed to load dashboard data");
@@ -69,7 +57,7 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  // Initial Load
+
   useEffect(() => {
     fetchAllData();
   }, []);
@@ -82,6 +70,34 @@ export default function SuperAdminDashboard() {
 
   const handleRefresh = () => {
     fetchAllData();
+  };
+
+  const handleSetAdmin = async (userId) => {
+    if (!confirm("Are you sure you want to make this user an admin?")) return;
+    try {
+      setRefreshing(true);
+      await setAdminApi(userId);
+      fetchAllData(); 
+    } catch (err) {
+      console.error("Error setting admin:", err);
+      setError(err.response?.data?.error || "Failed to set admin");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleRevokeAdmin = async (userId) => {
+    if (!confirm("Are you sure you want to revoke admin status for this user?")) return;
+    try {
+      setRefreshing(true);
+      await revokeAdminApi(userId);
+      fetchAllData(); 
+    } catch (err) {
+      console.error("Error revoking admin:", err);
+      setError(err.response?.data?.error || "Failed to revoke admin");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Loading State
@@ -175,7 +191,7 @@ export default function SuperAdminDashboard() {
             <p className="text-xs text-slate-500 mt-2">All registered users</p>
           </div>
 
-          {/* Active Users */}
+          
           <div className="group bg-white border border-slate-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300 hover:border-green-500">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-500 rounded-lg group-hover:scale-110 transition-transform">
@@ -196,9 +212,11 @@ export default function SuperAdminDashboard() {
               </div>
               <TrendingUp className="w-5 h-5 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <p className="text-slate-600 text-sm font-medium">Total Problems</p>
-            <p className="text-4xl font-bold text-slate-900 mt-2">{stats.totalProblems}</p>
-            <p className="text-xs text-slate-500 mt-2">In the system</p>
+            <p className={` text-slate-500 text-sm font-medium`}>Total Problems</p>
+            <p className="text-4xl font-bold text-slate-900 mt-2">
+              {stats.totalProblems}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">Listed problems</p>
           </div>
 
           {/* Active Admins */}
@@ -408,12 +426,13 @@ export default function SuperAdminDashboard() {
                       <th className="pb-4 text-slate-600 font-semibold">Role</th>
                       <th className="pb-4 text-slate-600 font-semibold">Status</th>
                       <th className="pb-4 text-slate-600 font-semibold">Joined</th>
+                      <th className="pb-4 text-slate-600 font-semibold text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {allUsers.slice(0, 20).map((userItem, idx) => (
+                    {allUsers.map((userItem) => (
                       <tr
-                        key={idx}
+                        key={userItem._id}
                         className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                       >
                         <td className="py-4 text-slate-900 font-medium">{userItem.name}</td>
@@ -444,6 +463,26 @@ export default function SuperAdminDashboard() {
                         </td>
                         <td className="py-4 text-slate-600 text-sm">
                           {new Date(userItem.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 text-right flex gap-2 justify-end items-center">
+                          {userItem.role === "learner" && (
+                            <button
+                              onClick={() => handleSetAdmin(userItem._id)}
+                              disabled={refreshing}
+                              className="px-3 py-1 text-sm rounded-md font-medium bg-green-100 text-green-700 hover:bg-green-200"
+                            >
+                              Make Admin
+                            </button>
+                          )}
+                          {userItem.role === "admin" && (
+                            <button
+                              onClick={() => handleRevokeAdmin(userItem._id)}
+                              disabled={refreshing}
+                              className="px-3 py-1 text-sm rounded-md font-medium bg-orange-100 text-orange-700 hover:bg-orange-200"
+                            >
+                              Revoke Admin
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

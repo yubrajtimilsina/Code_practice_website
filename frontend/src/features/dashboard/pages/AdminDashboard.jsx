@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../auth/slice/authSlice.js";
+import { getAdminDashboardApi, blockUserApi, deleteUserApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
 import {
   Users,
@@ -32,10 +33,10 @@ export default function AdminDashboard() {
       setRefreshing(true);
       setError(null);
 
-      const dashRes = await api.get("/dashboard/admin");
-      console.log("Dashboard data:", dashRes.data);
+      const dashRes = await getAdminDashboardApi();
       setData(dashRes.data);
 
+      console.log("Dashboard data:", dashRes.data);
       try {
         const usersRes = await api.get("/users/all");
         console.log("Users data:", usersRes.data);
@@ -65,6 +66,34 @@ export default function AdminDashboard() {
 
   const handleRefresh = () => {
     fetchDashboardData();
+  };
+
+  const handleBlockUser = async (userId) => {
+    if (!confirm("Are you sure you want to block this user?")) return;
+    try {
+      setRefreshing(true);
+      await blockUserApi(userId);
+      fetchDashboardData(); // Re-fetch data to update the user list
+    } catch (err) {
+      console.error("Error blocking user:", err);
+      setError(err.response?.data?.error || "Failed to block user");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("Are you sure you want to permanently delete this user?")) return;
+    try {
+      setRefreshing(true);
+      await deleteUserApi(userId);
+      fetchDashboardData(); 
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      setError(err.response?.data?.error || "Failed to delete user");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
    const BG_GRADIENT =
@@ -304,6 +333,7 @@ export default function AdminDashboard() {
                     <th className="pb-4 text-slate-600">Role</th>
                     <th className="pb-4 text-slate-600">Status</th>
                     <th className="pb-4 text-slate-600">Joined</th>
+                    <th className="pb-4 text-slate-600">Actions</th>
                   </tr>
                 </thead>
 
@@ -336,12 +366,28 @@ export default function AdminDashboard() {
                               : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {userItem.isActive ? "Active" : "Inactive"}
+                          {userItem.isActive ? "Active" : "Blocked"}
                         </span>
                       </td>
 
                       <td className="py-4 text-slate-500">
                         {new Date(userItem.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 text-right flex gap-2 justify-end items-center">
+                        <button
+                          onClick={() => handleBlockUser(userItem._id)}
+                          disabled={refreshing || !userItem.isActive}
+                          className={`px-3 py-1 text-sm rounded-md font-medium ${userItem.isActive ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-slate-100 text-slate-500 cursor-not-allowed'}`}
+                        >
+                          {userItem.isActive ? "Block" : "Blocked"}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(userItem._id)}
+                          disabled={refreshing}
+                          className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}

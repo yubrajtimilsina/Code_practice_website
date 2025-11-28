@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  solvedProblemsCount: {
+    type: Number,
+    default: 0,
+  },
+  totalSubmissionsCount: {
+    type: Number,
+    default: 0,
+  },
 
     createdAt: {
         type: Date,

@@ -46,5 +46,7 @@ export const registerUser = async ({ name, email, password, role = "learner" }) 
         role: user.role,
         isActive: user.isActive,
         token: generateToken(user._id),
+        solvedProblemsCount: user.solvedProblemsCount,
+        totalSubmissionsCount: user.totalSubmissionsCount,
     };
 };

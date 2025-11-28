@@ -142,20 +142,30 @@ if (!data) {
             <div>
               <div className="flex justify-between mb-1">
                 <span className={TEXT_SUB}>Beginner Level</span>
-                <span className="text-slate-700 font-semibold">75%</span>
+                <span className="text-slate-700 font-semibold">{data.dashboard.learningPath.beginner.progress}%</span>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                <div className="bg-blue-500 h-full rounded-full" style={{ width: "75%" }}></div>
+                <div className="bg-blue-500 h-full rounded-full" style={{ width: `${data.dashboard.learningPath.beginner.progress}%` }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between mb-1">
                 <span className={TEXT_SUB}>Intermediate Level</span>
-                <span className="text-slate-700 font-semibold">45%</span>
+                <span className="text-slate-700 font-semibold">{data.dashboard.learningPath.intermediate.progress}%</span>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                <div className="bg-purple-500 h-full rounded-full" style={{ width: "45%" }}></div>
+                <div className="bg-purple-500 h-full rounded-full" style={{ width: `${data.dashboard.learningPath.intermediate.progress}%` }}></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className={TEXT_SUB}>Advanced Level</span>
+                <span className="text-slate-700 font-semibold">{data.dashboard.learningPath.advanced.progress}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div className="bg-yellow-500 h-full rounded-full" style={{ width: `${data.dashboard.learningPath.advanced.progress}%` }}></div>
               </div>
             </div>
           </div>
@@ -171,12 +181,12 @@ if (!data) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className={TEXT_SUB}>Problems Solved</span>
-              <span className="text-lg font-bold text-green-600">+5</span>
+              <span className="text-lg font-bold text-green-600">+{data.dashboard.thisWeek.problemsSolved}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className={TEXT_SUB}>Streak</span>
-              <span className="text-lg font-bold text-yellow-600">3 days 🔥</span>
+              <span className="text-lg font-bold text-yellow-600">{data.dashboard.thisWeek.streak} days 🔥</span>
             </div>
 
             <div className="w-full h-px bg-slate-200 my-2"></div>
