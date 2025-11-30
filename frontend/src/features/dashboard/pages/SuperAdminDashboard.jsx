@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../auth/slice/authSlice.js";
 import { getAdminDashboardApi, getAdminsApi, setAdminApi, revokeAdminApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
 import {
@@ -10,7 +9,6 @@ import {
   Users,
   Code2,
   TrendingUp,
-  LogOut,
   AlertCircle,
   RefreshCw,
   BarChart3,
@@ -62,11 +60,6 @@ export default function SuperAdminDashboard() {
     fetchAllData();
   }, []);
 
-  // Handlers
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
-  };
 
   const handleRefresh = () => {
     fetchAllData();
@@ -152,13 +145,7 @@ export default function SuperAdminDashboard() {
               {!refreshing && "Refresh"}
             </button>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              Logout
-            </button>
+           
           </div>
         </div>
 

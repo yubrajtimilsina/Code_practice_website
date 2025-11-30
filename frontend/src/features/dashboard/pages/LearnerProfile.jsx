@@ -66,10 +66,7 @@ export default function LearnerProfile() {
             <span>{profile.email}</span>
           </div>
 
-          <div className="flex items-center space-x-4 text-slate-700 text-lg">
-            <Hash className="w-6 h-6 text-blue-500" />
-            <span>ID: {profile._id}</span>
-          </div>
+    
 
           <div className="flex items-center space-x-4 text-slate-700 text-lg">
             <Calendar className="w-6 h-6 text-blue-500" />

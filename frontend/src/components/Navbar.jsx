@@ -23,6 +23,8 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-6">
+
+          {/* ROLE */}
           <div className="flex items-center gap-2 text-slate-600">
             <Shield className="w-4 h-4" />
             <span className="text-sm font-semibold">
@@ -30,6 +32,18 @@ export default function Navbar() {
             </span>
           </div>
 
+          {/* LEARNER PROFILE LINK */}
+          {user.role === "learner" && (
+            <Link
+              to="/learner/profile"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            >
+              <User className="w-4 h-4" />
+              Profile
+            </Link>
+          )}
+
+          {/* LOGOUT */}
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"

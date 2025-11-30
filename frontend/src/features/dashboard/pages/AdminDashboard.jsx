@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../auth/slice/authSlice.js";
 import { getAdminDashboardApi, blockUserApi, deleteUserApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
 import {
   Users,
   Code2,
   GitBranch,
-  LogOut,
   BarChart3,
   TrendingUp,
   AlertCircle,
@@ -59,10 +57,7 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
-  };
+
 
   const handleRefresh = () => {
     fetchDashboardData();
@@ -190,13 +185,7 @@ export default function AdminDashboard() {
               {!refreshing && "Refresh"}
             </button>
 
-             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
-            >
-              <LogOut className="w-5 h-5" />
-              Logout
-            </button>
+             
           </div>
         </div>
 
@@ -227,19 +216,25 @@ export default function AdminDashboard() {
           </div>
 
           {/* PROBLEMS */}
-          <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-500 text-white rounded-lg">
-                <Code2 className="w-6 h-6" />
-              </div>
-              <TrendingUp className="w-5 h-5 text-green-500" />
-            </div>
-            <p className={`${TEXT_SUB} text-sm font-medium`}>Total Problems</p>
-            <p className="text-4xl font-bold text-slate-900 mt-2">
-              {stats.totalProblems}
-            </p>
-            <p className="text-xs text-slate-500 mt-2">Listed problems</p>
+           <div
+        onClick={() => navigate("/problems")}
+        className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 bg-blue-500 text-white rounded-lg">
+            <Code2 className="w-6 h-6" />
           </div>
+          <TrendingUp className="w-5 h-5 text-green-500" />
+        </div>
+
+        <p className={`${TEXT_SUB} text-sm font-medium`}>Total Problems</p>
+
+        <p className="text-4xl font-bold text-slate-900 mt-2">
+          {stats.totalProblems}
+        </p>
+
+        <p className="text-xs text-slate-500 mt-2">Listed problems</p>
+      </div>
 
             {/* SUBMISSIONS */}
           <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>

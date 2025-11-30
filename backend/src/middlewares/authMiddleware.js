@@ -19,7 +19,7 @@ export const authMiddleware = async (req, res, next) => {
         return res.status(401).json({ error: "User not found" });
       }
       
-      return next(); 
+     return next(); 
       
     } catch (error) {
       console.error("Auth error:", error.message);
@@ -27,6 +27,6 @@ export const authMiddleware = async (req, res, next) => {
     }
   }
 
-  // No token provided
+ 
   return res.status(401).json({ error: "Not authorized, no token provided" });
 };

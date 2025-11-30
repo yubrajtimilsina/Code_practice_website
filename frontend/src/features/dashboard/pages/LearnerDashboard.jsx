@@ -1,16 +1,12 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { getLearnerDashboardApi } from "../api/dashboardApi";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target } from "lucide-react";
-import { logout } from '../../auth/slice/authSlice.js'; 
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+
 
   useEffect(() => {
     getLearnerDashboardApi().then(res => {
@@ -47,11 +43,6 @@ if (!data) {
 
   const stats = data.dashboard.stats;
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/');
-  };
-
   return (
   <div className="min-h-screen bg-slate-50 p-6 md:p-8">
     <div className="max-w-7xl mx-auto">
@@ -63,12 +54,7 @@ if (!data) {
         </h1>
         <div className="flex items-center justify-between mt-2">
           <p className="text-slate-600 text-lg">Keep pushing your coding skills to new heights</p>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
-          >
-            Logout
-          </button>
+        
         </div>
       </div>
 
