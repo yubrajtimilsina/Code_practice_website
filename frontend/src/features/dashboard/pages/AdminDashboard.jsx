@@ -160,7 +160,7 @@ export default function AdminDashboard() {
   return (
     <div className={`${BG_GRADIENT} min-h-screen p-6`}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+     
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Stats Grid */}
+    
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
           {/* USERS */}
