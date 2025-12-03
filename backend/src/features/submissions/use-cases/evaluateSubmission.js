@@ -3,7 +3,6 @@ import { submitToJudge0, pollResult } from "../services/judge0Service";
 import Submission from "../models/Submission.js";
 import Problem from "../../problems/models/ProblemModel.js";
 import User from "../../auth/models/UserModels.js";
-import { getProblemByIdUseCase } from "../../problems/use-cases/getProblemById";
 
 
 export const evaluateSubmission = async (userId, problemId, code, language) => {
@@ -101,6 +100,53 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 export const getSubmissionHistory = async (userId, problemId = null, limit = 10) => {
     try {
         const query = { userId};
-        
+        if (problemId){
+            query.problemId = problemId;
+        }
+
+        const submissions = await Submission.find(query)
+        .sort({ createdAt: -1})
+        .limit(limit)
+        .populate('problemId', 'title slug')
+        .lean();
+
+        return submissions;
+    } catch (error) {
+        console.error("Error fetching submission history:", error.message);
+        throw error;
     }
-}
+    };
+
+export const getUserAcceptedProblems = async (userId) => {
+    try {
+        const acceptedSubmissions = await Submission.find({
+            userId,
+            isAccepted: true,
+        })
+        .distinct("problemId")
+        .lean();
+
+        return acceptedSubmissions;
+    } catch (error) {
+        console.error("Error fetching accepted problems:", error.message);
+        throw error;
+    }
+};
+
+export const getProblemSubmissions = async (problemId, limit = 50) => {
+    try {
+        const submissions = await Submission.find({
+             problemId
+            })
+            .sort({ createdAt: -1})
+            .limit(limit)
+            .populate('userId', 'name email')
+            .lean();
+
+            return submissions;
+        
+    }catch (error) {
+        console.error("Get problem submissions error:", error.message);
+        throw error;
+    }
+};
