@@ -1,0 +1,420 @@
+import { useEffect, useRef, useState} from "react";
+
+import { Play, Send, Save, Copy, RotateCcw } from "lucide-react";
+
+import Editor from "@monaco-editor/react";
+
+const CODE_TEMPLATES = {
+   javascript: `// Enter your JavaScript code here
+function solution(input) {
+  // Parse input if needed
+  const lines = input.trim().split('\\n');
+  
+  // Your solution logic here
+  
+  return output;
+}
+
+// Read from input
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+let input = '';
+rl.on('line', (line) => {
+  input += line + '\\n';
+});
+
+rl.on('close', () => {
+  console.log(solution(input));
+});`,
+
+
+ python: `# Enter your Python code here
+
+def solution(input_text):
+    lines = input_text.strip().split('\\n')
+    
+    # Your solution logic here
+    
+    return output
+
+# Read from stdin
+if __name__ == "__main__":
+    import sys
+    input_text = sys.stdin.read()
+    print(solution(input_text))`,
+
+
+     cpp: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    // Your solution logic here
+    
+    return 0;
+}`,
+
+java: `import java.util.*;
+import java.io.*;
+
+public class Solution {
+    public static void main(String[] args) throws IOException {
+        // Your solution logic here
+    }
+}`,
+
+  c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // Your solution logic here
+    
+    return 0;
+}`,
+
+ csharp: `using System;
+
+class Solution {
+    static void Main(string[] args) {
+        // Your solution logic here
+    }
+}`,
+
+ ruby: `# Enter your Ruby code here
+
+def solution(input_text)
+  lines = input_text.strip.split("\\n")
+  
+  # Your solution logic here
+  
+  output
+end
+
+input_text = STDIN.read
+puts solution(input_text)`,
+
+  go: `package main
+
+import (
+    "fmt"
+    "bufio"
+    "os"
+)
+
+func main() {
+    scanner := bufio.NewScanner(os.Stdin)
+    // Your solution logic here
+}`,
+
+  typescript: `// Enter your TypeScript code here
+
+function solution(input: string): string {
+    const lines = input.trim().split('\\n');
+    
+    // Your solution logic here
+    
+    return output;
+}
+
+import * as readline from 'readline';
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+let input = '';
+rl.on('line', (line) => {
+    input += line + '\\n';
+});
+
+rl.on('close', () => {
+    console.log(solution(input));
+});`,
+
+};
+
+
+export default function CodeEditor({
+    problemId,
+    problemTitle,
+    sampleInput,
+    sampleOutput,
+    onRun,
+    onSubmit,
+    loading = false,
+}) {
+    const editorRef = useRef(null);
+  const [code, setCode] = useState(CODE_TEMPLATES.javascript);
+  const [language, setLanguage] = useState("javascript");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [verdict, setVerdict] = useState(null);
+  const [activeTab, setActiveTab] = useState("input");
+
+  useEffect(() => {
+    const loadDraft = async () => {
+        try {
+
+            setCode(CODE_TEMPLATES[language]);
+        } catch (err){
+            console.error("Failed to load Draft code:", err);
+        }
+    };
+    loadDraft();
+  }, []);
+
+  const handleLanguageChange = (newLanguage) => {
+    setLanguage(newLanguage);
+    setCode(CODE_TEMPLATES[newLanguage]);
+  };
+
+   const handleRunCode = async () => {
+    setIsRunning(true);
+    setError("");
+    setOutput("");
+    setVerdict(null);
+
+    try {
+      const result = await onRun({
+        code,
+        language,
+        problemId,
+        input: sampleInput,
+      });
+        if (result.verdict === "Accepted") {
+        setVerdict({ type: "success", text: "✓ Accepted" });
+      } else if (result.verdict === "Compilation Error") {
+        setError(result.compilationError);
+      } else if (result.verdict === "Runtime Error") {
+        setError(result.stderr);
+      } else if (result.verdict === "Wrong Answer") {
+        setError(`Expected: ${result.expectedOutput}\nGot: ${result.output}`);
+      } else {
+        setError(result.verdict);
+      }
+       setOutput(result.output || "");
+    } catch (err) {
+      setError(err.message || "Failed to run code");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsRunning(true);
+    setError("");
+    setOutput("");
+
+    try {
+      const result = await onSubmit({
+        code,
+        language,
+        problemId,
+      });
+
+      if (result.verdict === "Accepted") {
+        setVerdict({ type: "success", text: "✓ Accepted" });
+      } else if (result.verdict === "Compilation Error") {
+        setError(result.compilationError);
+      } else {
+        setError(result.verdict);
+      }
+
+      setOutput(result.output || "");
+    } catch (err) {
+      setError(err.message || "Failed to submit");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleReset = () => {
+    setCode(CODE_TEMPLATES[language]);
+    setOutput("");
+    setError("");
+    setVerdict(null);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    alert("Code copied to clipboard!");
+  }; 
+
+  return (
+     <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
+      {/* Header */}
+      <div className="bg-slate-900 text-white px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold">{problemTitle}</h2>
+            <p className="text-sm text-slate-400">Problem ID: {problemId}</p>
+          </div>
+        </div>
+
+        {/* Language Selector */}
+        <div className="flex gap-2 flex-wrap">
+          {Object.keys(CODE_TEMPLATES).map((lang) => (
+            <button
+              key={lang}
+              onClick={() => handleLanguageChange(lang)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                language === lang
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+              }`}
+            >
+              {lang.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Editor Section */}
+        <div className="flex-1 flex flex-col border-r border-slate-200">
+          <Editor
+            height="100%"
+            language={language}
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              fontFamily: "Monaco, Menlo, 'Courier New', monospace",
+              lineNumbers: "on",
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+            }}
+          />
+        </div>
+
+        {/* Output Section */}
+        <div className="w-96 flex flex-col border-l border-slate-200 bg-slate-50">
+          {/* Tabs */}
+          <div className="flex border-b border-slate-200">
+            <button
+              onClick={() => setActiveTab("input")}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "input"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Input
+            </button>
+            <button
+              onClick={() => setActiveTab("output")}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "output"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Output
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-auto p-4">
+            {activeTab === "input" ? (
+              <div>
+                <h4 className="font-semibold text-slate-700 mb-2 text-sm">Sample Input:</h4>
+                <pre className="bg-white p-3 rounded border border-slate-200 text-xs font-mono text-slate-700 whitespace-pre-wrap break-words">
+                  {sampleInput || "No input"}
+                </pre>
+              </div>
+            ) : (
+              <div>
+                {verdict && (
+                  <div
+                    className={`p-3 rounded mb-4 text-sm font-medium ${
+                      verdict.type === "success"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {verdict.text}
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mb-4">
+                    <h5 className="font-semibold text-red-600 mb-2 text-sm">Error:</h5>
+                    <pre className="bg-red-50 p-3 rounded border border-red-200 text-xs font-mono text-red-700 whitespace-pre-wrap break-words">
+                      {error}
+                    </pre>
+                  </div>
+                )}
+
+                {output && !error && (
+                  <div>
+                    <h5 className="font-semibold text-slate-700 mb-2 text-sm">Output:</h5>
+                    <pre className="bg-white p-3 rounded border border-slate-200 text-xs font-mono text-slate-700 whitespace-pre-wrap break-words">
+                      {output}
+                    </pre>
+                  </div>
+                )}
+
+                {!output && !error && !verdict && (
+                  <p className="text-slate-500 text-sm">Click "Run" to execute your code</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer with Action Buttons */}
+      <div className="bg-slate-100 border-t border-slate-200 px-6 py-4 flex gap-2 justify-end flex-wrap">
+        <button
+          onClick={handleReset}
+          className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+          disabled={isRunning}
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset
+        </button>
+
+        <button
+          onClick={handleCopy}
+          className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+          disabled={isRunning}
+        >
+          <Copy className="w-4 h-4" />
+          Copy
+        </button>
+
+        <button
+          onClick={handleRunCode}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+          disabled={isRunning}
+        >
+          <Play className="w-4 h-4" />
+          {isRunning ? "Running..." : "Run"}
+        </button>
+
+        <button
+          onClick={handleSubmit}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+          disabled={isRunning}
+        >
+          <Send className="w-4 h-4" />
+          {isRunning ? "Submitting..." : "Submit"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
