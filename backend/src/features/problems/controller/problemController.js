@@ -59,8 +59,7 @@ export const getProblemController = async (req, res) => {
     const idOrSlug = req.params.id;
     const problem = await getProblemByIdUseCase(idOrSlug);
     if (!problem) return res.status(404).json({ message: "Not found" });
-    // hide hidden testcases — the model already stores them; do not include testCases for learners
-    // only include sample inputs/outputs and metadata
+  
     const safe = {
       _id: problem._id,
       title: problem.title,

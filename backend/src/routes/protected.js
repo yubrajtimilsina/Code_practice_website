@@ -6,6 +6,9 @@ import userRoutes from "../features/user/routes/userRoutes.js";
 import adminRoutes from "../features/admin/routes/adminRoutes.js";
 import superAdminRoutes from "../features/superAdmin/routes/superAdminRoutes.js";
 import problemRoutes from "../features/problems/routes/problemRoutes.js";
+import submissionRoutes from "../features/submissions/routes/submissionRoutes.js";
+
+
 
 const router = Router();
 
@@ -16,6 +19,6 @@ router.use("/users", userRoutes);
 router.use("/admin", adminRoutes); 
 router.use("/super-admin", superAdminRoutes); 
 router.use("/problems", problemRoutes);
-
+router.use("/submissions", submissionRoutes);
 
 export default router;  

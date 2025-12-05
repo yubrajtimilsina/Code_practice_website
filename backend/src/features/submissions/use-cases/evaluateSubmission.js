@@ -1,6 +1,6 @@
-import { submitToJudge0, pollResult } from "../services/judge0Service";
+import { submitToJudge0, pollResult } from "../services/judge0Service.js";
 
-import Submission from "../models/Submission.js";
+import Submission from "../models/submissionModel.js";
 import Problem from "../../problems/models/ProblemModel.js";
 import User from "../../auth/models/UserModels.js";
 

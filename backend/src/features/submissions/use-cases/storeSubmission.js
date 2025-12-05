@@ -93,4 +93,58 @@ export const deleteSubmission = async (submissionId, userId) => {
     }
 };
 
-export const getLatestAcceptedSubmission = async (userId, problemId)
+export const getLatestAcceptedSubmission = async (userId, problemId) => {
+    try {
+        const submission = await Submission.findOne({
+            userId,
+            problemId,
+            isAccepted : true,
+        })
+        .sort({ createdAt: -1})
+        .lean();
+
+        return submission || nulll;
+    } catch ( error) {
+        console.error("Fetchiing latest accepted submission error:", error.message);
+        throw error;
+    }
+};
+
+export const getUserStats = async (userId) => {
+  try {
+    const stats = await Submission.aggregate([
+      { $match: { userId: new (require("mongoose")).Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: null,
+          totalSubmissions: { $sum: 1 },
+          acceptedSubmissions: {
+            $sum: { $cond: ["$isAccepted", 1, 0] },
+          },
+          distinctProblems: { $addToSet: "$problemId" },
+          verdictCounts: {
+            $push: "$verdict",
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalSubmissions: 1,
+          acceptedSubmissions: 1,
+          distinctProblems: { $size: "$distinctProblems" },
+          verdictCounts: 1,
+        },
+      },
+    ]);
+
+    return stats[0] || {
+      totalSubmissions: 0,
+      acceptedSubmissions: 0,
+      distinctProblems: 0,
+    };
+  } catch (error) {
+    console.error("Get user stats error:", error.message);
+    throw error;
+  }
+};

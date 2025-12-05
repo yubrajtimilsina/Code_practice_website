@@ -86,9 +86,11 @@ export const fetchResult = async (token) => {
             'X-RapidAPI-Host': JUDGE0_HOST,
         };
 
-        const response = await axios.get('${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false', {
-            headers,
-        });
+    const response = await axios.get(
+      `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false`,
+      { headers }
+   );
+
 
         const result = response.data;
 
