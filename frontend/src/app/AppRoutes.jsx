@@ -11,6 +11,7 @@ import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
 import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
 import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
 import ProblemList from "../features/problems/pages/ProblemList.jsx";
+import CodeEditor from "../features/problems/components/CodeEditor.jsx";
 
 
 export default function AppRoutes() {
@@ -112,6 +113,15 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/editor/:problemId"
+  element={
+    <ProtectedRoute requiredRoles={["learner"]}>
+      <CodeEditor />
+    </ProtectedRoute>
+  }
+/>
 
      
       <Route path="/" element={<Navigate to="/" replace />} />

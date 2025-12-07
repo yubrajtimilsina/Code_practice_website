@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { getLearnerDashboardApi } from "../api/dashboardApi";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+
+  const navigate = useNavigate();
 
 
 
@@ -190,9 +194,13 @@ if (!data) {
         <p className="text-slate-600 mb-6 max-w-2xl mx-auto">
           Start solving more problems today and climb the leaderboard. Every submission brings you closer to mastery.
         </p>
-        <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
-          Start Coding →
-        </button>
+        <button
+  onClick={() => navigate("/problems")}
+  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+>
+  Start Coding →
+</button>
+
       </div>
 
     </div>
