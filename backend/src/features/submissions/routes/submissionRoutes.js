@@ -19,7 +19,7 @@ router.post("/submit", submissionValidation, submitSolution );
 
 router.post("/run", submissionValidation,runCode );
 
-router.post(
+router.put(
   "/draft/:problemId",
   saveDraft
 );
@@ -40,17 +40,17 @@ router.get(
 );
 
 router.get(
-  "/accepted-problems",
+  "/user/accepted-problems",
   getAccepted
 );
 
 router.get(
-  "/stats/user-stats",
+  "/user/stats",
   getUserStatistics
 );
 
 router.get(
-  "/accepted/:problemId",
+  "/problem/:problemId/accepted",
   getLatestAccepted
 );
 

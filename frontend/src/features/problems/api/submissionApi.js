@@ -1,5 +1,4 @@
 import api from "../../../utils/api.js";
-import axios from "axios";
 
 
 export const submitSolutionApi = (payload) => {
@@ -11,10 +10,10 @@ export const runCodeApi = (payload) => {
 };
 
 export const saveDraftApi = async (problemId, { code, language }) => {
-  return await axios.post(`/api/submissions/draft/${problemId}`, {
+  return await api.put(`/submissions/draft/${problemId}`, {
     code,
     language,
-    verdict: 'Pending', // must match backend enum
+    problemId, // Include problemId in the body
   });
 };
 

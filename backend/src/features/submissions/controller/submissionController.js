@@ -1,12 +1,12 @@
 import { evaluateSubmission, getSubmissionHistory, getUserAcceptedProblems, getProblemSubmissions } from "../use-cases/evaluateSubmission.js";
-
 import { saveCodeDraft, getDraft, getSubmissionById, deleteSubmission, getLatestAcceptedSubmission, getUserStats } from "../use-cases/storeSubmission.js";
-
 
 export const submitSolution = async (req, res) => {
     try {
         const { code, language, problemId } = req.body;
         const userId = req.user._id;
+
+        console.log("Submit solution request:", { userId, problemId, language, codeLength: code?.length });
 
         if (!code || !code.trim()) {
             return res.status(400).json({ message: "Code cannot be empty" });
@@ -21,16 +21,17 @@ export const submitSolution = async (req, res) => {
         const submission = await evaluateSubmission(userId, problemId, code, language);
 
         res.status(201).json({
-            message: "Submission evaluated Sucessfully",
+            message: "Submission evaluated successfully",
             submission,
         });
 
     } catch (error) {
-        console.error("Submission evaluation error:",
-            error.message
-        );
+        console.error("Submission evaluation error:", error);
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({ error: error.message || "Failed to submit solution" });
+        res.status(statusCode).json({ 
+            error: error.message || "Failed to submit solution",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
@@ -39,6 +40,8 @@ export const runCode = async (req, res) => {
         const { code, language, problemId } = req.body;
         const userId = req.user._id;
 
+        console.log("Run code request:", { userId, problemId, language, codeLength: code?.length });
+
         if (!code || !code.trim()) {
             return res.status(400).json({ message: "Code cannot be empty" });
         }
@@ -52,45 +55,55 @@ export const runCode = async (req, res) => {
         const submission = await evaluateSubmission(userId, problemId, code, language);
 
         res.status(201).json({
-            message: "Code run sucessfully",
+            message: "Code run successfully",
             submission,
         });
     } catch (error) {
-        console.error("Code run error:", error.message);
+        console.error("Code run error:", error);
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({ error: error.message || "Failed to run code" });
+        res.status(statusCode).json({ 
+            error: error.message || "Failed to run code",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
-
 export const saveDraft = async (req, res) => {
     try {
-        const { code, language, problemId } = req.body;
+        const { code, language, problemId: bodyProblemId } = req.body;
+        const { problemId: paramProblemId } = req.params;
         const userId = req.user._id;
+
+        // Use problemId from params, fallback to body
+        const problemId = paramProblemId || bodyProblemId;
+
+        console.log("Save draft request:", { userId, problemId, language, codeLength: code?.length });
 
         if (!problemId) {
             return res.status(400).json({ message: "Problem ID is required" });
         }
 
-        const draft = await saveCodeDraft(userId, problemId, code || "", language || "JavaScript");
+        const draft = await saveCodeDraft(userId, problemId, code || "", language || "javascript");
 
         res.status(200).json({
-            message: "Draft saved sucessfully",
+            message: "Draft saved successfully",
             draft,
         });
     } catch (error) {
-        console.error("Save draft error:", error.message);
+        console.error("Save draft error:", error);
         res.status(500).json({
             error: error.message || "Failed to save draft",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
-
 
 export const getDraftCode = async (req, res) => {
     try {
         const { problemId } = req.params;
         const userId = req.user._id;
+
+        console.log("Get draft request:", { userId, problemId });
 
         const draft = await getDraft(userId, problemId);
 
@@ -101,9 +114,10 @@ export const getDraftCode = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Get draft error:", error.message);
+        console.error("Get draft error:", error);
         res.status(500).json({
             error: error.message || "Failed to get draft",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
@@ -112,125 +126,141 @@ export const getSubmission = async (req, res) => {
     try {
         const { submissionId } = req.params;
 
+        console.log("Get submission request:", { submissionId });
+
         const submission = await getSubmissionById(submissionId);
 
-    res.status(200).json(submission);
-  } catch (error) {
-    console.error("Get submission error:", error.message);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({
-      error: error.message || "Failed to get submission",
-    });
-  }
+        res.status(200).json(submission);
+    } catch (error) {
+        console.error("Get submission error:", error);
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({
+            error: error.message || "Failed to get submission",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
-
 
 export const getHistory = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { problemId, limit = 10 } = req.query;
+    try {
+        const userId = req.user._id;
+        const { problemId, limit = 10 } = req.query;
 
-    const submissions = await getSubmissionHistory(userId, problemId, parseInt(limit));
+        console.log("Get history request:", { userId, problemId, limit });
 
-    res.status(200).json({
-      submissions,
-      count: submissions.length,
-    });
-  } catch (error) {
-    console.error("Get history error:", error.message);
-    res.status(500).json({
-      error: error.message || "Failed to get submission history",
-    });
-  }
+        const submissions = await getSubmissionHistory(userId, problemId, parseInt(limit));
+
+        res.status(200).json({
+            submissions,
+            count: submissions.length,
+        });
+    } catch (error) {
+        console.error("Get history error:", error);
+        res.status(500).json({
+            error: error.message || "Failed to get submission history",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
 
-
 export const getAccepted = async (req, res) => {
-  try {
-    const userId = req.user._id;
+    try {
+        const userId = req.user._id;
 
-    const acceptedProblems = await getUserAcceptedProblems(userId);
+        console.log("Get accepted problems request:", { userId });
 
-    res.status(200).json({
-      acceptedProblems,
-      count: acceptedProblems.length,
-    });
-  } catch (error) {
-    console.error("Get accepted problems error:", error.message);
-    res.status(500).json({
-      error: error.message || "Failed to get accepted problems",
-    });
-  }
+        const acceptedProblems = await getUserAcceptedProblems(userId);
+
+        res.status(200).json({
+            acceptedProblems,
+            count: acceptedProblems.length,
+        });
+    } catch (error) {
+        console.error("Get accepted problems error:", error);
+        res.status(500).json({
+            error: error.message || "Failed to get accepted problems",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
 
 export const getProblemStats = async (req, res) => {
-  try {
-    const { problemId } = req.params;
-    const { limit = 50 } = req.query;
+    try {
+        const { problemId } = req.params;
+        const { limit = 50 } = req.query;
 
-    const submissions = await getProblemSubmissions(problemId, parseInt(limit));
+        console.log("Get problem stats request:", { problemId, limit });
 
-    res.status(200).json({
-      submissions,
-      count: submissions.length,
-    });
-  } catch (error) {
-    console.error("Get problem stats error:", error.message);
-    res.status(500).json({
-      error: error.message || "Failed to get problem submissions",
-    });
-  }
+        const submissions = await getProblemSubmissions(problemId, parseInt(limit));
+
+        res.status(200).json({
+            submissions,
+            count: submissions.length,
+        });
+    } catch (error) {
+        console.error("Get problem stats error:", error);
+        res.status(500).json({
+            error: error.message || "Failed to get problem submissions",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
-
 
 export const removeSubmission = async (req, res) => {
-  try {
-    const { submissionId } = req.params;
-    const userId = req.user._id;
+    try {
+        const { submissionId } = req.params;
+        const userId = req.user._id;
 
-    const result = await deleteSubmission(submissionId, userId);
+        console.log("Delete submission request:", { submissionId, userId });
 
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Delete submission error:", error.message);
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({
-      error: error.message || "Failed to delete submission",
-    });
-  }
+        const result = await deleteSubmission(submissionId, userId);
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Delete submission error:", error);
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({
+            error: error.message || "Failed to delete submission",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
 
-
 export const getUserStatistics = async (req, res) => {
-  try {
-    const userId = req.user._id;
+    try {
+        const userId = req.user._id;
 
-    const stats = await getUserStats(userId);
+        console.log("Get user stats request:", { userId });
 
-    res.status(200).json(stats);
-  } catch (error) {
-    console.error("Get user stats error:", error.message);
-    res.status(500).json({
-      error: error.message || "Failed to get user statistics",
-    });
-  }
+        const stats = await getUserStats(userId);
+
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error("Get user stats error:", error);
+        res.status(500).json({
+            error: error.message || "Failed to get user statistics",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
 
 export const getLatestAccepted = async (req, res) => {
-  try {
-    const { problemId } = req.params;
-    const userId = req.user._id;
+    try {
+        const { problemId } = req.params;
+        const userId = req.user._id;
 
-    const submission = await getLatestAcceptedSubmission(userId, problemId);
+        console.log("Get latest accepted request:", { problemId, userId });
 
-    res.status(200).json({
-      submission: submission || null,
-    });
-  } catch (error) {
-    console.error("Get latest accepted error:", error.message);
-    res.status(500).json({
-      error: error.message || "Failed to get latest accepted submission",
-    });
-  }
+        const submission = await getLatestAcceptedSubmission(userId, problemId);
+
+        res.status(200).json({
+            submission: submission || null,
+        });
+    } catch (error) {
+        console.error("Get latest accepted error:", error);
+        res.status(500).json({
+            error: error.message || "Failed to get latest accepted submission",
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
 };
-

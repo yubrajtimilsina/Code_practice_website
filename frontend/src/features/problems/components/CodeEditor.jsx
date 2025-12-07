@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
+// Replace the CODE_TEMPLATES constant in your CodeEditor.jsx with this:
+
 const CODE_TEMPLATES = {
   javascript: `// Enter your JavaScript code here
 function solution(input) {
   // Parse input if needed
-  const lines = input.trim().split('\n');
+  const lines = input.trim().split('\\n');
   
   // Your solution logic here
   
@@ -33,11 +35,10 @@ rl.on('close', () => {
   console.log(solution(input));
 });`,
 
-
   python: `# Enter your Python code here
 
 def solution(input_text):
-    lines = input_text.strip().split('\n')
+    lines = input_text.strip().split('\\n')
     
     # Your solution logic here
     
@@ -48,7 +49,6 @@ if __name__ == "__main__":
     import sys
     input_text = sys.stdin.read()
     print(solution(input_text))`,
-
 
   cpp: `#include <bits/stdc++.h>
 using namespace std;
@@ -62,17 +62,28 @@ int main() {
     return 0;
 }`,
 
+
   java: `import java.util.*;
 import java.io.*;
 
-public class Solution {
+public class Main {
     public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        
         // Your solution logic here
+        // Example: Read a line
+        // String line = br.readLine();
+        
+        // Example: Print output
+        // System.out.println("Result");
+        
+        br.close();
     }
 }`,
 
   c: `#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main() {
     // Your solution logic here
@@ -81,8 +92,10 @@ int main() {
 }`,
 
   csharp: `using System;
+using System.Collections.Generic;
+using System.Linq;
 
-class Solution {
+class Program {
     static void Main(string[] args) {
         // Your solution logic here
     }
@@ -91,7 +104,7 @@ class Solution {
   ruby: `# Enter your Ruby code here
 
 def solution(input_text)
-  lines = input_text.strip.split("\n")
+  lines = input_text.strip.split("\\n")
   
   # Your solution logic here
   
@@ -107,17 +120,25 @@ import (
     "fmt"
     "bufio"
     "os"
+    "strings"
 )
 
 func main() {
     scanner := bufio.NewScanner(os.Stdin)
+    
     // Your solution logic here
+    
+    // Example: Read line by line
+    // for scanner.Scan() {
+    //     line := scanner.Text()
+    //     // Process line
+    // }
 }`,
 
   typescript: `// Enter your TypeScript code here
 
 function solution(input: string): string {
-    const lines = input.trim().split('\n');
+    const lines = input.trim().split('\\n');
     
     // Your solution logic here
     
@@ -133,13 +154,12 @@ const rl = readline.createInterface({
 
 let input = '';
 rl.on('line', (line) => {
-    input += line + '\n';
+    input += line + '\\n';
 });
 
 rl.on('close', () => {
     console.log(solution(input));
 });`,
-
 };
 
 
@@ -192,9 +212,11 @@ export default function CodeEditor({
           setTimeout(() => setAutoSaveStatus(""), 2000);
         } catch (err) {
           console.error("Auto-save failed:", err);
+          setAutoSaveStatus("Save failed ✗");
+          setTimeout(() => setAutoSaveStatus(""), 3000);
         }
       }
-    }, 2000); // Save after 2 seconds of inactivity
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [code, language, problemId]);
@@ -238,33 +260,71 @@ export default function CodeEditor({
     }
   };
 
-  const handleSubmit = async () => {
-    setIsRunning(true);
-    setError("");
-    setOutput("");
+ // Add this improved error handling to your handleSubmit function in CodeEditor.jsx
 
-    try {
-      const result = await onSubmit({
-        code,
-        language,
-        problemId,
-      });
+const handleSubmit = async () => {
+  setIsRunning(true);
+  setError("");
+  setOutput("");
+  setVerdict(null);
 
-      if (result.verdict === "Accepted") {
-        setVerdict({ type: "success", text: "✓ Accepted" });
-      } else if (result.verdict === "Compilation Error") {
-        setError(result.compilationError);
-      } else {
-        setError(result.verdict);
+  try {
+    console.log("Submitting code:", { problemId, language, codeLength: code.length });
+    
+    const result = await onSubmit({
+      code,
+      language,
+      problemId,
+    });
+
+    console.log("Submission result:", result);
+
+    // Handle different verdicts
+    if (result.verdict === "Accepted") {
+      setVerdict({ type: "success", text: "✓ Accepted" });
+      setOutput(result.output || "Solution accepted!");
+    } 
+    else if (result.verdict === "Compilation Error") {
+      const errorMsg = result.compilationError || "Compilation failed";
+      setError(errorMsg);
+      setVerdict({ type: "error", text: "✗ Compilation Error" });
+      
+      // Show helpful hints for common compilation errors
+      if (language === "java" && errorMsg.includes("class")) {
+        setError(errorMsg + "\n\n💡 Hint: Make sure your class name is 'Main' for Judge0.");
       }
-
-      setOutput(result.output || "");
-    } catch (err) {
-      setError(err.message || "Failed to submit");
-    } finally {
-      setIsRunning(false);
+    } 
+    else if (result.verdict === "Runtime Error") {
+      setError(result.stderr || "Runtime error occurred");
+      setVerdict({ type: "error", text: "✗ Runtime Error" });
+    } 
+    else if (result.verdict === "Wrong Answer") {
+      const comparison = `Your Output:\n${result.output || "(empty)"}\n\nExpected Output:\n${result.expectedOutput || "(empty)"}`;
+      setError(comparison);
+      setVerdict({ type: "error", text: "✗ Wrong Answer" });
+    } 
+    else if (result.verdict === "Time Limit Exceeded") {
+      setError("Your code took too long to execute. Try optimizing your solution.");
+      setVerdict({ type: "error", text: "✗ Time Limit Exceeded" });
     }
-  };
+    else {
+      setError(result.verdict || "Submission failed");
+      setVerdict({ type: "error", text: `✗ ${result.verdict || "Error"}` });
+    }
+
+    // Always set output if available
+    if (result.output) {
+      setOutput(result.output);
+    }
+  } catch (err) {
+    console.error("Submit error:", err);
+    const errorMsg = err.response?.data?.error || err.message || "Failed to submit code";
+    setError(errorMsg);
+    setVerdict({ type: "error", text: "✗ Submission Failed" });
+  } finally {
+    setIsRunning(false);
+  }
+};
 
   const handleReset = () => {
     setCode(CODE_TEMPLATES[language]);
@@ -279,7 +339,7 @@ export default function CodeEditor({
   };
 
   return (
- <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
       {/* Header */}
       <div className="bg-slate-900 text-white px-6 py-4 border-b border-slate-700">
         <div className="flex items-center justify-between mb-4">
@@ -303,17 +363,16 @@ export default function CodeEditor({
           )}
         </div>
 
-        
+
         <div className="flex gap-2 flex-wrap">
           {Object.keys(CODE_TEMPLATES).map((lang) => (
             <button
               key={lang}
               onClick={() => handleLanguageChange(lang)}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                language === lang
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-              }`}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${language === lang
+                ? "bg-blue-600 text-white"
+                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
             >
               {lang.toUpperCase()}
             </button>
@@ -322,7 +381,7 @@ export default function CodeEditor({
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-       
+
         <div className="flex-1 flex flex-col border-r border-slate-200">
           <Editor
             height="100%"
@@ -341,27 +400,25 @@ export default function CodeEditor({
           />
         </div>
 
-  
+
         <div className="w-96 flex flex-col border-l border-slate-200 bg-slate-50">
           {/* Tabs */}
           <div className="flex border-b border-slate-200">
             <button
               onClick={() => setActiveTab("input")}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "input"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "input"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
             >
               Input
             </button>
             <button
               onClick={() => setActiveTab("output")}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === "output"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "output"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
             >
               Output
             </button>
@@ -379,11 +436,10 @@ export default function CodeEditor({
               <div>
                 {verdict && (
                   <div
-                    className={`p-3 rounded mb-4 text-sm font-medium ${
-                      verdict.type === "success"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
+                    className={`p-3 rounded mb-4 text-sm font-medium ${verdict.type === "success"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                      }`}
                   >
                     {verdict.text}
                   </div>
