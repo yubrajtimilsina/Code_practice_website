@@ -6,7 +6,7 @@ import { AlertCircle, Save, Trash2 } from "lucide-react";
 export default function AdminProblemForm() {
   const { id } = useParams(); // optional, when editing
   const navigate = useNavigate();
-  
+
   const [form, setForm] = useState({
     title: "",
     slug: "",
@@ -18,11 +18,11 @@ export default function AdminProblemForm() {
     timeLimitSec: 1,
     memoryLimitMB: 256,
   });
-  
+
   const [testCases, setTestCases] = useState([
     { input: "", expectedOutput: "", isHidden: false }
   ]);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -58,9 +58,9 @@ export default function AdminProblemForm() {
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ 
-      ...prev, 
-      [name]: name === "timeLimitSec" || name === "memoryLimitMB" ? parseInt(value) || 0 : value 
+    setForm(prev => ({
+      ...prev,
+      [name]: name === "timeLimitSec" || name === "memoryLimitMB" ? parseInt(value) || 0 : value
     }));
   };
 
@@ -155,7 +155,7 @@ export default function AdminProblemForm() {
         )}
 
         <form onSubmit={onSubmit} className="space-y-6">
-          
+
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">

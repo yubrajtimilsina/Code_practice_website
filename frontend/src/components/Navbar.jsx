@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { logout } from "../features/auth/slice/authSlice.js";
-import { LogOut, User, Shield } from "lucide-react";
+import { LogOut, User, Shield, LayoutDashboard, Code2, Settings } from "lucide-react";
 
 export default function Navbar() {
   const { user } = useSelector((state) => state.auth);
@@ -32,7 +32,42 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* LEARNER PROFILE LINK */}
+          {/* Dashboard Link */}
+          <Link
+            to={
+              user.role === "super-admin"
+                ? "/dashboard/super-admin"
+                : user.role === "admin"
+                ? "/dashboard/admin"
+                : "/dashboard/learner"
+            }
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </Link>
+
+          {/* Problems Link */}
+          <Link
+            to="/problems"
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+          >
+            <Code2 className="w-4 h-4" />
+            Problems
+          </Link>
+
+          {/* Admin / Super Admin Only */}
+          {(user.role === "admin" || user.role === "super-admin") && (
+            <Link
+              to="/admin/problems"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Manage
+            </Link>
+          )}
+
+          {/* Profile (only learner) */}
           {user.role === "learner" && (
             <Link
               to="/learner/profile"

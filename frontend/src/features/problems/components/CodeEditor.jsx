@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState} from "react";
+import { useEffect, useRef, useState } from "react";
+import { Play, Send, Save, Copy, RotateCcw, ArrowLeft } from "lucide-react";
 
-import { Play, Send, Save, Copy, RotateCcw } from "lucide-react";
+import { getDraftApi, saveDraftApi } from "../api/submissionApi";
+import { useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
 const CODE_TEMPLATES = {
-   javascript: `// Enter your JavaScript code here
+  javascript: `// Enter your JavaScript code here
 function solution(input) {
   // Parse input if needed
-  const lines = input.trim().split('\\n');
+  const lines = input.trim().split('\n');
   
   // Your solution logic here
   
@@ -32,10 +34,10 @@ rl.on('close', () => {
 });`,
 
 
- python: `# Enter your Python code here
+  python: `# Enter your Python code here
 
 def solution(input_text):
-    lines = input_text.strip().split('\\n')
+    lines = input_text.strip().split('\n')
     
     # Your solution logic here
     
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     print(solution(input_text))`,
 
 
-     cpp: `#include <bits/stdc++.h>
+  cpp: `#include <bits/stdc++.h>
 using namespace std;
 
 int main() {
@@ -60,7 +62,7 @@ int main() {
     return 0;
 }`,
 
-java: `import java.util.*;
+  java: `import java.util.*;
 import java.io.*;
 
 public class Solution {
@@ -78,7 +80,7 @@ int main() {
     return 0;
 }`,
 
- csharp: `using System;
+  csharp: `using System;
 
 class Solution {
     static void Main(string[] args) {
@@ -86,10 +88,10 @@ class Solution {
     }
 }`,
 
- ruby: `# Enter your Ruby code here
+  ruby: `# Enter your Ruby code here
 
 def solution(input_text)
-  lines = input_text.strip.split("\\n")
+  lines = input_text.strip.split("\n")
   
   # Your solution logic here
   
@@ -115,7 +117,7 @@ func main() {
   typescript: `// Enter your TypeScript code here
 
 function solution(input: string): string {
-    const lines = input.trim().split('\\n');
+    const lines = input.trim().split('\n');
     
     // Your solution logic here
     
@@ -131,7 +133,7 @@ const rl = readline.createInterface({
 
 let input = '';
 rl.on('line', (line) => {
-    input += line + '\\n';
+    input += line + '\n';
 });
 
 rl.on('close', () => {
@@ -142,15 +144,17 @@ rl.on('close', () => {
 
 
 export default function CodeEditor({
-    problemId,
-    problemTitle,
-    sampleInput,
-    sampleOutput,
-    onRun,
-    onSubmit,
-    loading = false,
+  problemId,
+  problemTitle,
+  sampleInput,
+  sampleOutput,
+  onRun,
+  onSubmit,
+  loading = false,
 }) {
-    const editorRef = useRef(null);
+  const editorRef = useRef(null);
+  const navigate = useNavigate();
+
   const [code, setCode] = useState(CODE_TEMPLATES.javascript);
   const [language, setLanguage] = useState("javascript");
   const [output, setOutput] = useState("");
@@ -158,25 +162,51 @@ export default function CodeEditor({
   const [isRunning, setIsRunning] = useState(false);
   const [verdict, setVerdict] = useState(null);
   const [activeTab, setActiveTab] = useState("input");
+  const [autoSaveStatus, setAutoSaveStatus] = useState("");
 
   useEffect(() => {
     const loadDraft = async () => {
-        try {
-
-            setCode(CODE_TEMPLATES[language]);
-        } catch (err){
-            console.error("Failed to load Draft code:", err);
+      try {
+        const response = await getDraftApi(problemId);
+        if (response.data.draft) {
+          setCode(response.data.draft.code);
+          setLanguage(response.data.draft.language);
+        } else {
+          setCode(CODE_TEMPLATES[language]);
         }
+      } catch (err) {
+        console.error("Failed to load Draft code:", err);
+        setCode(CODE_TEMPLATES[language]);
+      }
     };
     loadDraft();
-  }, []);
+  }, [problemId]);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (code && code.trim() !== "" && code !== CODE_TEMPLATES[language]) {
+        try {
+          setAutoSaveStatus("Saving...");
+          await saveDraftApi(problemId, { code, language });
+          setAutoSaveStatus("Saved ✓");
+          setTimeout(() => setAutoSaveStatus(""), 2000);
+        } catch (err) {
+          console.error("Auto-save failed:", err);
+        }
+      }
+    }, 2000); // Save after 2 seconds of inactivity
+
+    return () => clearTimeout(timer);
+  }, [code, language, problemId]);
 
   const handleLanguageChange = (newLanguage) => {
-    setLanguage(newLanguage);
-    setCode(CODE_TEMPLATES[newLanguage]);
+    if (confirm("Changing language will reset your code. Continue?")) {
+      setLanguage(newLanguage);
+      setCode(CODE_TEMPLATES[newLanguage]);
+    }
   };
 
-   const handleRunCode = async () => {
+  const handleRunCode = async () => {
     setIsRunning(true);
     setError("");
     setOutput("");
@@ -189,7 +219,7 @@ export default function CodeEditor({
         problemId,
         input: sampleInput,
       });
-        if (result.verdict === "Accepted") {
+      if (result.verdict === "Accepted") {
         setVerdict({ type: "success", text: "✓ Accepted" });
       } else if (result.verdict === "Compilation Error") {
         setError(result.compilationError);
@@ -200,7 +230,7 @@ export default function CodeEditor({
       } else {
         setError(result.verdict);
       }
-       setOutput(result.output || "");
+      setOutput(result.output || "");
     } catch (err) {
       setError(err.message || "Failed to run code");
     } finally {
@@ -246,20 +276,34 @@ export default function CodeEditor({
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
     alert("Code copied to clipboard!");
-  }; 
+  };
 
   return (
-     <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
+ <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
       {/* Header */}
       <div className="bg-slate-900 text-white px-6 py-4 border-b border-slate-700">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold">{problemTitle}</h2>
-            <p className="text-sm text-slate-400">Problem ID: {problemId}</p>
+          <div className="flex items-center gap-3">
+            {/* ✅ NEW: Back to Problem Button */}
+            <button
+              onClick={() => navigate(`/problems/${problemId}`)}
+              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center gap-2 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div>
+              <h2 className="text-xl font-bold">{problemTitle}</h2>
+              <p className="text-sm text-slate-400">Problem ID: {problemId}</p>
+            </div>
           </div>
+          {/* ✅ NEW: Auto-save status indicator */}
+          {autoSaveStatus && (
+            <span className="text-xs text-green-400">{autoSaveStatus}</span>
+          )}
         </div>
 
-        {/* Language Selector */}
+        
         <div className="flex gap-2 flex-wrap">
           {Object.keys(CODE_TEMPLATES).map((lang) => (
             <button
@@ -277,9 +321,8 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Editor Section */}
+       
         <div className="flex-1 flex flex-col border-r border-slate-200">
           <Editor
             height="100%"
@@ -298,7 +341,7 @@ export default function CodeEditor({
           />
         </div>
 
-        {/* Output Section */}
+  
         <div className="w-96 flex flex-col border-l border-slate-200 bg-slate-50">
           {/* Tabs */}
           <div className="flex border-b border-slate-200">
@@ -324,7 +367,6 @@ export default function CodeEditor({
             </button>
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-auto p-4">
             {activeTab === "input" ? (
               <div>
@@ -374,7 +416,6 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Footer with Action Buttons */}
       <div className="bg-slate-100 border-t border-slate-200 px-6 py-4 flex gap-2 justify-end flex-wrap">
         <button
           onClick={handleReset}

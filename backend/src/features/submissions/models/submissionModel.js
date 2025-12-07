@@ -1,35 +1,35 @@
 import mongoose from 'mongoose';
 
 const SubmissionSchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    problemId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Problem',
-        required: true,
-    },
-    code: {
-        type: String,
-        required:true,
-    },
-    language: {
-        type: String,
-        emun: ['javascript', 'python', 'java', 'c++','c', 'typescript'],
-        required: true,
-    },
-    verdict:{
-        type: String,
-        enum:['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Runtime Error', 'Compilation Error', 'Pending', 'System Error'],
-        default: 'Pending',
-    },
-    status:{
-        type: Number,
-        default:0,
-    },
-      output: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  problemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Problem',
+    required: true,
+  },
+  code: {
+    type: String,
+    required: true,
+  },
+  language: {
+    type: String,
+    enum: ['javascript', 'python', 'java', 'c++', 'c', 'typescript', 'go', 'ruby', 'csharp'],
+    required: true,
+  },
+  verdict: {
+    type: String,
+    enum: ['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Runtime Error', 'Compilation Error', 'Pending', 'System Error', 'Internal Error', 'Draft'],
+    default: 'Pending',
+  },
+  status: {
+    type: Number,
+    default: 0,
+  },
+  output: {
     type: String,
     default: "",
   },

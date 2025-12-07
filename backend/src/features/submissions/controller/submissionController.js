@@ -74,7 +74,7 @@ export const saveDraft = async (req, res) => {
 
         const draft = await saveCodeDraft(userId, problemId, code || "", language || "JavaScript");
 
-        res.ststus(200).json({
+        res.status(200).json({
             message: "Draft saved sucessfully",
             draft,
         });

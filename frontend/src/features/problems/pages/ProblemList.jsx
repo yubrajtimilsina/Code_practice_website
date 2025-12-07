@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { listProblems } from "../api/problemApi";
 import ProblemCard from "../components/ProblemCard";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function ProblemList({ adminView = false }) {
   const [problems, setProblems] = useState([]);
@@ -65,12 +66,12 @@ export default function ProblemList({ adminView = false }) {
       {/* Admin Action Button */}
       {adminView && (
         <div className="mb-6">
-          <a
-            href="/admin/problems/new"
+          <Link
+            to="/admin/problems/new"
             className="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           >
             + Create New Problem
-          </a>
+          </Link>
         </div>
       )}
 

@@ -12,15 +12,15 @@ import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
 import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
 import ProblemList from "../features/problems/pages/ProblemList.jsx";
 import CodeEditor from "../features/problems/components/CodeEditor.jsx";
-
+import SubmissionHistory from "../features/problems/pages/SubmissionHistory.jsx";
 
 export default function AppRoutes() {
   return (
     <Routes>
-      
+
       <Route path="/" element={<Home />} />
-      
-      
+
+
       <Route
         path="/register"
         element={
@@ -38,7 +38,7 @@ export default function AppRoutes() {
         }
       />
 
-     
+
       <Route
         path="/dashboard/learner"
         element={
@@ -48,7 +48,7 @@ export default function AppRoutes() {
         }
       />
 
-      
+
       <Route
         path="/dashboard/admin"
         element={
@@ -58,7 +58,7 @@ export default function AppRoutes() {
         }
       />
 
-    
+
       <Route
         path="/dashboard/super-admin"
         element={
@@ -68,7 +68,7 @@ export default function AppRoutes() {
         }
       />
 
-     
+
       <Route
         path="/learner/profile"
         element={
@@ -95,7 +95,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      
+
 
       <Route
         path="/admin/problems/new"
@@ -115,15 +115,23 @@ export default function AppRoutes() {
       />
 
       <Route
-  path="/editor/:problemId"
-  element={
-    <ProtectedRoute requiredRoles={["learner"]}>
-      <CodeEditor />
-    </ProtectedRoute>
-  }
-/>
+        path="/editor/:problemId"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <CodeEditor />
+          </ProtectedRoute>
+        }
+      />
 
-     
+      <Route
+        path="/submissions"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <SubmissionHistory />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
   );

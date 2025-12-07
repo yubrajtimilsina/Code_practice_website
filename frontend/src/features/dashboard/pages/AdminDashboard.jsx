@@ -270,16 +270,21 @@ export default function AdminDashboard() {
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
   {/* Manage Problems */}
-  <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>
-    <div className="flex items-center justify-between mb-4">
-      <div className="p-3 bg-blue-500 text-white rounded-lg">
-        <Code2 className="w-6 h-6" />
-      </div>
+<div
+  onClick={() => navigate("/admin/problems")}
+  className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
+>
+  <div className="flex items-center justify-between mb-4">
+    <div className="p-3 bg-blue-500 text-white rounded-lg">
+      <Code2 className="w-6 h-6" />
     </div>
-    <p className={`${TEXT_SUB} text-sm font-medium`}>Manage Problems</p>
-    <p className="text-2xl font-bold text-slate-900 mt-2">Create & Edit</p>
-    <p className="text-xs text-slate-500 mt-2">Manage all coding questions</p>
   </div>
+
+  <p className={`${TEXT_SUB} text-sm font-medium`}>Manage Problems</p>
+  <p className="text-2xl font-bold text-slate-900 mt-2">Create & Edit</p>
+  <p className="text-xs text-slate-500 mt-2">Manage all coding questions</p>
+</div>
+
 
   {/* User Management */}
   <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>

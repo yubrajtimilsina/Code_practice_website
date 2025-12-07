@@ -9,7 +9,7 @@ export default function ProblemCard({ problem, adminView = false }) {
           {problem.title}
         </h3>
       </Link>
-      
+
       <p className="text-slate-600 text-sm mt-2 line-clamp-2">
         {problem.description}
       </p>
@@ -18,17 +18,16 @@ export default function ProblemCard({ problem, adminView = false }) {
         {/* Difficulty Badge */}
         <div className="flex items-center justify-between">
           <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${
-              problem.difficulty === "Hard"
+            className={`px-3 py-1 rounded-full text-xs font-medium ${problem.difficulty === "Hard"
                 ? "bg-red-100 text-red-700"
                 : problem.difficulty === "Medium"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-green-100 text-green-700"
-            }`}
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
+              }`}
           >
             {problem.difficulty}
           </span>
-          
+
           {/* Problem Stats - FIX: Added constraints display */}
           <span className="text-xs text-slate-500">
             {problem.timeLimitSec}s / {problem.memoryLimitMB}MB
