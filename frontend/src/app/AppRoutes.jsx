@@ -13,6 +13,7 @@ import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
 import ProblemList from "../features/problems/pages/ProblemList.jsx";
 import CodeEditor from "../features/problems/components/CodeEditor.jsx";
 import SubmissionHistory from "../features/problems/pages/SubmissionHistory.jsx";
+import SubmissionDetails from "../features/problems/pages/SubmissionDetails.jsx";
 
 export default function AppRoutes() {
   return (
@@ -131,6 +132,15 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+       <Route
+        path="/submissions/:submissionId"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <SubmissionDetails />
+          </ProtectedRoute>
+        }
+      />
+      
 
       <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
