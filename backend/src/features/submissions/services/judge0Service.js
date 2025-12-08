@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const JUDGE0_API_URL = process.env.JUDGE0_API_URL;
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY;
-const JUDGE0_HOST = process.env.JUDGE0_HOST;
+const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN;
 
 const LANGUAGE_IDS = {
     javascript: 63,
@@ -13,6 +12,7 @@ const LANGUAGE_IDS = {
     typescript: 74,
     csharp: 51,
     go: 60,
+    ruby: 72,
 };
 
 const VERDICTS = {
@@ -34,21 +34,18 @@ const VERDICTS = {
 
 export const submitToJudge0 = async (code, languageKey, input = '', expectedOutput = '') => {
     try {
-        if (!JUDGE0_API_KEY) {
-            throw new Error('Judge0 API key is not defined in environment variables.');
-        }
-
         const languageId = LANGUAGE_IDS[languageKey];
         if (!languageId) {
             throw new Error(`Language ${languageKey} is not supported.`);
         }
 
-        console.log('Submitting to Judge0:', {
+        console.log('Submitting to self-hosted Judge0:', {
             language: languageKey,
             languageId,
             codeLength: code.length,
             inputLength: input.length,
-            expectedOutputLength: expectedOutput.length
+            expectedOutputLength: expectedOutput.length,
+            url: JUDGE0_API_URL
         });
 
         const payload = {
@@ -56,18 +53,32 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             source_code: code,
             stdin: input,
             expected_output: expectedOutput,
+
+            cpu_time_limit: 5,          
+            memory_limit: 256000,       
+            wall_time_limit: 10,        
+            max_file_size: 1024,        
+            enable_network: false,      
         };
 
+   
         const headers = {
             'content-type': 'application/json',
-            'X-RapidAPI-Key': JUDGE0_API_KEY,
-            'X-RapidAPI-Host': JUDGE0_HOST,
         };
 
+        // Add authentication if configured
+        if (JUDGE0_AUTH_TOKEN) {
+            headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
+        }
+
+
         const response = await axios.post(
-            `${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=false`, 
+            `${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=false`,
             payload,
-            { headers }
+            { 
+                headers,
+                timeout: 10000 
+            }
         );
 
         console.log('Judge0 submission created:', response.data);
@@ -81,30 +92,42 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
         console.error("Judge0 submission error:", {
             message: error.message,
             response: error.response?.data,
-            status: error.response?.status
+            status: error.response?.status,
+            url: JUDGE0_API_URL
         });
+
+        
+        if (error.code === 'ECONNREFUSED') {
+            throw new Error("Cannot connect to Judge0 server. Make sure Docker containers are running.");
+        }
+        if (error.response?.status === 401) {
+            throw new Error("Judge0 authentication failed. Check your auth token.");
+        }
+
         throw new Error(error.response?.data?.message || error.message || "Failed to submit code to Judge0");
     }
 };
 
 export const fetchResult = async (token) => {
     try {
-        if (!JUDGE0_API_KEY) {
-            throw new Error("Judge0 API key is not defined in environment variables.");
-        }
-
         if (!token) {
             throw new Error("Token is required to fetch the result.");
         }
 
         const headers = {
-            'X-RapidAPI-Key': JUDGE0_API_KEY,
-            'X-RapidAPI-Host': JUDGE0_HOST,
+            'content-type': 'application/json',
         };
 
+        if (JUDGE0_AUTH_TOKEN) {
+            headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
+        }
+
         const response = await axios.get(
-            `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false`,
-            { headers }
+            `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false&fields=*`,
+            { 
+                headers,
+                timeout: 5000 
+            }
         );
 
         const result = response.data;
@@ -112,10 +135,9 @@ export const fetchResult = async (token) => {
         console.log('Judge0 result:', {
             token,
             status: result.status,
-            stdout: result.stdout,
-            stderr: result.stderr,
-            compile_output: result.compile_output,
-            message: result.message
+            stdout: result.stdout?.substring(0, 100),
+            stderr: result.stderr?.substring(0, 100),
+            compile_output: result.compile_output?.substring(0, 100),
         });
 
         return {
@@ -131,7 +153,7 @@ export const fetchResult = async (token) => {
             memoryUsed: result.memory ? `${result.memory}KB` : "0KB",
             isAccepted: result.status?.id === 3,
             isCompilationError: result.status?.id === 6,
-            isRuntimeError: [5, 7, 8, 9, 10, 11, 12].includes(result.status?.id),
+            isRuntimeError: [7, 8, 9, 10, 11, 12].includes(result.status?.id),
             isTimeoutError: result.status?.id === 5,
             isProcessing: result.status?.id === 1 || result.status?.id === 2,
         };
@@ -141,31 +163,40 @@ export const fetchResult = async (token) => {
             response: error.response?.data,
             status: error.response?.status
         });
+
+        if (error.code === 'ECONNREFUSED') {
+            throw new Error("Cannot connect to Judge0 server. Make sure Docker containers are running.");
+        }
+
         throw new Error(error.response?.data?.message || error.message || "Failed to fetch result from Judge0");
     }
 };
 
-export const pollResult = async (token, maxAttempts = 20, interval = 500) => {
+
+export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
     try {
-        console.log(` Polling Judge0 result for token: ${token}`);
-        
+        console.log(`Polling Judge0 result for token: ${token}`);
+
         for (let i = 0; i < maxAttempts; i++) {
             const result = await fetchResult(token);
-            
+
             console.log(`Attempt ${i + 1}/${maxAttempts}:`, {
                 status: result.statusText,
                 verdict: result.verdict,
                 isProcessing: result.isProcessing
             });
+
             
             if (!result.isProcessing) {
-                console.log(' Final result:', result);
+                console.log('✅ Final result:', result);
                 return result;
             }
 
+            
             await new Promise(resolve => setTimeout(resolve, interval));
         }
-        throw new Error("Execution timeout. Please try again.");
+
+        throw new Error("Execution timeout. The code is taking too long to execute.");
     } catch (error) {
         console.error("Judge0 poll result error:", error.message);
         throw error;
@@ -180,6 +211,32 @@ export const getAvailableLanguages = () => {
     }));
 };
 
+export const testJudge0Connection = async () => {
+    try {
+        const headers = {};
+        if (JUDGE0_AUTH_TOKEN) {
+            headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
+        }
+
+        const response = await axios.get(
+            `${JUDGE0_API_URL}/about`,
+            { headers, timeout: 5000 }
+        );
+
+        console.log('Judge0 connection successful:', response.data);
+        return {
+            success: true,
+            version: response.data?.version || 'unknown',
+            data: response.data
+        };
+    } catch (error) {
+        console.error(' Judge0 connection failed:', error.message);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
