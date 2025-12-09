@@ -1,18 +1,19 @@
 import axios from 'axios';
 
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
-const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN;
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Optional
 
+// Language IDs remain the same
 const LANGUAGE_IDS = {
-    javascript: 63,
-    python: 71,
-    java: 62,
-    'c++': 54,
-    c: 50,
-    typescript: 74,
-    csharp: 51,
-    go: 60,
-    ruby: 72,
+    javascript: 63,      // Node.js
+    python: 71,          // Python 3
+    java: 62,            // Java
+    'c++': 54,          // C++ (GCC 9.2.0)
+    c: 50,              // C (GCC 9.2.0)
+    typescript: 74,     // TypeScript
+    csharp: 51,         // C# (Mono)
+    go: 60,             // Go
+    ruby: 72,           // Ruby
 };
 
 const VERDICTS = {
@@ -31,6 +32,7 @@ const VERDICTS = {
     13: 'Internal Error',
     14: 'Exec Format Error',
 };
+
 
 export const submitToJudge0 = async (code, languageKey, input = '', expectedOutput = '') => {
     try {
@@ -53,15 +55,15 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             source_code: code,
             stdin: input,
             expected_output: expectedOutput,
-
-            cpu_time_limit: 5,          
-            memory_limit: 256000,       
-            wall_time_limit: 10,        
-            max_file_size: 1024,        
-            enable_network: false,      
+            // Additional options for better performance
+            cpu_time_limit: 5,          // 5 seconds CPU time
+            memory_limit: 128000,       // 256 MB
+            wall_time_limit: 10,        // 10 seconds wall time
+            max_file_size: 1024,        // 1 MB
+            enable_network: false,      // Disable network access for security
         };
 
-   
+        // Build headers
         const headers = {
             'content-type': 'application/json',
         };
@@ -71,13 +73,13 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
         }
 
-
+        // Submit to Judge0 with wait=false (async submission)
         const response = await axios.post(
             `${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=false`,
             payload,
             { 
                 headers,
-                timeout: 10000 
+                timeout: 10000 // 10 second timeout
             }
         );
 
@@ -96,7 +98,7 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             url: JUDGE0_API_URL
         });
 
-        
+        // Better error messages
         if (error.code === 'ECONNREFUSED') {
             throw new Error("Cannot connect to Judge0 server. Make sure Docker containers are running.");
         }
@@ -107,6 +109,7 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
         throw new Error(error.response?.data?.message || error.message || "Failed to submit code to Judge0");
     }
 };
+
 
 export const fetchResult = async (token) => {
     try {
@@ -186,13 +189,13 @@ export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
                 isProcessing: result.isProcessing
             });
 
-            
+            // Check if processing is complete
             if (!result.isProcessing) {
-                console.log('✅ Final result:', result);
+                console.log(' Final result:', result);
                 return result;
             }
 
-            
+            // Wait before next attempt
             await new Promise(resolve => setTimeout(resolve, interval));
         }
 
@@ -203,6 +206,7 @@ export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
     }
 };
 
+
 export const getAvailableLanguages = () => {
     return Object.entries(LANGUAGE_IDS).map(([name, id]) => ({
         name,
@@ -210,6 +214,7 @@ export const getAvailableLanguages = () => {
         displayName: capitalizeFirst(name),
     }));
 };
+
 
 export const testJudge0Connection = async () => {
     try {
@@ -237,6 +242,8 @@ export const testJudge0Connection = async () => {
         };
     }
 };
+
+// Helper function
 const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };

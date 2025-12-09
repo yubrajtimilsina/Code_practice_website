@@ -45,6 +45,8 @@ services:
       - MAX_EXTRACT_SIZE=10240
       - ENABLE_BATCHED_SUBMISSIONS=true
       - ENABLE_NETWORK=false
+      - MAX_MEMORY_LIMIT=256000
+      - MAX_MAX_MEMORY_LIMIT=512000
       
       # Authentication (Optional - Recommended for production)
       # - AUTHENTICATION_HEADER=X-Auth-Token

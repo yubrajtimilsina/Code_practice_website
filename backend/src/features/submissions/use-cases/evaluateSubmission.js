@@ -103,10 +103,10 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
         } catch (judgeError) {
             console.error('Judge0 evaluation error:', judgeError.message);
             
-            // Update submission with error
+
             submission.verdict = "System Error";
             submission.stderr = judgeError.message;
-            submission.status = 13; // Internal Error
+            submission.status = 3; // Internal Error
             await submission.save();
 
             throw judgeError;
@@ -116,6 +116,7 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
         throw error;
     }
 };
+
 
 export const getSubmissionHistory = async (userId, problemId = null, limit = 10) => {
     try {
