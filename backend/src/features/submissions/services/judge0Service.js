@@ -1,19 +1,18 @@
 import axios from 'axios';
 
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'http://localhost:2358';
-const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN; // Optional
+const JUDGE0_AUTH_TOKEN = process.env.JUDGE0_AUTH_TOKEN;
 
-// Language IDs remain the same
 const LANGUAGE_IDS = {
-    javascript: 63,      // Node.js
-    python: 71,          // Python 3
-    java: 62,            // Java
-    'c++': 54,          // C++ (GCC 9.2.0)
-    c: 50,              // C (GCC 9.2.0)
-    typescript: 74,     // TypeScript
-    csharp: 51,         // C# (Mono)
-    go: 60,             // Go
-    ruby: 72,           // Ruby
+    javascript: 63,
+    python: 71,
+    java: 62,
+    'c++': 54,
+    c: 50,
+    typescript: 74,
+    csharp: 51,
+    go: 60,
+    ruby: 72,
 };
 
 const VERDICTS = {
@@ -33,6 +32,28 @@ const VERDICTS = {
     14: 'Exec Format Error',
 };
 
+const normalizeVerdict = (statusId) => {
+    const verdict = VERDICTS[statusId] || 'System Error';
+    if (verdict.startsWith('Runtime Error')) {
+        return 'Runtime Error';
+    }
+    return verdict;
+};
+
+// Helper functions for base64 encoding/decoding
+const encodeBase64 = (str) => {
+    return Buffer.from(str || '', 'utf-8').toString('base64');
+};
+
+const decodeBase64 = (str) => {
+    if (!str) return '';
+    try {
+        return Buffer.from(str, 'base64').toString('utf-8');
+    } catch (e) {
+        console.error('Base64 decode error:', e);
+        return str; // Return original if decode fails
+    }
+};
 
 export const submitToJudge0 = async (code, languageKey, input = '', expectedOutput = '') => {
     try {
@@ -41,49 +62,46 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             throw new Error(`Language ${languageKey} is not supported.`);
         }
 
-        console.log('Submitting to self-hosted Judge0:', {
+        console.log(' Submitting to Judge0:', {
             language: languageKey,
             languageId,
             codeLength: code.length,
             inputLength: input.length,
             expectedOutputLength: expectedOutput.length,
-            url: JUDGE0_API_URL
         });
 
+        // FIXED: Use base64 encoding
         const payload = {
             language_id: languageId,
-            source_code: code,
-            stdin: input,
-            expected_output: expectedOutput,
-            // Additional options for better performance
-            cpu_time_limit: 5,          // 5 seconds CPU time
-            memory_limit: 128000,       // 256 MB
-            wall_time_limit: 10,        // 10 seconds wall time
-            max_file_size: 1024,        // 1 MB
-            enable_network: false,      // Disable network access for security
+            source_code: encodeBase64(code),
+            stdin: encodeBase64(input),
+            expected_output: encodeBase64(expectedOutput),
+            cpu_time_limit: 5,
+            memory_limit: 128000,
+            wall_time_limit: 10,
+            max_file_size: 1024,
+            enable_network: false,
         };
 
-        // Build headers
         const headers = {
             'content-type': 'application/json',
         };
 
-        // Add authentication if configured
         if (JUDGE0_AUTH_TOKEN) {
             headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
         }
 
-        // Submit to Judge0 with wait=false (async submission)
+        // FIXED: Add base64_encoded=true parameter
         const response = await axios.post(
-            `${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=false`,
+            `${JUDGE0_API_URL}/submissions?base64_encoded=true&wait=false`,
             payload,
             { 
                 headers,
-                timeout: 10000 // 10 second timeout
+                timeout: 10000
             }
         );
 
-        console.log('Judge0 submission created:', response.data);
+        console.log(' Judge0 submission created:', response.data);
 
         if (!response.data || !response.data.token) {
             throw new Error("Invalid response from Judge0 API");
@@ -91,14 +109,12 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
 
         return response.data.token;
     } catch (error) {
-        console.error("Judge0 submission error:", {
+        console.error(" Judge0 submission error:", {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
-            url: JUDGE0_API_URL
         });
 
-        // Better error messages
         if (error.code === 'ECONNREFUSED') {
             throw new Error("Cannot connect to Judge0 server. Make sure Docker containers are running.");
         }
@@ -109,7 +125,6 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
         throw new Error(error.response?.data?.message || error.message || "Failed to submit code to Judge0");
     }
 };
-
 
 export const fetchResult = async (token) => {
     try {
@@ -125,8 +140,9 @@ export const fetchResult = async (token) => {
             headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
         }
 
+        // FIXED: Add base64_encoded=true parameter
         const response = await axios.get(
-            `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=false&fields=*`,
+            `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=true&fields=*`,
             { 
                 headers,
                 timeout: 5000 
@@ -138,27 +154,37 @@ export const fetchResult = async (token) => {
         console.log('Judge0 result:', {
             token,
             status: result.status,
-            stdout: result.stdout?.substring(0, 100),
-            stderr: result.stderr?.substring(0, 100),
-            compile_output: result.compile_output?.substring(0, 100),
+            statusId: result.status?.id,
+            verdict: VERDICTS[result.status?.id],
         });
+
+        // FIXED: Decode base64 responses
+        const actualOutput = decodeBase64(result.stdout || "").trim();
+        const expectedOutput = decodeBase64(result.expected_output || "").trim();
+        const stderr = decodeBase64(result.stderr || "");
+        const compileOutput = decodeBase64(result.compile_output || "");
+        
+        const isCorrectOutput = actualOutput === expectedOutput;
+        const isJudge0Accepted = result.status?.id === 3;
+        const isAccepted = isJudge0Accepted && isCorrectOutput;
 
         return {
             token,
             status: result.status?.id || 0,
             statusText: result.status?.description || 'Unknown',
-            verdict: VERDICTS[result.status?.id] || "Unknown",
-            output: result.stdout || "",
-            stderr: result.stderr || "",
-            compilationError: result.compile_output || "",
-            expectedOutput: result.expected_output || "",
+            verdict: normalizeVerdict(result.status?.id),
+            output: actualOutput,
+            stderr: stderr,
+            compilationError: compileOutput,
+            expectedOutput: expectedOutput,
             executionTime: result.time ? `${(parseFloat(result.time) * 1000).toFixed(2)}ms` : "0ms",
             memoryUsed: result.memory ? `${result.memory}KB` : "0KB",
-            isAccepted: result.status?.id === 3,
+            isAccepted: isAccepted,
             isCompilationError: result.status?.id === 6,
             isRuntimeError: [7, 8, 9, 10, 11, 12].includes(result.status?.id),
             isTimeoutError: result.status?.id === 5,
             isProcessing: result.status?.id === 1 || result.status?.id === 2,
+            isWrongAnswer: result.status?.id === 4 || (!isAccepted && isJudge0Accepted),
         };
     } catch (error) {
         console.error("Judge0 fetch result error:", {
@@ -171,10 +197,9 @@ export const fetchResult = async (token) => {
             throw new Error("Cannot connect to Judge0 server. Make sure Docker containers are running.");
         }
 
-        throw new Error(error.response?.data?.message || error.message || "Failed to fetch result from Judge0");
+        throw new Error(error.response?.data?.error || error.message || "Failed to fetch result from Judge0");
     }
 };
-
 
 export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
     try {
@@ -183,19 +208,22 @@ export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
         for (let i = 0; i < maxAttempts; i++) {
             const result = await fetchResult(token);
 
-            console.log(`Attempt ${i + 1}/${maxAttempts}:`, {
+            console.log(` Attempt ${i + 1}/${maxAttempts}:`, {
                 status: result.statusText,
                 verdict: result.verdict,
                 isProcessing: result.isProcessing
             });
 
-            // Check if processing is complete
             if (!result.isProcessing) {
-                console.log(' Final result:', result);
+                console.log('Final result:', {
+                    verdict: result.verdict,
+                    isAccepted: result.isAccepted,
+                    output: result.output?.substring(0, 50),
+                    expectedOutput: result.expectedOutput?.substring(0, 50),
+                });
                 return result;
             }
 
-            // Wait before next attempt
             await new Promise(resolve => setTimeout(resolve, interval));
         }
 
@@ -206,15 +234,13 @@ export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
     }
 };
 
-
 export const getAvailableLanguages = () => {
     return Object.entries(LANGUAGE_IDS).map(([name, id]) => ({
         name,
         id,
-        displayName: capitalizeFirst(name),
+        displayName: name.charAt(0).toUpperCase() + name.slice(1),
     }));
 };
-
 
 export const testJudge0Connection = async () => {
     try {
@@ -228,14 +254,14 @@ export const testJudge0Connection = async () => {
             { headers, timeout: 5000 }
         );
 
-        console.log('Judge0 connection successful:', response.data);
+        console.log(' Judge0 connection successful:', response.data);
         return {
             success: true,
             version: response.data?.version || 'unknown',
             data: response.data
         };
     } catch (error) {
-        console.error(' Judge0 connection failed:', error.message);
+        console.error('Judge0 connection failed:', error.message);
         return {
             success: false,
             error: error.message
@@ -243,7 +269,6 @@ export const testJudge0Connection = async () => {
     }
 };
 
-// Helper function
-const capitalizeFirst = (str) => {
+export const capitalizeFirst = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 };

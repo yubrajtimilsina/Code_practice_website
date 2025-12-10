@@ -260,7 +260,6 @@ export default function CodeEditor({
     }
   };
 
- // Add this improved error handling to your handleSubmit function in CodeEditor.jsx
 
 const handleSubmit = async () => {
   setIsRunning(true);

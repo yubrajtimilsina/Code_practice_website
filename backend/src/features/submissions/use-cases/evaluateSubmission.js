@@ -11,7 +11,7 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             throw error;
         }
 
-        console.log('🔍 Evaluating submission:', { userId, problemId, language });
+        console.log(' Evaluating submission:', { userId, problemId, language });
 
         const problem = await Problem.findById(problemId);
         if (!problem) {
@@ -44,20 +44,27 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             submission.judge0Token = judge0Token;
             await submission.save();
 
-            console.log('Waiting for Judge0 result...');
+            console.log(' Waiting for Judge0 result...');
 
-            // Poll for result
+            
             const result = await pollResult(judge0Token);
 
             console.log('Judge0 result received:', {
                 verdict: result.verdict,
                 status: result.status,
                 isAccepted: result.isAccepted,
-                isCompilationError: result.isCompilationError
+                output: result.output?.substring(0, 50),
+                expectedOutput: result.expectedOutput?.substring(0, 50),
             });
 
-            // Update submission with results
-            submission.verdict = result.verdict;
+            let finalVerdict = result.verdict;
+            
+            
+            if (result.verdict === "Accepted" && !result.isAccepted) {
+                finalVerdict = "Wrong Answer";
+            }
+
+            submission.verdict = finalVerdict;
             submission.status = result.status;
             submission.output = result.output || "";
             submission.stderr = result.stderr || "";
@@ -102,11 +109,10 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             return submission.toObject();
         } catch (judgeError) {
             console.error('Judge0 evaluation error:', judgeError.message);
-            
 
             submission.verdict = "System Error";
             submission.stderr = judgeError.message;
-            submission.status = 3; // Internal Error
+            submission.status = 13; // Internal Error
             await submission.save();
 
             throw judgeError;
@@ -116,7 +122,6 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
         throw error;
     }
 };
-
 
 export const getSubmissionHistory = async (userId, problemId = null, limit = 10) => {
     try {

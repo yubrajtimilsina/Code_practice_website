@@ -22,7 +22,26 @@ const SubmissionSchema = new mongoose.Schema({
   },
   verdict: {
     type: String,
-    enum: ['Accepted', 'Wrong Answer', 'Time Limit Exceeded', 'Runtime Error', 'Compilation Error', 'Pending', 'System Error', 'Internal Error', 'Draft'],
+    enum: [
+      'Accepted',
+      'Wrong Answer',
+      'Time Limit Exceeded',
+      'Runtime Error',
+      'Runtime Error (SIGSEGV)',
+      'Runtime Error (SIGXFSZ)',
+      'Runtime Error (SIGFPE)',
+      'Runtime Error (SIGABRT)',
+      'Runtime Error (NZEC)',
+      'Runtime Error (Other)',
+      'Compilation Error',
+      'Internal Error',
+      'Exec Format Error',
+      'Pending',
+      'Processing',
+      'In Queue',
+      'System Error',
+      'Draft'
+    ],
     default: 'Pending',
   },
   status: {

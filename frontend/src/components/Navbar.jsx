@@ -38,8 +38,8 @@ export default function Navbar() {
               user.role === "super-admin"
                 ? "/dashboard/super-admin"
                 : user.role === "admin"
-                ? "/dashboard/admin"
-                : "/dashboard/learner"
+                  ? "/dashboard/admin"
+                  : "/dashboard/learner"
             }
             className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
           >
@@ -48,13 +48,17 @@ export default function Navbar() {
           </Link>
 
           {/* Problems Link */}
-          <Link
-            to="/problems"
-            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-          >
-            <Code2 className="w-4 h-4" />
-            Problems
-          </Link>
+          {/* Problems Link (only learner) */}
+          {user.role === "learner" && (
+            <Link
+              to="/problems"
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+            >
+              <Code2 className="w-4 h-4" />
+              Problems
+            </Link>
+          )}
+
 
           {/* Admin / Super Admin Only */}
           {(user.role === "admin" || user.role === "super-admin") && (
