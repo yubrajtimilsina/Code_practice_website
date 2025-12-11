@@ -33,7 +33,9 @@ const ProblemSchema = new mongoose.Schema({
 
     totalSubmissions: { type: Number, default: 0 },
     acceptedSubmissions: { type: Number, default: 0 },
-    acceptanceRate: { type: Number, default: 0 }
+    acceptanceRate: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+lastViewedAt: { type: Date, default: null }
 });
 
 ProblemSchema.pre('save', function () {
