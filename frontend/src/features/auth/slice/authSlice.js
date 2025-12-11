@@ -3,9 +3,12 @@ import { loginApi, registerApi, meApi } from "../api/authApi";
 
 const rawUser = localStorage.getItem("user");
 const user = rawUser && rawUser !== "null" ? JSON.parse(rawUser) : null;
-const rawToken = localStorage.getItem("token");
-const token = rawToken && rawToken !== "null" && rawToken !== "undefined" ? rawToken : null;
 
+const rawToken = localStorage.getItem("token");
+const token = rawToken && rawToken !== "null" && rawToken !== "undefined" && rawToken.trim() !== "" 
+  ? rawToken 
+  : null;
+  
 const initialState = {
   user: user,
   loading: false,

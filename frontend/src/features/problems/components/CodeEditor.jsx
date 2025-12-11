@@ -1,171 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Send, Save, Copy, RotateCcw, ArrowLeft } from "lucide-react";
-
+import { Play, Send, Save, Copy, RotateCcw, ArrowLeft, ChevronRight, ChevronLeft, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
 import { getDraftApi, saveDraftApi } from "../api/submissionApi";
 import { useNavigate } from "react-router-dom";
+import { CODE_TEMPLATES } from "../../../utils/codeTemplates";
 
 import Editor from "@monaco-editor/react";
-
-// Replace the CODE_TEMPLATES constant in your CodeEditor.jsx with this:
-
-const CODE_TEMPLATES = {
-  javascript: `// Enter your JavaScript code here
-function solution(input) {
-  // Parse input if needed
-  const lines = input.trim().split('\\n');
-  
-  // Your solution logic here
-  
-  return output;
-}
-
-// Read from input
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-let input = '';
-rl.on('line', (line) => {
-  input += line + '\\n';
-});
-
-rl.on('close', () => {
-  console.log(solution(input));
-});`,
-
-  python: `# Enter your Python code here
-
-def solution(input_text):
-    lines = input_text.strip().split('\\n')
-    
-    # Your solution logic here
-    
-    return output
-
-# Read from stdin
-if __name__ == "__main__":
-    import sys
-    input_text = sys.stdin.read()
-    print(solution(input_text))`,
-
-  cpp: `#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    
-    // Your solution logic here
-    
-    return 0;
-}`,
-
-
-  java: `import java.util.*;
-import java.io.*;
-
-public class Main {
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        
-        // Your solution logic here
-        // Example: Read a line
-        // String line = br.readLine();
-        
-        // Example: Print output
-        // System.out.println("Result");
-        
-        br.close();
-    }
-}`,
-
-  c: `#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-int main() {
-    // Your solution logic here
-    
-    return 0;
-}`,
-
-  csharp: `using System;
-using System.Collections.Generic;
-using System.Linq;
-
-class Program {
-    static void Main(string[] args) {
-        // Your solution logic here
-    }
-}`,
-
-  ruby: `# Enter your Ruby code here
-
-def solution(input_text)
-  lines = input_text.strip.split("\\n")
-  
-  # Your solution logic here
-  
-  output
-end
-
-input_text = STDIN.read
-puts solution(input_text)`,
-
-  go: `package main
-
-import (
-    "fmt"
-    "bufio"
-    "os"
-    "strings"
-)
-
-func main() {
-    scanner := bufio.NewScanner(os.Stdin)
-    
-    // Your solution logic here
-    
-    // Example: Read line by line
-    // for scanner.Scan() {
-    //     line := scanner.Text()
-    //     // Process line
-    // }
-}`,
-
-  typescript: `// Enter your TypeScript code here
-
-function solution(input: string): string {
-    const lines = input.trim().split('\\n');
-    
-    // Your solution logic here
-    
-    return output;
-}
-
-import * as readline from 'readline';
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-let input = '';
-rl.on('line', (line) => {
-    input += line + '\\n';
-});
-
-rl.on('close', () => {
-    console.log(solution(input));
-});`,
-};
-
 
 export default function CodeEditor({
   problemId,
   problemTitle,
+  problemDescription,
+  problemDifficulty,
+  problemExamples,
+  problemConstraints,
+  problemTopics,
   sampleInput,
   sampleOutput,
   onRun,
@@ -181,8 +29,36 @@ export default function CodeEditor({
   const [error, setError] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [verdict, setVerdict] = useState(null);
-  const [activeTab, setActiveTab] = useState("input");
+  const [activeTab, setActiveTab] = useState("description");
+  const [outputTab, setOutputTab] = useState("input");
   const [autoSaveStatus, setAutoSaveStatus] = useState("");
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+
+
+  const [outputHeight, setOutputHeight] = useState(200); // initial output height
+  const [editorMinHeight, setEditorMinHeight] = useState(200);
+
+  const initResize = (e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = outputHeight;
+
+    const doDrag = (event) => {
+      const newHeight = startHeight - (event.clientY - startY);
+      if (newHeight >= 100 && newHeight <= window.innerHeight * 0.7) {
+        setOutputHeight(newHeight);
+        setEditorMinHeight(window.innerHeight - newHeight - 120); // adjust editor height dynamically
+      }
+    };
+
+    const stopDrag = () => {
+      window.removeEventListener("mousemove", doDrag);
+      window.removeEventListener("mouseup", stopDrag);
+    };
+
+    window.addEventListener("mousemove", doDrag);
+    window.addEventListener("mouseup", stopDrag);
+  };
 
   useEffect(() => {
     const loadDraft = async () => {
@@ -260,70 +136,53 @@ export default function CodeEditor({
     }
   };
 
+  const handleSubmit = async () => {
+    setIsRunning(true);
+    setError("");
+    setOutput("");
+    setVerdict(null);
 
-const handleSubmit = async () => {
-  setIsRunning(true);
-  setError("");
-  setOutput("");
-  setVerdict(null);
+    try {
+      const result = await onSubmit({
+        code,
+        language,
+        problemId,
+      });
 
-  try {
-    console.log("Submitting code:", { problemId, language, codeLength: code.length });
-    
-    const result = await onSubmit({
-      code,
-      language,
-      problemId,
-    });
-
-    console.log("Submission result:", result);
-
-    // Handle different verdicts
-    if (result.verdict === "Accepted") {
-      setVerdict({ type: "success", text: "✓ Accepted" });
-      setOutput(result.output || "Solution accepted!");
-    } 
-    else if (result.verdict === "Compilation Error") {
-      const errorMsg = result.compilationError || "Compilation failed";
-      setError(errorMsg);
-      setVerdict({ type: "error", text: "✗ Compilation Error" });
-      
-      // Show helpful hints for common compilation errors
-      if (language === "java" && errorMsg.includes("class")) {
-        setError(errorMsg + "\n\n💡 Hint: Make sure your class name is 'Main' for Judge0.");
+      if (result.verdict === "Accepted") {
+        setVerdict({ type: "success", text: "✓ Accepted" });
+        setOutput(result.output || "Solution accepted!");
+      } else if (result.verdict === "Compilation Error") {
+        const errorMsg = result.compilationError || "Compilation failed";
+        setError(errorMsg);
+        setVerdict({ type: "error", text: "✗ Compilation Error" });
+      } else if (result.verdict === "Runtime Error") {
+        setError(result.stderr || "Runtime error occurred");
+        setVerdict({ type: "error", text: "✗ Runtime Error" });
+      } else if (result.verdict === "Wrong Answer") {
+        const comparison = `Your Output:\n${result.output || "(empty)"}\n\nExpected Output:\n${result.expectedOutput || "(empty)"}`;
+        setError(comparison);
+        setVerdict({ type: "error", text: "✗ Wrong Answer" });
+      } else if (result.verdict === "Time Limit Exceeded") {
+        setError("Your code took too long to execute. Try optimizing your solution.");
+        setVerdict({ type: "error", text: "✗ Time Limit Exceeded" });
+      } else {
+        setError(result.verdict || "Submission failed");
+        setVerdict({ type: "error", text: `✗ ${result.verdict || "Error"}` });
       }
-    } 
-    else if (result.verdict === "Runtime Error") {
-      setError(result.stderr || "Runtime error occurred");
-      setVerdict({ type: "error", text: "✗ Runtime Error" });
-    } 
-    else if (result.verdict === "Wrong Answer") {
-      const comparison = `Your Output:\n${result.output || "(empty)"}\n\nExpected Output:\n${result.expectedOutput || "(empty)"}`;
-      setError(comparison);
-      setVerdict({ type: "error", text: "✗ Wrong Answer" });
-    } 
-    else if (result.verdict === "Time Limit Exceeded") {
-      setError("Your code took too long to execute. Try optimizing your solution.");
-      setVerdict({ type: "error", text: "✗ Time Limit Exceeded" });
-    }
-    else {
-      setError(result.verdict || "Submission failed");
-      setVerdict({ type: "error", text: `✗ ${result.verdict || "Error"}` });
-    }
 
-    // Always set output if available
-    if (result.output) {
-      setOutput(result.output);
+      if (result.output) {
+        setOutput(result.output);
+      }
+    } catch (err) {
+      console.error("Submit error:", err);
+      const errorMsg = err.response?.data?.error || err.message || "Failed to submit code";
+      setError(errorMsg);
+      setVerdict({ type: "error", text: "✗ Submission Failed" });
+    } finally {
+      setIsRunning(false);
     }
-  } catch (err) {
-    console.error("Submit error:", err);
-    const errorMsg = err.response?.data?.error || err.message || "Failed to submit code";
-    setError(errorMsg);
-    setVerdict({ type: "error", text: "✗ Submission Failed" });
-  } finally {
-    setIsRunning(false);
-  }
-};
+  };
 
   const handleReset = () => {
     setCode(CODE_TEMPLATES[language]);
@@ -337,180 +196,257 @@ const handleSubmit = async () => {
     alert("Code copied to clipboard!");
   };
 
+  const getVerdictIcon = () => {
+    if (!verdict) return null;
+    if (verdict.type === "success") return <CheckCircle className="w-5 h-5 text-green-500" />;
+    if (verdict.type === "error") return <XCircle className="w-5 h-5 text-red-500" />;
+    return <Clock className="w-5 h-5 text-yellow-500" />;
+  };
+
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden flex flex-col h-screen">
+    <div className="h-screen flex flex-col bg-white">
       {/* Header */}
-      <div className="bg-slate-900 text-white px-6 py-4 border-b border-slate-700">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            {/* ✅ NEW: Back to Problem Button */}
-            <button
-              onClick={() => navigate(`/problems/${problemId}`)}
-              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-            <div>
-              <h2 className="text-xl font-bold">{problemTitle}</h2>
-              <p className="text-sm text-slate-400">Problem ID: {problemId}</p>
+      <div className="bg-white border-b border-gray-300 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(`/problems/${problemId}`)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">{problemTitle}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${problemDifficulty === "Hard" ? "bg-red-100 text-red-600" :
+                problemDifficulty === "Medium" ? "bg-yellow-100 text-yellow-600" :
+                  "bg-green-100 text-green-600"
+                }`}>
+                {problemDifficulty}
+              </span>
+              {problemTopics?.map((topic) => (
+                <span key={topic} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                  {topic}
+                </span>
+              ))}
             </div>
           </div>
-          {/* ✅ NEW: Auto-save status indicator */}
-          {autoSaveStatus && (
-            <span className="text-xs text-green-400">{autoSaveStatus}</span>
-          )}
         </div>
 
-
-        <div className="flex gap-2 flex-wrap">
-          {Object.keys(CODE_TEMPLATES).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => handleLanguageChange(lang)}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${language === lang
-                ? "bg-blue-600 text-white"
-                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-            >
-              {lang.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        {autoSaveStatus && (
+          <span className="text-xs text-green-500">{autoSaveStatus}</span>
+        )}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel */}
+        <div className={`bg-white border-r border-gray-300 transition-all duration-300 ${isPanelCollapsed ? "w-0" : "w-1/2"
+          } overflow-hidden`}>
+          <div className="h-full flex flex-col">
+            {/* Tabs */}
+            <div className="flex border-b border-gray-300 bg-gray-50">
+              <button
+                onClick={() => setActiveTab("description")}
+                className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === "description"
+                  ? "text-gray-900 border-b-2 border-blue-500"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                Description
+              </button>
+            </div>
 
-        <div className="flex-1 flex flex-col border-r border-slate-200">
-          <Editor
-            height="100%"
-            language={language}
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            theme="vs-dark"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              fontFamily: "Monaco, Menlo, 'Courier New', monospace",
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-            }}
-          />
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 text-gray-900">
+              {activeTab === "description" && (
+                <div className="space-y-6">
+                  <p className="text-base leading-relaxed whitespace-pre-line">{problemDescription}</p>
+
+                  {/* Examples */}
+                  {problemExamples && problemExamples.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3">Examples</h3>
+                      {problemExamples.map((example, idx) => (
+                        <div key={idx} className="mb-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <p className="text-sm font-medium text-gray-500 mb-2">Example {idx + 1}:</p>
+                          <div className="space-y-2">
+                            <div>
+                              <span className="font-medium">Input: </span>
+                              <span>{example.input}</span>
+                            </div>
+                            <div>
+                              <span className="font-medium">Output: </span>
+                              <span>{example.output}</span>
+                            </div>
+                            {example.explanation && (
+                              <div>
+                                <span className="font-medium">Explanation: </span>
+                                <span>{example.explanation}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Constraints */}
+                  {problemConstraints && problemConstraints.length > 0 && (
+                    <div>
+                      <h3 className="text-gray-900 font-semibold text-lg mb-3">Constraints</h3>
+                      <ul className="space-y-2">
+                        {problemConstraints.map((constraint, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-blue-800 mt-1">•</span>
+                            <span className="text-slate-900 text-sm font-mono">{constraint}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Collapse Button */}
+        <button
+          onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+          className="w-6 bg-gray-50 hover:bg-gray-100 border-x border-gray-300 flex items-center justify-center transition-colors group"
+        >
+          {isPanelCollapsed ? <ChevronRight className="w-4 h-4 text-gray-500" /> : <ChevronLeft className="w-4 h-4 text-gray-500" />}
+        </button>
+
+
+        {/* Right Panel - Editor */}
+        <div className={`flex flex-col transition-all duration-300 ${isPanelCollapsed ? "flex-1" : "w-1/2"}`}>
+          {/* Language Selector */}
+          <div className="bg-gray-50 border-b border-gray-300 px-4 py-2 flex gap-2 overflow-x-auto">
+            {Object.keys(CODE_TEMPLATES).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => handleLanguageChange(lang)}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors whitespace-nowrap ${language === lang ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* Monaco Editor */}
+          <div className="flex-1 bg-white" style={{ minHeight: editorMinHeight }}>
+            <Editor
+              height="100%"
+              language={language}
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              theme="vs-dark"
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "Monaco, Menlo, 'Courier New', monospace",
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+              }}
+            />
+          </div>
+
+          {/* Draggable Resizer */}
+          <div
+            className="h-2 cursor-row-resize bg-gray-300 hover:bg-gray-400"
+            onMouseDown={(e) => initResize(e)}
+          ></div>
+
+          {/* Output Panel */}
+          <div
+            className="bg-gray-50 flex flex-col border-t border-gray-300 overflow-hidden"
+            style={{ height: outputHeight }}
+          >
+            {/* Output Tabs */}
+            <div className="flex border-b border-gray-300 items-center">
+              <button
+                onClick={() => setOutputTab("input")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "input" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                Input
+              </button>
+              <button
+                onClick={() => setOutputTab("output")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "output" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                Output
+              </button>
+              <button
+                onClick={() => setOutputTab("expected")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "expected" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
+              >
+                Expected
+              </button>
+
+              {verdict && (
+                <div
+                  className={`ml-auto mr-4 flex items-center gap-2 px-3 py-1 rounded ${verdict.type === "success" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                    }`}
+                >
+                  {getVerdictIcon()}
+                  <span className="text-sm font-medium">{verdict.text}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Output Content */}
+            <div className="flex-1 overflow-y-auto p-4 text-gray-900">
+              {outputTab === "input" && <pre className="text-sm font-mono whitespace-pre-wrap">{sampleInput || "No input"}</pre>}
+              {outputTab === "output" && (
+                <div>
+                  {error && <pre className="text-red-600 text-sm font-mono bg-red-100 p-3 rounded">{error}</pre>}
+                  {output && !error && <pre className="text-gray-900 text-sm font-mono bg-gray-100 p-3 rounded">{output}</pre>}
+                  {!output && !error && !isRunning && (
+                    <div className="text-gray-500 text-sm italic flex items-center gap-2">
+                      <Play className="w-4 h-4" /> Click "Run" to execute your code
+                    </div>
+                  )}
+                  {isRunning && (
+                    <div className="text-blue-600 text-sm flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div> Running your code...
+                    </div>
+                  )}
+                </div>
+              )}
+              {outputTab === "expected" && <pre className="text-sm font-mono whitespace-pre-wrap">{sampleOutput || "No expected output"}</pre>}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="bg-gray-50 border-t border-gray-300 px-4 py-3 flex justify-between items-center">
+            <div className="flex gap-2">
+              <button onClick={handleReset} disabled={isRunning} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 text-sm disabled:opacity-50">
+                <RotateCcw className="w-4 h-4" /> Reset
+              </button>
+              <button onClick={handleCopy} disabled={isRunning} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-2 text-sm disabled:opacity-50">
+                <Copy className="w-4 h-4" /> Copy
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleRunCode} disabled={isRunning} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center gap-2 font-medium disabled:opacity-50">
+                {isRunning ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Running...</> : <><Play className="w-4 h-4" /> Run</>}
+              </button>
+              <button onClick={handleSubmit} disabled={isRunning} className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center gap-2 font-medium disabled:opacity-50">
+                {isRunning ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Submitting...</> : <><Send className="w-4 h-4" /> Submit</>}
+              </button>
+            </div>
+          </div>
         </div>
 
 
-        <div className="w-96 flex flex-col border-l border-slate-200 bg-slate-50">
-          {/* Tabs */}
-          <div className="flex border-b border-slate-200">
-            <button
-              onClick={() => setActiveTab("input")}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "input"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-                }`}
-            >
-              Input
-            </button>
-            <button
-              onClick={() => setActiveTab("output")}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "output"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-                }`}
-            >
-              Output
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-auto p-4">
-            {activeTab === "input" ? (
-              <div>
-                <h4 className="font-semibold text-slate-700 mb-2 text-sm">Sample Input:</h4>
-                <pre className="bg-white p-3 rounded border border-slate-200 text-xs font-mono text-slate-700 whitespace-pre-wrap break-words">
-                  {sampleInput || "No input"}
-                </pre>
-              </div>
-            ) : (
-              <div>
-                {verdict && (
-                  <div
-                    className={`p-3 rounded mb-4 text-sm font-medium ${verdict.type === "success"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                      }`}
-                  >
-                    {verdict.text}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="mb-4">
-                    <h5 className="font-semibold text-red-600 mb-2 text-sm">Error:</h5>
-                    <pre className="bg-red-50 p-3 rounded border border-red-200 text-xs font-mono text-red-700 whitespace-pre-wrap break-words">
-                      {error}
-                    </pre>
-                  </div>
-                )}
-
-                {output && !error && (
-                  <div>
-                    <h5 className="font-semibold text-slate-700 mb-2 text-sm">Output:</h5>
-                    <pre className="bg-white p-3 rounded border border-slate-200 text-xs font-mono text-slate-700 whitespace-pre-wrap break-words">
-                      {output}
-                    </pre>
-                  </div>
-                )}
-
-                {!output && !error && !verdict && (
-                  <p className="text-slate-500 text-sm">Click "Run" to execute your code</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-100 border-t border-slate-200 px-6 py-4 flex gap-2 justify-end flex-wrap">
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
-          disabled={isRunning}
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reset
-        </button>
-
-        <button
-          onClick={handleCopy}
-          className="px-4 py-2 bg-slate-500 text-white rounded hover:bg-slate-600 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
-          disabled={isRunning}
-        >
-          <Copy className="w-4 h-4" />
-          Copy
-        </button>
-
-        <button
-          onClick={handleRunCode}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
-          disabled={isRunning}
-        >
-          <Play className="w-4 h-4" />
-          {isRunning ? "Running..." : "Run"}
-        </button>
-
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
-          disabled={isRunning}
-        >
-          <Send className="w-4 h-4" />
-          {isRunning ? "Submitting..." : "Submit"}
-        </button>
       </div>
     </div>
   );
 }
-
-
-

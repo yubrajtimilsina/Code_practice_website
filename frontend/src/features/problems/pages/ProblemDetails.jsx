@@ -22,8 +22,7 @@ export default function ProblemDetails() {
         const { data } = await getProblem(id);
         setProblem(data);
         
-        // Check if already solved
-        // This would call your API
+      
         setIsSolved(false); // Default
       } catch (err) {
         console.error("Failed to load problem:", err);
@@ -76,6 +75,27 @@ export default function ProblemDetails() {
     }
   };
 
+  const parseExamples = () => {
+    if (problem.sampleInput && problem.sampleOutput) {
+      return [
+        {
+          input: problem.sampleInput,
+          output: problem.sampleOutput,
+          explanation: "Sample test case"
+        }
+      ];
+    }
+    return [];
+  };
+
+  const parseConstraints = () => {
+    
+    return [
+      `Time limit: ${problem.timeLimitSec || 1} second(s)`,
+      `Memory limit: ${problem.memoryLimitMB || 256} MB`
+    ];
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -103,6 +123,11 @@ export default function ProblemDetails() {
       <CodeEditor
         problemId={problem._id}
         problemTitle={problem.title}
+        problemDescription={problem.description}
+        problemDifficulty={problem.difficulty}
+        problemExamples={parseExamples()}
+        problemConstraints={parseConstraints()}
+        problemTopics={problem.tags}
         sampleInput={problem.sampleInput}
         sampleOutput={problem.sampleOutput}
         onRun={handleRunCode}
