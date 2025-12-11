@@ -257,19 +257,6 @@ export default function AdminProblemForm() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Companies (comma separated)
-                </label>
-                <input
-                  type="text"
-                  name="companies"
-                  value={form.companies}
-                  onChange={onChange}
-                  placeholder="Google,Amazon,Microsoft"
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
             </div>
           </div>
 
