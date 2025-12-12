@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Submission from "../models/submissionModel.js";
+import User from "../../auth/models/UserModels.js";
+import Problem from "../../problems/models/ProblemModel.js";
 
 export const saveCodeDraft = async (userId, problemId, code, language) => {
   try {
@@ -151,5 +153,66 @@ export const getUserStats = async (userId) => {
   } catch (error) {
     console.error("Get user stats error:", error.message);
     throw error;
+  }
+};
+
+
+export const updateUserStats = async (userId, problemId, isAccepted) => {
+  try {
+    const user = await User.findById(userId);
+    const problem = await Problem.findById(problemId);
+    
+    if (!user || !problem) {
+      console.error("User or problem not found for stats update");
+      return;
+    }
+    
+    // Update submission count
+    user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
+    
+    if (isAccepted) {
+      user.acceptedSubmissionsCount = (user.acceptedSubmissionsCount || 0) + 1;
+      
+      // Check if this is first accepted solution for this problem
+      const previousAccepted = await Submission.countDocuments({
+        userId,
+        problemId,
+        isAccepted: true,
+        createdAt: { $lt: new Date() }
+      });
+      
+      if (previousAccepted === 1) { // Including current submission
+        user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
+        
+        // Update difficulty-specific counts
+        if (problem.difficulty === 'Easy') {
+          user.easyProblemsSolved = (user.easyProblemsSolved || 0) + 1;
+        } else if (problem.difficulty === 'Medium') {
+          user.mediumProblemsSolved = (user.mediumProblemsSolved || 0) + 1;
+        } else if (problem.difficulty === 'Hard') {
+          user.hardProblemsSolved = (user.hardProblemsSolved || 0) + 1;
+        }
+        
+        // Update rank points
+        user.rankPoints = user.calculateRankPoints();
+      }
+    }
+    
+    // Update streak
+    user.updateStreak();
+    user.lastActiveDate = new Date();
+    
+    await user.save();
+    
+    console.log(`✅ Updated user stats for ${user.name}:`, {
+      solved: user.solvedProblemsCount,
+      total: user.totalSubmissionsCount,
+      accepted: user.acceptedSubmissionsCount,
+      rankPoints: user.rankPoints,
+      streak: user.currentStreak
+    });
+    
+  } catch (error) {
+    console.error("Error updating user stats:", error);
   }
 };
