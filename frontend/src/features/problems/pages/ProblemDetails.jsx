@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProblem } from "../api/problemApi";
-
-import { runCodeApi, submitSolutionApi, getDraftApi,saveDraftApi } from "../api/submissionApi";
-
+import { runCodeApi, submitSolutionApi, saveDraftApi } from "../api/submissionApi";
 import CodeEditor from "../components/CodeEditor";
-import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader, Code2, Clock } from "lucide-react";
 
 export default function ProblemDetails() {
-  const { id } = useParams(); // slug or id
+  const { id } = useParams();
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
@@ -20,10 +18,9 @@ export default function ProblemDetails() {
       setLoading(true);
       try {
         const { data } = await getProblem(id);
+        console.log("Loaded problem:", data);
         setProblem(data);
-        
-      
-        setIsSolved(false); // Default
+        setIsSolved(false);
       } catch (err) {
         console.error("Failed to load problem:", err);
       } finally {
@@ -41,7 +38,6 @@ export default function ProblemDetails() {
         language: codeData.language,
         problemId: problem._id,
       });
-      
       return response.data.submission;
     } catch (err) {
       throw new Error(err.response?.data?.error || "Failed to run code");
@@ -50,13 +46,11 @@ export default function ProblemDetails() {
 
   const handleSubmitCode = async (codeData) => {
     try {
-      // Save draft first
       await saveDraftApi(problem._id, {
         code: codeData.code,
         language: codeData.language,
       });
 
-      // Submit for evaluation
       const response = await submitSolutionApi({
         code: codeData.code,
         language: codeData.language,
@@ -73,27 +67,6 @@ export default function ProblemDetails() {
     } catch (err) {
       throw new Error(err.response?.data?.error || "Failed to submit code");
     }
-  };
-
-  const parseExamples = () => {
-    if (problem.sampleInput && problem.sampleOutput) {
-      return [
-        {
-          input: problem.sampleInput,
-          output: problem.sampleOutput,
-          explanation: "Sample test case"
-        }
-      ];
-    }
-    return [];
-  };
-
-  const parseConstraints = () => {
-    
-    return [
-      `Time limit: ${problem.timeLimitSec || 1} second(s)`,
-      `Memory limit: ${problem.memoryLimitMB || 256} MB`
-    ];
   };
 
   if (loading) {
@@ -119,15 +92,20 @@ export default function ProblemDetails() {
   }
 
   if (showEditor) {
+    // FIXED: Log what we're passing to CodeEditor
+    console.log("Passing to CodeEditor:");
+    console.log("Examples:", problem.examples);
+    console.log("Constraints:", problem.constraints);
+    
     return (
       <CodeEditor
         problemId={problem._id}
         problemTitle={problem.title}
         problemDescription={problem.description}
         problemDifficulty={problem.difficulty}
-        problemExamples={parseExamples()}
-        problemConstraints={parseConstraints()}
-        problemTopics={problem.tags}
+        problemExamples={problem.examples || []}
+        problemConstraints={problem.constraints || []}
+        problemTopics={problem.tags || []}
         sampleInput={problem.sampleInput}
         sampleOutput={problem.sampleOutput}
         onRun={handleRunCode}
@@ -139,7 +117,7 @@ export default function ProblemDetails() {
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header with Title and Status */}
+        {/* Header */}
         <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
           <div className="flex items-start justify-between mb-4">
             <div>
@@ -171,10 +149,12 @@ export default function ProblemDetails() {
 
           {/* Constraints */}
           <div className="flex gap-6 text-sm text-slate-600 pt-4 border-t border-slate-200">
-            <div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
               <span className="font-semibold">Time Limit:</span> {problem.timeLimitSec}s
             </div>
-            <div>
+            <div className="flex items-center gap-2">
+              <Code2 className="w-4 h-4" />
               <span className="font-semibold">Memory Limit:</span> {problem.memoryLimitMB}MB
             </div>
           </div>
@@ -194,13 +174,58 @@ export default function ProblemDetails() {
           )}
         </div>
 
-        {/* Problem Description */}
+        {/* Description */}
         <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Description</h2>
-          <div className="prose prose-sm max-w-none text-slate-700">
-            <div dangerouslySetInnerHTML={{ __html: problem.description }} />
+          <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-line">
+            {problem.description}
           </div>
         </div>
+
+        {/* Examples */}
+        {problem.examples && problem.examples.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Examples</h2>
+            <div className="space-y-4">
+              {problem.examples.map((example, idx) => (
+                <div key={idx} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <p className="text-sm font-semibold text-slate-600 mb-2">Example {idx + 1}</p>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-semibold text-slate-700">Input: </span>
+                      <pre className="inline bg-white px-2 py-1 rounded text-sm font-mono">{example.input}</pre>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-700">Output: </span>
+                      <pre className="inline bg-white px-2 py-1 rounded text-sm font-mono">{example.output}</pre>
+                    </div>
+                    {example.explanation && (
+                      <div>
+                        <span className="font-semibold text-slate-700">Explanation: </span>
+                        <span className="text-slate-600">{example.explanation}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Constraints */}
+        {problem.constraints && problem.constraints.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Constraints</h2>
+            <ul className="space-y-2">
+              {problem.constraints.map((constraint, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-1">•</span>
+                  <span className="text-slate-700 font-mono text-sm">{constraint}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Sample Input/Output */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -219,7 +244,22 @@ export default function ProblemDetails() {
           </div>
         </div>
 
-        {/* Submission History (if available) */}
+        {/* Hints */}
+        {problem.hints && problem.hints.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Hints 💡</h2>
+            <ul className="space-y-2">
+              {problem.hints.map((hint, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-yellow-600 mt-1">💡</span>
+                  <span className="text-slate-700">{hint}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Submission History */}
         {submission && (
           <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-6 shadow-lg">
             <h2 className="text-2xl font-bold text-slate-900 mb-4">Last Submission</h2>

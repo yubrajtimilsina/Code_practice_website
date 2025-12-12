@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { createProblem, getProblem, updateProblem, deleteProblem } from "../api/problemApi";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, Save, Trash2, Plus } from "lucide-react";
+import { AlertCircle, Save, Trash2, Plus, X } from "lucide-react";
 
 export default function AdminProblemForm() {
-  const { id } = useParams(); // optional, when editing
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -21,7 +21,7 @@ export default function AdminProblemForm() {
     hints: ""
   });
 
-   const [examples, setExamples] = useState([
+  const [examples, setExamples] = useState([
     { input: "", output: "", explanation: "" }
   ]);
 
@@ -76,8 +76,7 @@ export default function AdminProblemForm() {
     }));
   };
 
-
-   const handleExampleChange = (index, field, value) => {
+  const handleExampleChange = (index, field, value) => {
     const updated = [...examples];
     updated[index][field] = value;
     setExamples(updated);
@@ -93,7 +92,6 @@ export default function AdminProblemForm() {
     }
   };
 
-  // FIX: Handle test case changes
   const handleTestCaseChange = (index, field, value) => {
     const updated = [...testCases];
     if (field === "isHidden") {
@@ -114,7 +112,7 @@ export default function AdminProblemForm() {
     }
   };
 
-   const onSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -148,6 +146,8 @@ export default function AdminProblemForm() {
         testCases: testCases.filter(tc => tc.input.trim() && tc.expectedOutput.trim()),
       };
 
+      console.log("Submitting problem payload:", payload);
+
       if (id) {
         await updateProblem(id, payload);
       } else {
@@ -176,7 +176,7 @@ export default function AdminProblemForm() {
     }
   };
 
-   return (
+  return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-6xl mx-auto bg-white border border-slate-200 shadow-lg rounded-2xl p-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-6">
@@ -229,14 +229,14 @@ export default function AdminProblemForm() {
 
             <div className="mt-6">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Description (Markdown) <span className="text-red-500">*</span>
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={onChange}
                 rows={10}
-                placeholder="Full problem description using Markdown"
+                placeholder="Full problem description"
                 className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -256,7 +256,6 @@ export default function AdminProblemForm() {
                   className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-
             </div>
           </div>
 
@@ -481,7 +480,7 @@ export default function AdminProblemForm() {
             </div>
           </div>
 
-          {/* Hints (Optional) */}
+          {/* Hints */}
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-4">Hints (Optional)</h2>
             <textarea

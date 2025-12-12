@@ -3,7 +3,6 @@ import { Play, Send, Save, Copy, RotateCcw, ArrowLeft, ChevronRight, ChevronLeft
 import { getDraftApi, saveDraftApi } from "../api/submissionApi";
 import { useNavigate } from "react-router-dom";
 import { CODE_TEMPLATES } from "../../../utils/codeTemplates";
-
 import Editor from "@monaco-editor/react";
 
 export default function CodeEditor({
@@ -34,9 +33,15 @@ export default function CodeEditor({
   const [autoSaveStatus, setAutoSaveStatus] = useState("");
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
-
-  const [outputHeight, setOutputHeight] = useState(200); // initial output height
+  const [outputHeight, setOutputHeight] = useState(200);
   const [editorMinHeight, setEditorMinHeight] = useState(200);
+
+  // FIXED: Log received data
+  useEffect(() => {
+    console.log("CodeEditor received:");
+    console.log("Examples:", problemExamples);
+    console.log("Constraints:", problemConstraints);
+  }, [problemExamples, problemConstraints]);
 
   const initResize = (e) => {
     e.preventDefault();
@@ -47,7 +52,7 @@ export default function CodeEditor({
       const newHeight = startHeight - (event.clientY - startY);
       if (newHeight >= 100 && newHeight <= window.innerHeight * 0.7) {
         setOutputHeight(newHeight);
-        setEditorMinHeight(window.innerHeight - newHeight - 120); // adjust editor height dynamically
+        setEditorMinHeight(window.innerHeight - newHeight - 120);
       }
     };
 
@@ -256,32 +261,36 @@ export default function CodeEditor({
               </button>
             </div>
 
-            {/* Content */}
+            {/* Content - FIXED: Added proper scrolling */}
             <div className="flex-1 overflow-y-auto p-6 text-gray-900">
               {activeTab === "description" && (
                 <div className="space-y-6">
-                  <p className="text-base leading-relaxed whitespace-pre-line">{problemDescription}</p>
+                  {/* Description */}
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Problem Description</h3>
+                    <p className="text-base leading-relaxed whitespace-pre-line">{problemDescription}</p>
+                  </div>
 
-                  {/* Examples */}
+                  {/* Examples - FIXED: Display all examples */}
                   {problemExamples && problemExamples.length > 0 && (
                     <div>
-                      <h3 className="font-semibold text-lg mb-3">Examples</h3>
+                      <h3 className="font-semibold text-lg mb-3 text-gray-900">Examples</h3>
                       {problemExamples.map((example, idx) => (
                         <div key={idx} className="mb-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
                           <p className="text-sm font-medium text-gray-500 mb-2">Example {idx + 1}:</p>
                           <div className="space-y-2">
                             <div>
-                              <span className="font-medium">Input: </span>
-                              <span>{example.input}</span>
+                              <span className="font-medium text-gray-900">Input: </span>
+                              <pre className="inline-block bg-white px-2 py-1 rounded text-sm font-mono text-gray-800">{example.input}</pre>
                             </div>
                             <div>
-                              <span className="font-medium">Output: </span>
-                              <span>{example.output}</span>
+                              <span className="font-medium text-gray-900">Output: </span>
+                              <pre className="inline-block bg-white px-2 py-1 rounded text-sm font-mono text-gray-800">{example.output}</pre>
                             </div>
                             {example.explanation && (
                               <div>
-                                <span className="font-medium">Explanation: </span>
-                                <span>{example.explanation}</span>
+                                <span className="font-medium text-gray-900">Explanation: </span>
+                                <span className="text-gray-700">{example.explanation}</span>
                               </div>
                             )}
                           </div>
@@ -290,15 +299,15 @@ export default function CodeEditor({
                     </div>
                   )}
 
-                  {/* Constraints */}
+                  {/* Constraints - FIXED: Display all constraints */}
                   {problemConstraints && problemConstraints.length > 0 && (
                     <div>
                       <h3 className="text-gray-900 font-semibold text-lg mb-3">Constraints</h3>
                       <ul className="space-y-2">
                         {problemConstraints.map((constraint, idx) => (
                           <li key={idx} className="flex items-start gap-2">
-                            <span className="text-blue-800 mt-1">•</span>
-                            <span className="text-slate-900 text-sm font-mono">{constraint}</span>
+                            <span className="text-blue-600 mt-1 font-bold">•</span>
+                            <span className="text-gray-900 text-sm font-mono">{constraint}</span>
                           </li>
                         ))}
                       </ul>
@@ -306,7 +315,6 @@ export default function CodeEditor({
                   )}
                 </div>
               )}
-
             </div>
           </div>
         </div>
@@ -318,7 +326,6 @@ export default function CodeEditor({
         >
           {isPanelCollapsed ? <ChevronRight className="w-4 h-4 text-gray-500" /> : <ChevronLeft className="w-4 h-4 text-gray-500" />}
         </button>
-
 
         {/* Right Panel - Editor */}
         <div className={`flex flex-col transition-all duration-300 ${isPanelCollapsed ? "flex-1" : "w-1/2"}`}>
@@ -444,8 +451,6 @@ export default function CodeEditor({
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );

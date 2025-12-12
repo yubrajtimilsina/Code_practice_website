@@ -22,11 +22,23 @@ const ProblemSchema = new mongoose.Schema({
     memoryLimitMB: { type: Number, default: 256 },
     sampleInput: { type: String },
     sampleOutput: { type: String },
-    testCases: [TestCaseSchema],
-
-    examples: [ExampleSchema],
-    constraints: [{ type: String }], 
-    hints: [{ type: String }],
+     // FIXED: Ensure testCases and examples are properly saved
+    testCases: {
+        type: [TestCaseSchema],
+        default: []
+    },
+    examples: {
+        type: [ExampleSchema],
+        default: []
+    },
+    constraints: {
+        type: [String],
+        default: []
+    },
+    hints: {
+        type: [String],
+        default: []
+    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
