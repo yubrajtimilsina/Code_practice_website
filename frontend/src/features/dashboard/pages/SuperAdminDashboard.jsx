@@ -27,7 +27,6 @@ export default function SuperAdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // overview, admins, users
 
- 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -54,7 +53,6 @@ export default function SuperAdminDashboard() {
       setRefreshing(false);
     }
   };
-
 
   useEffect(() => {
     fetchAllData();
