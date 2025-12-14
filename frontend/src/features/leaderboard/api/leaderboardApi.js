@@ -1,6 +1,6 @@
 import api from "../../../utils/api";
 
-export const getGlobalLeaderboardApi = ( params = {}) => {
+export const getLeaderboardApi = ( params = {}) => {
     return api.get("/leaderboard", { params});
 };
 

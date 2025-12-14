@@ -15,12 +15,14 @@ import CodeEditor from "../features/problems/components/CodeEditor.jsx";
 import SubmissionHistory from "../features/problems/pages/SubmissionHistory.jsx";
 import SubmissionDetails from "../features/problems/pages/SubmissionDetails.jsx";
 
+import Leaderboard from "../features/leaderboard/pages/leaderboard.jsx";
+import Progress from "../features/leaderboard/pages/Progress.jsx";
+
 export default function AppRoutes() {
   return (
     <Routes>
 
       <Route path="/" element={<Home />} />
-
 
       <Route
         path="/register"
@@ -137,6 +139,24 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["learner"]}>
             <SubmissionDetails />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/leaderboard"
+        element={
+          <ProtectedRoute requiredRoles={["learner", "admin"]}>
+            <Leaderboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/progress"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <Progress />
           </ProtectedRoute>
         }
       />
