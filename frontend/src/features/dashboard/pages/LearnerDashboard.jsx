@@ -6,11 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-
   const navigate = useNavigate();
-
-
 
   useEffect(() => {
     getLearnerDashboardApi().then(res => {
@@ -23,7 +19,7 @@ export default function LearnerDashboard() {
   }, []);
 
   const CARD_BASE = "bg-white border border-slate-200 shadow-sm";
-  const CARD_HOVER = "hover:shadow-md hover:-translate-y-1 transition-all";
+  const CARD_HOVER = "hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer";
   const TEXT_SUB = "text-slate-600";
 
   if (loading) {
@@ -56,19 +52,17 @@ export default function LearnerDashboard() {
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-1">
             Welcome Back, <span className="text-blue-600">{data.user.name}</span>
           </h1>
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-slate-600 text-lg">Keep pushing your coding skills to new heights</p>
-
-          </div>
+          <p className="text-slate-600 text-lg">Keep pushing your coding skills to new heights</p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - WITH NAVIGATION */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-          {/* Problems Solved */}
-          <div onClick={() => navigate("/problems")}
-            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer`}>
-
+          {/* Problems Solved - NAVIGATES TO PROBLEMS */}
+          <div 
+            onClick={() => navigate("/problems")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-3 bg-blue-500 text-white rounded-lg">
                 <Code2 className="w-6 h-6" />
@@ -76,12 +70,14 @@ export default function LearnerDashboard() {
             </div>
             <p className={TEXT_SUB + " text-sm font-medium"}>Problems Solved</p>
             <p className="text-3xl font-bold text-slate-900 mt-1">{stats.solvedProblems}</p>
-            <p className="text-xs text-slate-500 mt-2">Keep solving to improve</p>
+            <p className="text-xs text-slate-500 mt-2">Click to solve more →</p>
           </div>
 
-          {/* Total Submissions */}
-          <div onClick={() => navigate("/submissions")} 
-          className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
+          {/* Total Submissions - NAVIGATES TO SUBMISSION HISTORY */}
+          <div 
+            onClick={() => navigate("/submissions")} 
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-3 bg-purple-500 text-white rounded-lg">
                 <Zap className="w-6 h-6" />
@@ -89,11 +85,14 @@ export default function LearnerDashboard() {
             </div>
             <p className={TEXT_SUB + " text-sm font-medium"}>Total Submissions</p>
             <p className="text-3xl font-bold text-slate-900 mt-1">{stats.submissions}</p>
-            <p className="text-xs text-slate-500 mt-2">Consistency is key</p>
+            <p className="text-xs text-slate-500 mt-2">View history →</p>
           </div>
 
-          {/* Current Rank */}
-          <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
+          {/* Current Rank - NAVIGATES TO LEADERBOARD */}
+          <div 
+            onClick={() => navigate("/leaderboard")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-3 bg-yellow-500 text-white rounded-lg">
                 <Trophy className="w-6 h-6" />
@@ -101,11 +100,14 @@ export default function LearnerDashboard() {
             </div>
             <p className={TEXT_SUB + " text-sm font-medium"}>Current Rank</p>
             <p className="text-3xl font-bold text-slate-900 mt-1">#{stats.rank}</p>
-            <p className="text-xs text-slate-500 mt-2">Climb the leaderboard</p>
+            <p className="text-xs text-slate-500 mt-2">View leaderboard →</p>
           </div>
 
-          {/* Accuracy */}
-          <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
+          {/* Accuracy - NAVIGATES TO PROGRESS PAGE */}
+          <div 
+            onClick={() => navigate("/progress")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="p-3 bg-green-500 text-white rounded-lg">
                 <Award className="w-6 h-6" />
@@ -117,7 +119,7 @@ export default function LearnerDashboard() {
                 ? ((stats.solvedProblems / stats.submissions) * 100).toFixed(1)
                 : 0}%
             </p>
-            <p className="text-xs text-slate-500 mt-2">Quality over quantity</p>
+            <p className="text-xs text-slate-500 mt-2">View detailed stats →</p>
           </div>
         </div>
 
@@ -190,9 +192,38 @@ export default function LearnerDashboard() {
               >
                 View Challenges →
               </button>
-
             </div>
           </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <button
+            onClick={() => navigate("/problems")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 text-left`}
+          >
+            <Code2 className="w-8 h-8 text-blue-600 mb-3" />
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Solve Problems</h3>
+            <p className="text-sm text-slate-600">Browse 500+ coding challenges</p>
+          </button>
+
+          <button
+            onClick={() => navigate("/leaderboard")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 text-left`}
+          >
+            <Trophy className="w-8 h-8 text-yellow-600 mb-3" />
+            <h3 className="text-lg font-bold text-slate-900 mb-2">View Leaderboard</h3>
+            <p className="text-sm text-slate-600">See where you rank globally</p>
+          </button>
+
+          <button
+            onClick={() => navigate("/progress")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 text-left`}
+          >
+            <TrendingUp className="w-8 h-8 text-green-600 mb-3" />
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Track Progress</h3>
+            <p className="text-sm text-slate-600">View detailed analytics</p>
+          </button>
         </div>
 
         {/* CTA Section */}
@@ -207,7 +238,6 @@ export default function LearnerDashboard() {
           >
             Start Coding →
           </button>
-
         </div>
 
       </div>
