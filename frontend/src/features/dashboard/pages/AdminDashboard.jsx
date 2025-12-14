@@ -13,6 +13,8 @@ import {
   RefreshCw,
   UserCheck,
   FileText,
+  TestTube,
+  Info,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -21,7 +23,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
     try {
       setRefreshing(true);
       await deleteUserApi(userId);
-      fetchDashboardData(); 
+      fetchDashboardData();
     } catch (err) {
       console.error("Error deleting user:", err);
       setError(err.response?.data?.error || "Failed to delete user");
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
     }
   };
 
-   const BG_GRADIENT =
+  const BG_GRADIENT =
     "bg-gradient-to-br from-blue-50 via-white to-blue-100";
 
   const CARD_BASE =
@@ -103,8 +105,8 @@ export default function AdminDashboard() {
   const TEXT_TITLE = "text-slate-800";
   const TEXT_SUB = "text-slate-500"
 
-  
-    if (loading) {
+
+  if (loading) {
     return (
       <div className={`${BG_GRADIENT} min-h-screen flex items-center justify-center`}>
         <div className="text-center">
@@ -117,7 +119,7 @@ export default function AdminDashboard() {
     );
   }
 
-    if (error && !data) {
+  if (error && !data) {
     return (
       <div className={`${BG_GRADIENT} min-h-screen p-6`}>
         <div className="max-w-7xl mx-auto">
@@ -140,7 +142,7 @@ export default function AdminDashboard() {
   }
 
 
-    if (!data) {
+  if (!data) {
     return (
       <div className={`${BG_GRADIENT} min-h-screen p-6`}>
         <div className="max-w-7xl mx-auto text-center">
@@ -160,7 +162,7 @@ export default function AdminDashboard() {
   return (
     <div className={`${BG_GRADIENT} min-h-screen p-6`}>
       <div className="max-w-7xl mx-auto">
-     
+
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -185,7 +187,7 @@ export default function AdminDashboard() {
               {!refreshing && "Refresh"}
             </button>
 
-             
+
           </div>
         </div>
 
@@ -197,8 +199,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-    
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
           {/* USERS */}
           <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
@@ -216,27 +218,27 @@ export default function AdminDashboard() {
           </div>
 
           {/* PROBLEMS */}
-           <div
-        onClick={() => navigate("/problems")}
-        className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-blue-500 text-white rounded-lg">
-            <Code2 className="w-6 h-6" />
+          <div
+            onClick={() => navigate("/problems")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-blue-500 text-white rounded-lg">
+                <Code2 className="w-6 h-6" />
+              </div>
+              <TrendingUp className="w-5 h-5 text-green-500" />
+            </div>
+
+            <p className={`${TEXT_SUB} text-sm font-medium`}>Total Problems</p>
+
+            <p className="text-4xl font-bold text-slate-900 mt-2">
+              {stats.totalProblems}
+            </p>
+
+            <p className="text-xs text-slate-500 mt-2">Listed problems</p>
           </div>
-          <TrendingUp className="w-5 h-5 text-green-500" />
-        </div>
 
-        <p className={`${TEXT_SUB} text-sm font-medium`}>Total Problems</p>
-
-        <p className="text-4xl font-bold text-slate-900 mt-2">
-          {stats.totalProblems}
-        </p>
-
-        <p className="text-xs text-slate-500 mt-2">Listed problems</p>
-      </div>
-
-            {/* SUBMISSIONS */}
+          {/* SUBMISSIONS */}
           <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-yellow-400 text-white rounded-lg">
@@ -251,7 +253,7 @@ export default function AdminDashboard() {
             <p className="text-xs text-slate-500 mt-2">User attempts</p>
           </div>
 
-           {/* Active Users */}
+          {/* Active Users */}
           <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}>
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-500 text-white rounded-lg">
@@ -267,53 +269,53 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
-  {/* Manage Problems */}
-<div
-  onClick={() => navigate("/admin/problems")}
-  className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
->
-  <div className="flex items-center justify-between mb-4">
-    <div className="p-3 bg-blue-500 text-white rounded-lg">
-      <Code2 className="w-6 h-6" />
-    </div>
-  </div>
+          {/* Manage Problems */}
+          <div
+            onClick={() => navigate("/admin/problems")}
+            className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-blue-500 text-white rounded-lg">
+                <Code2 className="w-6 h-6" />
+              </div>
+            </div>
 
-  <p className={`${TEXT_SUB} text-sm font-medium`}>Manage Problems</p>
-  <p className="text-2xl font-bold text-slate-900 mt-2">Create & Edit</p>
-  <p className="text-xs text-slate-500 mt-2">Manage all coding questions</p>
-</div>
-
-
-  {/* User Management */}
-  <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>
-    <div className="flex items-center justify-between mb-4">
-      <div className="p-3 bg-purple-500 text-white rounded-lg">
-        <Users className="w-6 h-6" />
-      </div>
-    </div>
-    <p className={`${TEXT_SUB} text-sm font-medium`}>User Management</p>
-    <p className="text-2xl font-bold text-slate-900 mt-2">All Users</p>
-    <p className="text-xs text-slate-500 mt-2">View, block, delete users</p>
-  </div>
-
-  {/* View Analytics */}
-  <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>
-    <div className="flex items-center justify-between mb-4">
-      <div className="p-3 bg-pink-500 text-white rounded-lg">
-        <BarChart3 className="w-6 h-6" />
-      </div>
-    </div>
-    <p className={`${TEXT_SUB} text-sm font-medium`}>View Analytics</p>
-    <p className="text-2xl font-bold text-slate-900 mt-2">Insights</p>
-    <p className="text-xs text-slate-500 mt-2">Track platform performance</p>
-  </div>
-
-</div>
+            <p className={`${TEXT_SUB} text-sm font-medium`}>Manage Problems</p>
+            <p className="text-2xl font-bold text-slate-900 mt-2">Create & Edit</p>
+            <p className="text-xs text-slate-500 mt-2">Manage all coding questions</p>
+          </div>
 
 
-         {/* RECENT USERS TABLE */}
+          {/* User Management */}
+          <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-purple-500 text-white rounded-lg">
+                <Users className="w-6 h-6" />
+              </div>
+            </div>
+            <p className={`${TEXT_SUB} text-sm font-medium`}>User Management</p>
+            <p className="text-2xl font-bold text-slate-900 mt-2">All Users</p>
+            <p className="text-xs text-slate-500 mt-2">View, block, delete users</p>
+          </div>
+
+          {/* View Analytics */}
+          <div className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 cursor-pointer transition-all`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-pink-500 text-white rounded-lg">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+            </div>
+            <p className={`${TEXT_SUB} text-sm font-medium`}>View Analytics</p>
+            <p className="text-2xl font-bold text-slate-900 mt-2">Insights</p>
+            <p className="text-xs text-slate-500 mt-2">Track platform performance</p>
+          </div>
+
+        </div>
+
+
+        {/* RECENT USERS TABLE */}
         <div className={`${CARD_BASE} rounded-2xl p-6`}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -346,13 +348,12 @@ export default function AdminDashboard() {
                       <td className="py-4 text-slate-600">{userItem.email}</td>
                       <td className="py-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            userItem.role === "admin"
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.role === "admin"
                               ? "bg-red-100 text-red-700"
                               : userItem.role === "super-admin"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
-                          }`}
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
                         >
                           {userItem.role}
                         </span>
@@ -360,11 +361,10 @@ export default function AdminDashboard() {
 
                       <td className="py-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            userItem.isActive
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.isActive
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
-                          }`}
+                            }`}
                         >
                           {userItem.isActive ? "Active" : "Blocked"}
                         </span>
@@ -400,9 +400,47 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-      
 
-      
+        <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-600 rounded-lg">
+              <TestTube className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-blue-900 mb-2 flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                Admin Test Mode
+              </h3>
+              <p className="text-blue-800 mb-3">
+                As an admin, you can test the code editor and solve problems, but:
+              </p>
+              <ul className="space-y-2 text-blue-700">
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                  Your submissions will be marked as <strong>"Test Runs"</strong>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                  Your stats <strong>will NOT be counted</strong> in rankings
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                  You <strong>will NOT appear</strong> on the leaderboard
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                  This ensures fair competition for learners
+                </li>
+              </ul>
+            </div>
+            <button
+              onClick={() => navigate("/problems")}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
+            >
+              Test Editor →
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -20,17 +20,27 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             throw error;
         }
 
+        //  CHECK USER ROLE
+        const user = await User.findById(userId);
+        if (!user) {
+            const error = new Error("User not found");
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const isAdmin = user.role === 'admin' || user.role === 'super-admin';
+
         // Create initial submission record
         let submission = await Submission.create({
             userId,
             problemId,
             code,
             language,
-            verdict: "Pending",
+            verdict: isAdmin ? "Test Run (Admin)" : "Pending", // Mark admin submissions
             status: 0,
         });
 
-        console.log(' Submission created:', submission._id);
+        console.log(` Submission created: ${submission._id} ${isAdmin ? '(Admin Test Mode)' : ''}`);
 
         try {
             // Submit to Judge0
@@ -46,24 +56,28 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 
             console.log(' Waiting for Judge0 result...');
 
-            
             const result = await pollResult(judge0Token);
 
-            console.log('Judge0 result received:', {
+            console.log(' Judge0 result received:', {
                 verdict: result.verdict,
                 status: result.status,
                 isAccepted: result.isAccepted,
-                output: result.output?.substring(0, 50),
-                expectedOutput: result.expectedOutput?.substring(0, 50),
+                isAdmin
             });
 
             let finalVerdict = result.verdict;
             
-            
+            // Double-check verdict accuracy
             if (result.verdict === "Accepted" && !result.isAccepted) {
                 finalVerdict = "Wrong Answer";
             }
 
+            //  For admins, prefix verdict with "Test -"
+            if (isAdmin) {
+                finalVerdict = `Test - ${finalVerdict}`;
+            }
+
+            // Update submission with results
             submission.verdict = finalVerdict;
             submission.status = result.status;
             submission.output = result.output || "";
@@ -76,41 +90,22 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 
             await submission.save();
 
-            console.log('Submission updated with verdict:', submission.verdict);
+            console.log(` Submission updated with verdict: ${submission.verdict}`);
 
-            // Update user statistics
-            if (result.isAccepted) {
-                const user = await User.findById(userId);
-
-                const previousAccepted = await Submission.findOne({
-                    userId,
-                    problemId,
-                    isAccepted: true,
-                    _id: { $ne: submission._id },
-                });
-
-                if (!previousAccepted && user) {
-                    user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
-                    user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
-                    await user.save();
-                    console.log('First accepted solution! User stats updated.');
-                } else if (user) {
-                    user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
-                    await user.save();
-                }
-            } else {
-                const user = await User.findById(userId);
-                if (user) {
-                    user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
-                    await user.save();
-                }
+            //  ONLY UPDATE STATS FOR LEARNERS, NOT ADMINS
+            if (!isAdmin && result.isAccepted) {
+                await updateUserStatistics(userId, problemId, result.isAccepted, submission._id);
+                await updateProblemStatistics(problemId, result.isAccepted);
+                console.log(' User and problem stats updated');
+            } else if (isAdmin) {
+                console.log(' Admin test mode - Stats NOT updated');
             }
 
             return submission.toObject();
         } catch (judgeError) {
-            console.error('Judge0 evaluation error:', judgeError.message);
+            console.error(' Judge0 evaluation error:', judgeError.message);
 
-            submission.verdict = "System Error";
+            submission.verdict = isAdmin ? "Test - System Error" : "System Error";
             submission.stderr = judgeError.message;
             submission.status = 13; // Internal Error
             await submission.save();
@@ -118,10 +113,118 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             throw judgeError;
         }
     } catch (error) {
-        console.error("Evaluate submission error:", error.message);
+        console.error(" Evaluate submission error:", error.message);
         throw error;
     }
 };
+
+//  Update user statistics (only for learners)
+async function updateUserStatistics(userId, problemId, isAccepted, submissionId) {
+    try {
+        const user = await User.findById(userId);
+        const problem = await Problem.findById(problemId);
+
+        if (!user) {
+            console.error('User not found:', userId);
+            return;
+        }
+
+        //  DOUBLE CHECK: Don't update stats for admins
+        if (user.role === 'admin' || user.role === 'super-admin') {
+            console.log(' Admin detected - Skipping stats update');
+            return;
+        }
+
+        // Always increment total submissions
+        user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
+
+        if (isAccepted) {
+            // Increment accepted submissions
+            user.acceptedSubmissionsCount = (user.acceptedSubmissionsCount || 0) + 1;
+
+            // Check if this is the FIRST accepted solution for this problem
+            const previousAccepted = await Submission.findOne({
+                userId,
+                problemId,
+                isAccepted: true,
+                _id: { $ne: submissionId },
+            });
+
+            if (!previousAccepted && problem) {
+                //  First time solving this problem!
+                console.log(' First accepted solution for this problem!');
+                
+                user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
+
+                // Update difficulty-specific counts
+                if (problem.difficulty === 'Easy') {
+                    user.easyProblemsSolved = (user.easyProblemsSolved || 0) + 1;
+                } else if (problem.difficulty === 'Medium') {
+                    user.mediumProblemsSolved = (user.mediumProblemsSolved || 0) + 1;
+                } else if (problem.difficulty === 'Hard') {
+                    user.hardProblemsSolved = (user.hardProblemsSolved || 0) + 1;
+                }
+
+                // Recalculate rank points
+                user.rankPoints = user.calculateRankPoints();
+                
+                console.log('Updated stats:', {
+                    solvedProblems: user.solvedProblemsCount,
+                    rankPoints: user.rankPoints,
+                    difficulty: problem.difficulty
+                });
+            }
+
+            // Update streak for accepted submissions
+            user.updateStreak();
+        }
+
+        // Update last active date
+        user.lastActiveDate = new Date();
+
+        await user.save();
+
+        console.log(' User stats updated:', {
+            totalSubmissions: user.totalSubmissionsCount,
+            acceptedSubmissions: user.acceptedSubmissionsCount,
+            solvedProblems: user.solvedProblemsCount,
+            rankPoints: user.rankPoints,
+            streak: user.currentStreak
+        });
+
+    } catch (error) {
+        console.error(' Error updating user stats:', error);
+    }
+}
+
+// Update problem statistics (only count learner submissions)
+async function updateProblemStatistics(problemId, isAccepted) {
+    try {
+        const problem = await Problem.findById(problemId);
+        if (!problem) return;
+
+        problem.totalSubmissions = (problem.totalSubmissions || 0) + 1;
+        
+        if (isAccepted) {
+            problem.acceptedSubmissions = (problem.acceptedSubmissions || 0) + 1;
+        }
+
+        // Recalculate acceptance rate
+        if (problem.totalSubmissions > 0) {
+            problem.acceptanceRate = ((problem.acceptedSubmissions / problem.totalSubmissions) * 100).toFixed(2);
+        }
+
+        await problem.save();
+
+        console.log(' Problem stats updated:', {
+            total: problem.totalSubmissions,
+            accepted: problem.acceptedSubmissions,
+            rate: problem.acceptanceRate
+        });
+    } catch (error) {
+        console.error(' Error updating problem stats:', error);
+    }
+}
 
 export const getSubmissionHistory = async (userId, problemId = null, limit = 10) => {
     try {

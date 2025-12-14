@@ -3,22 +3,40 @@ import Submission from "../../submissions/models/submissionModel.js";
 import Problem from "../../problems/models/ProblemModel.js";
 
 export const getGlobalLeaderboard = async (req, res) => {
-    try {
-        const { page = 1, limit = 50, sortBy = 'rankPoints' } = req.query;
-        const skip = (page - 1) * limit;
+  try {
+    const { page = 1, limit = 50, sortBy = 'rankPoints' } = req.query;
+    const skip = (page - 1) * limit;
 
-        const sortOptions = {
-            rankPoints: { rankPoints: -1, solvedProblemsCount: -1 },
-            solved: { solvedProblemsCount: -1, rankPoints: -1 },
-            accuracy: { acceptedSubmissionsCount: -1, totalSubmissionsCount: 1 },
-            streak: { currentStreak: -1, longestStreak: -1 }
-        };
+    const sortOptions = {
+      rankPoints: { rankPoints: -1, solvedProblemsCount: -1 },
+      solved: { solvedProblemsCount: -1, rankPoints: -1 },
+      accuracy: { acceptedSubmissionsCount: -1, totalSubmissionsCount: 1 },
+      streak: { currentStreak: -1, longestStreak: -1 }
+    };
 
-         const sort = sortOptions[sortBy] || sortOptions.rankPoints;
+    const sort = sortOptions[sortBy] || sortOptions.rankPoints;
     
+    // FIX: Get ALL users first to calculate correct global ranks
+    const allActiveUsers = await User.find({ 
+      isActive: true,
+      solvedProblemsCount: { $gt: 0 },
+      role : 'learner'
+    })
+      .select('_id rankPoints')
+      .sort(sort)
+      .lean();
+    
+    // Calculate ranks for all users
+    const ranksMap = new Map();
+    allActiveUsers.forEach((user, index) => {
+      ranksMap.set(user._id.toString(), index + 1);
+    });
+    
+    // Now get paginated results
     const users = await User.find({ 
       isActive: true,
-      solvedProblemsCount: { $gt: 0 } 
+      solvedProblemsCount: { $gt: 0 },
+      role: 'learner'
     })
       .select('name email solvedProblemsCount totalSubmissionsCount acceptedSubmissionsCount rankPoints currentStreak longestStreak easyProblemsSolved mediumProblemsSolved hardProblemsSolved')
       .sort(sort)
@@ -26,14 +44,12 @@ export const getGlobalLeaderboard = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
     
-    const total = await User.countDocuments({ 
-      isActive: true,
-      solvedProblemsCount: { $gt: 0 }
-    });
+    const total = allActiveUsers.length;
 
-     const leaderboard = users.map((user, index) => ({
+    // Attach correct global ranks
+    const leaderboard = users.map((user) => ({
       ...user,
-      rank: skip + index + 1,
+      rank: ranksMap.get(user._id.toString()),
       accuracy: user.totalSubmissionsCount > 0 
         ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
         : 0
@@ -63,21 +79,35 @@ export const getUserRank = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-    const rank = await User.countDocuments({
+     if (user.role === 'admin' || user.role === 'super-admin') {
+      return res.json({
+        rank: null,
+        totalUsers: 0,
+        percentile: 0,
+        rankPoints: user.rankPoints || 0,
+        solvedProblems: user.solvedProblemsCount || 0,
+        message: "Admins are not ranked in the leaderboard"
+      });
+    }
+
+    // FIX: Calculate rank correctly based on ALL active users
+    const allActiveUsers = await User.find({
       isActive: true,
-      rankPoints: { $gt: user.rankPoints }
-    }) + 1;
+      solvedProblemsCount: { $gt: 0 },
+      role: 'learner'
+    })
+      .select('_id rankPoints solvedProblemsCount')
+      .sort({ rankPoints: -1, solvedProblemsCount: -1 })
+      .lean();
     
-    // Get total active users
-    const totalUsers = await User.countDocuments({
-      isActive: true,
-      solvedProblemsCount: { $gt: 0 }
-    });
+    const userIndex = allActiveUsers.findIndex(u => u._id.toString() === userId.toString());
+    const rank = userIndex >= 0 ? userIndex + 1 : null;
+    const totalUsers = allActiveUsers.length;
     
     res.json({
       rank,
       totalUsers,
-      percentile: totalUsers > 0 ? (100 - (rank / totalUsers * 100)).toFixed(2) : 0,
+      percentile: totalUsers > 0 && rank ? (100 - (rank / totalUsers * 100)).toFixed(2) : 0,
       rankPoints: user.rankPoints,
       solvedProblems: user.solvedProblemsCount
     });
@@ -138,7 +168,8 @@ export const getUserProgress = async ( req, res) => {
           : 0,
         rankPoints: user.rankPoints,
         currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak
+        longestStreak: user.longestStreak,
+        isAdmin: user.role === 'admin' || user.role === 'super-admin'
       },
       problemsByDifficulty: {
         easy: user.easyProblemsSolved,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getLeaderboardApi, getMyRankApi } from "../api/leaderboardApi.js";
-
-import { Trophy, Medal, Award, TrendingUp, Zap, Target, RefreshCw } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Zap, Target, RefreshCw, Shield, Info } from "lucide-react";
+import { useSelector } from "react-redux";
 
 export default function Leaderboard() {
     const [leaderboard, setLeaderboard] = useState([]);
@@ -10,18 +10,21 @@ export default function Leaderboard() {
     const [sortBy, setSortBy] = useState('rankPoints');
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState(null);
+    
+    const { user } = useSelector((state) => state.auth);
+    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
     const fetchLeaderboard = async () => {
         try {
             setLoading(true);
             const [leaderboardRes, rankRes] = await Promise.all([
                 getLeaderboardApi({ page, limit: 50, sortBy }),
-                getMyRankApi().catch(() => null)
+                !isAdmin ? getMyRankApi().catch(() => null) : Promise.resolve(null) // ✅ Skip rank for admins
             ]);
 
             setLeaderboard(leaderboardRes.data.leaderboard);
             setPagination(leaderboardRes.data.pagination);
-            if (rankRes) setMyRank(rankRes.data);
+            if (rankRes && !isAdmin) setMyRank(rankRes.data);
         } catch (error) {
             console.error("Failed to fetch leaderboard:", error);
         } finally {
@@ -73,7 +76,31 @@ export default function Leaderboard() {
                         Refresh
                     </button>
                 </div>
-                {myRank && (
+
+                {/*  ADMIN NOTICE - Not Ranked */}
+                {isAdmin && (
+                    <div className="mb-6 bg-amber-50 border-2 border-amber-300 rounded-xl p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-amber-600 rounded-lg">
+                                <Shield className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-amber-900 mb-2 flex items-center gap-2">
+                                    <Info className="w-5 h-5" />
+                                    Admin Viewing Mode
+                                </h3>
+                                <p className="text-amber-800">
+                                    You are viewing the leaderboard as an administrator. 
+                                    <strong> Admins are not ranked</strong> to ensure fair competition for learners.
+                                    Only learner submissions count toward rankings.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* My Rank Card - ONLY FOR LEARNERS */}
+                {!isAdmin && myRank && myRank.rank && (
                     <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-6 mb-8 shadow-xl">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div>
@@ -96,6 +123,7 @@ export default function Leaderboard() {
                     </div>
                 )}
 
+                {/* Sorting Options */}
                 <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-slate-200">
                     <div className="flex items-center gap-3">
                         <span className="text-slate-700 font-medium">Sort by:</span>
@@ -120,6 +148,7 @@ export default function Leaderboard() {
                     </div>
                 </div>
 
+                {/* Leaderboard Table */}
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -137,17 +166,15 @@ export default function Leaderboard() {
                                 {leaderboard.map((user, index) => (
                                     <tr
                                         key={user._id}
-                                        className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${myRank && user._id === myRank.userId ? 'bg-blue-50' : ''
+                                        className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${!isAdmin && myRank && user._id === myRank.userId ? 'bg-blue-50' : ''
                                             }`}
                                     >
-                                        {/* Rank */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 {getRankBadge(user.rank)}
                                             </div>
                                         </td>
 
-                                        {/* User */}
                                         <td className="px-6 py-4">
                                             <div>
                                                 <p className="font-semibold text-slate-900">{user.name}</p>
@@ -155,14 +182,12 @@ export default function Leaderboard() {
                                             </div>
                                         </td>
 
-                                        {/* Rank Points */}
                                         <td className="px-6 py-4">
                                             <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
                                                 {user.rankPoints}
                                             </span>
                                         </td>
 
-                                        {/* Problems Solved */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold text-slate-900">{user.solvedProblemsCount}</span>
@@ -174,12 +199,10 @@ export default function Leaderboard() {
                                             </div>
                                         </td>
 
-                                        {/* Accuracy */}
                                         <td className="px-6 py-4">
                                             <span className="text-slate-700 font-medium">{user.accuracy}%</span>
                                         </td>
 
-                                        {/* Streak */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1">
                                                 <span className="text-orange-600 font-bold">{user.currentStreak}</span>
@@ -234,8 +257,6 @@ export default function Leaderboard() {
                 )}
 
             </div>
-
         </div>
     );
-
 }
