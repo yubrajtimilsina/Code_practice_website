@@ -16,13 +16,12 @@ export const getGlobalLeaderboard = async (req, res) => {
 
     const sort = sortOptions[sortBy] || sortOptions.rankPoints;
     
-    // FIX: Get ALL users first to calculate correct global ranks
+    // FIX: Get ALL learners (including those with 0 solved) to calculate correct ranks
     const allActiveUsers = await User.find({ 
       isActive: true,
-      solvedProblemsCount: { $gt: 0 },
-      role : 'learner'
+      role: 'learner'
     })
-      .select('_id rankPoints')
+      .select('_id rankPoints solvedProblemsCount')
       .sort(sort)
       .lean();
     
@@ -32,10 +31,9 @@ export const getGlobalLeaderboard = async (req, res) => {
       ranksMap.set(user._id.toString(), index + 1);
     });
     
-    // Now get paginated results
+    // Now get paginated results (ALL learners, not filtered)
     const users = await User.find({ 
       isActive: true,
-      solvedProblemsCount: { $gt: 0 },
       role: 'learner'
     })
       .select('name email solvedProblemsCount totalSubmissionsCount acceptedSubmissionsCount rankPoints currentStreak longestStreak easyProblemsSolved mediumProblemsSolved hardProblemsSolved')
@@ -49,12 +47,12 @@ export const getGlobalLeaderboard = async (req, res) => {
     // Attach correct global ranks
     const leaderboard = users.map((user) => ({
       ...user,
-      rank: ranksMap.get(user._id.toString()),
+      rank: ranksMap.get(user._id.toString()) || 0,
       accuracy: user.totalSubmissionsCount > 0 
         ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
-        : 0
+        : '0.00'
     }));
-    
+
     res.json({
       leaderboard,
       pagination: {
@@ -117,72 +115,95 @@ export const getUserRank = async (req, res) => {
   }
 };
 
-export const getUserProgress = async ( req, res) => {
-    try{
-        const userId = req.user._id;
+export const getUserProgress = async (req, res) => {
+  try{
+    const userId = req.user._id;
 
-        const user = await User.findById(userId).lean();
-        if (!user) {
-            return res.status(404).json({ error: "User not found"});
-        }
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found"});
+    }
 
-         const submissions = await Submission.find({ userId })
-      .select('verdict language createdAt problemId')
+    const submissions = await Submission.find({ userId })
+      .select('verdict language createdAt problemId isAccepted')
       .populate('problemId', 'difficulty')
       .sort({ createdAt: -1 })
       .lean();
 
-      const languageStats = {};
-    submissions.forEach(sub => {
-      languageStats[sub.language] = (languageStats[sub.language] || 0) + 1;
-    });
+    // Totals
+    const totalSubmissions = submissions.length;
+    const acceptedSubmissions = submissions.filter(s => s.isAccepted).length;
 
-     const verdictStats = {};
-    submissions.forEach(sub => {
-      verdictStats[sub.verdict] = (verdictStats[sub.verdict] || 0) + 1;
-    });
-
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const recentSubmissions = submissions.filter(
-      sub => new Date(sub.createdAt) > thirtyDaysAgo
+    // Solved problems = distinct problemIds where accepted
+    const solvedProblemIds = new Set(
+      submissions.filter(s => s.isAccepted).map(s => s.problemId ? String(s.problemId._id || s.problemId) : null).filter(Boolean)
     );
+    const solvedProblems = solvedProblemIds.size;
 
-     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    const activityData = {};
+    // Language & verdict stats
+    const languageStats = {};
+    const verdictStats = {};
+    submissions.forEach(sub => {
+      if (sub.language) languageStats[sub.language] = (languageStats[sub.language] || 0) + 1;
+      const v = sub.verdict || "Unknown";
+      verdictStats[v] = (verdictStats[v] || 0) + 1;
+    });
+
+    // Problems by difficulty (count accepted per difficulty)
+    const problemsByDifficulty = { easy: 0, medium: 0, hard: 0 };
+    submissions.forEach(sub => {
+      if (sub.isAccepted && sub.problemId && sub.problemId.difficulty) {
+        const d = (sub.problemId.difficulty || "").toLowerCase();
+        if (d.includes('easy')) problemsByDifficulty.easy++;
+        else if (d.includes('medium')) problemsByDifficulty.medium++;
+        else if (d.includes('hard')) problemsByDifficulty.hard++;
+      }
+    });
+
+    // Recent activity (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const last30 = submissions.filter(s => new Date(s.createdAt) > thirtyDaysAgo);
+    const recentActivity = {
+      last30Days: last30.length,
+      submissions: last30.slice(0, 50)
+    };
+
+    // Activity calendar (last 90 days) -> date => count
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const activityCalendar = {};
     submissions
-      .filter(sub => new Date(sub.createdAt) > ninetyDaysAgo)
-      .forEach(sub => {
-        const date = new Date(sub.createdAt).toISOString().split('T')[0];
-        activityData[date] = (activityData[date] || 0) + 1;
+      .filter(s => new Date(s.createdAt) > ninetyDaysAgo)
+      .forEach(s => {
+        const date = new Date(s.createdAt).toISOString().split('T')[0];
+        activityCalendar[date] = (activityCalendar[date] || 0) + 1;
       });
-    
-    res.json({
-      user: {
-        name: user.name,
-        email: user.email,
-        solvedProblems: user.solvedProblemsCount,
-        totalSubmissions: user.totalSubmissionsCount,
-        acceptedSubmissions: user.acceptedSubmissionsCount,
-        accuracy: user.totalSubmissionsCount > 0 
-          ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
-          : 0,
-        rankPoints: user.rankPoints,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
-        isAdmin: user.role === 'admin' || user.role === 'super-admin'
-      },
-      problemsByDifficulty: {
-        easy: user.easyProblemsSolved,
-        medium: user.mediumProblemsSolved,
-        hard: user.hardProblemsSolved
-      },
+
+    // Accuracy: use accepted / total submissions (NOT solvedProblems / total)
+    const accuracy = totalSubmissions > 0 
+      ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(2) 
+      : "0.00";
+
+    // Use stored counts with computed as fallback
+    const normalizedUser = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      solvedProblems: user.solvedProblemsCount ?? solvedProblems,
+      acceptedSubmissions: user.acceptedSubmissionsCount ?? acceptedSubmissions,
+      totalSubmissions: user.totalSubmissionsCount ?? totalSubmissions,
+      accuracy: accuracy,
+      rankPoints: user.rankPoints ?? 0,
+      currentStreak: user.currentStreak ?? 0,
+      longestStreak: user.longestStreak ?? 0,
+    };
+
+    return res.json({
+      user: normalizedUser,
+      problemsByDifficulty,
       languageStats,
       verdictStats,
-      recentActivity: {
-        last30Days: recentSubmissions.length,
-        submissions: recentSubmissions.slice(0, 10)
-      },
-      activityCalendar: activityData
+      recentActivity,
+      activityCalendar
     });
   } catch (error) {
     console.error("Get user progress error:", error);

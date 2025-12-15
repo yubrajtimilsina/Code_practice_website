@@ -55,10 +55,9 @@ export default function LearnerDashboard() {
           <p className="text-slate-600 text-lg">Keep pushing your coding skills to new heights</p>
         </div>
 
-        {/* Stats Grid - WITH NAVIGATION */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-          {/* Problems Solved - NAVIGATES TO PROBLEMS */}
+    
           <div 
             onClick={() => navigate("/problems")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}

@@ -14,13 +14,51 @@ export default function Progress() {
         try {
             setLoading(true);
             const response = await getMyProgressApi();
-            setProgress(response.data);
+
+            const d = response.data || {};
+
+            const u = d.user || {};
+            const normalizedUser = {
+                solvedProblems: u.solvedProblems ?? u.solvedProblemsCount ?? 0,
+                accuracy: (u.accuracy !== undefined && u.accuracy !== null)
+                    ? String(u.accuracy)
+                    : (u.acceptedSubmissions != null && u.totalSubmissions != null && u.totalSubmissions > 0)
+                        ? ((u.acceptedSubmissions / u.totalSubmissions) * 100).toFixed(2)
+                        : "0.00",
+                acceptedSubmissions: u.acceptedSubmissions ?? u.acceptedSubmissionsCount ?? 0,
+                totalSubmissions: u.totalSubmissions ?? u.totalSubmissionsCount ?? 0,
+                rankPoints: u.rankPoints ?? 0,
+                currentStreak: u.currentStreak ?? 0,
+                longestStreak: u.longestStreak ?? 0,
+            };
+
+            const normalized = {
+                user: normalizedUser,
+                problemsByDifficulty: {
+                    easy: d.problemsByDifficulty?.easy ?? u.easyProblemsSolved ?? 0,
+                    medium: d.problemsByDifficulty?.medium ?? u.mediumProblemsSolved ?? 0,
+                    hard: d.problemsByDifficulty?.hard ?? u.hardProblemsSolved ?? 0,
+                },
+                languageStats: d.languageStats || {},
+                verdictStats: d.verdictStats || {},
+                recentActivity: d.recentActivity || { last30Days: 0, submissions: [] },
+                activityCalendar: d.activityCalendar || {},
+            };
+
+            setProgress(normalized);
         } catch (error) {
             console.error("Failed to fetch progress:", error);
         } finally {
             setLoading(false);
         }
     };
+
+    const CARD_BASE = "bg-white border border-slate-200 shadow-sm";
+    const CARD_HOVER = "hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer";
+    const TEXT_SUB = "text-slate-600";
+
+
+
 
     if (loading) {
         return (
@@ -101,78 +139,121 @@ export default function Progress() {
                             </div>
                         </div>
                         <p className="text-slate-600 text-sm mb-1">Current Streak</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.currentStreak} 🔥</p>
+                        <p className="text-4xl font-bold text-slate-900">{user.currentStreak} </p>
                         <p className="text-xs text-slate-500 mt-1">Longest: {user.longestStreak} days</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-             
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <h3 className="text-xl font-bold text-slate-900 mb-4">Problems by Difficulty</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-green-600 font-semibold">Easy</span>
-                                    <span className="text-slate-700 font-semibold">{problemsByDifficulty.easy}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-3">
-                                    <div
-                                        className="bg-green-500 h-3 rounded-full transition-all"
-                                        style={{ width: `${problemsByDifficulty.easy > 0 ? (problemsByDifficulty.easy / user.solvedProblems * 100) : 0}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-yellow-600 font-semibold">Medium</span>
-                                    <span className="text-slate-700 font-semibold">{problemsByDifficulty.medium}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-3">
-                                    <div
-                                        className="bg-yellow-500 h-3 rounded-full transition-all"
-                                        style={{ width: `${problemsByDifficulty.medium > 0 ? (problemsByDifficulty.medium / user.solvedProblems * 100) : 0}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-red-600 font-semibold">Hard</span>
-                                    <span className="text-slate-700 font-semibold">{problemsByDifficulty.hard}</span>
-                                </div>
-                                <div className="w-full bg-slate-200 rounded-full h-3">
-                                    <div
-                                        className="bg-red-500 h-3 rounded-full transition-all"
-                                        style={{ width: `${problemsByDifficulty.hard > 0 ? (problemsByDifficulty.hard / user.solvedProblems * 100) : 0}%` }}
-                                    ></div>
-                                </div>
-                            </div>
+                    {/* Problems by Difficulty */}
+                    <div className={`${CARD_BASE} rounded-2xl p-6`}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <BarChart3 className="w-6 h-6 text-green-500" />
+                            <h3 className="text-xl font-semibold text-slate-900">
+                                Problems by Difficulty
+                            </h3>
                         </div>
+
+                        {(() => {
+                            const totalSolved = Math.max(user.solvedProblems, 1);
+
+                            return (
+                                <div className="space-y-4">
+                                    {/* Easy */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className={TEXT_SUB}>Easy</span>
+                                            <span className="text-slate-700 font-semibold">
+                                                {problemsByDifficulty.easy}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className="bg-green-500 h-full rounded-full transition-all"
+                                                style={{
+                                                    width: `${(problemsByDifficulty.easy / totalSolved) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Medium */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className={TEXT_SUB}>Medium</span>
+                                            <span className="text-slate-700 font-semibold">
+                                                {problemsByDifficulty.medium}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className="bg-yellow-500 h-full rounded-full transition-all"
+                                                style={{
+                                                    width: `${(problemsByDifficulty.medium / totalSolved) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Hard */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className={TEXT_SUB}>Hard</span>
+                                            <span className="text-slate-700 font-semibold">
+                                                {problemsByDifficulty.hard}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className="bg-red-500 h-full rounded-full transition-all"
+                                                style={{
+                                                    width: `${(problemsByDifficulty.hard / totalSolved) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
 
-                   
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <h3 className="text-xl font-bold text-slate-900 mb-4">Language Usage</h3>
-                        <div className="space-y-3">
+                    {/* Language Usage */}
+                    <div className={`${CARD_BASE} rounded-2xl p-6`}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <Code2 className="w-6 h-6 text-blue-500" />
+                            <h3 className="text-xl font-semibold text-slate-900">
+                                Language Usage
+                            </h3>
+                        </div>
+
+                        <div className="space-y-4">
                             {Object.entries(languageStats).slice(0, 5).map(([lang, count]) => (
-                                <div key={lang} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Code2 className="w-4 h-4 text-blue-600" />
-                                        <span className="text-slate-700 font-medium capitalize">{lang}</span>
+                                <div key={lang}>
+                                    <div className="flex justify-between mb-1">
+                                        <span className={TEXT_SUB}>{lang.toUpperCase()}</span>
+                                        <span className="text-slate-700 font-semibold">{count}</span>
                                     </div>
-                                    <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
-                                        {count}
-                                    </span>
+                                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                        <div
+                                            className="bg-blue-500 h-full rounded-full"
+                                            style={{
+                                                width: `${user.totalSubmissions > 0
+                                                        ? (count / user.totalSubmissions) * 100
+                                                        : 0
+                                                    }%`,
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
+
                 </div>
 
-             
+
+
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Submission Statistics</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -205,7 +286,7 @@ export default function Progress() {
                     </div>
                 </div>
 
-           
+
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                     <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-blue-600" />
@@ -215,16 +296,16 @@ export default function Progress() {
                         You made <span className="font-bold text-blue-600">{recentActivity.last30Days}</span> submissions in the last 30 days
                     </p>
 
-                    
+
                     <div className="grid grid-cols-10 gap-1">
                         {Object.entries(activityCalendar).slice(-90).map(([date, count]) => (
                             <div
                                 key={date}
                                 title={`${date}: ${count} submissions`}
                                 className={`w-full aspect-square rounded ${count === 0 ? 'bg-slate-100' :
-                                        count <= 2 ? 'bg-green-200' :
-                                            count <= 5 ? 'bg-green-400' :
-                                                'bg-green-600'
+                                    count <= 2 ? 'bg-green-200' :
+                                        count <= 5 ? 'bg-green-400' :
+                                            'bg-green-600'
                                     }`}
                             ></div>
                         ))}

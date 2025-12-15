@@ -100,13 +100,11 @@ userSchema.virtual('accuracy').get(function() {
   return ((this.acceptedSubmissionsCount / this.totalSubmissionsCount) * 100).toFixed(2);
 });
 
-// Calculate Rank Points (Easy: 10, Medium: 25, Hard: 50)
 userSchema.methods.calculateRankPoints = function() {
   return (this.easyProblemsSolved * 10) + 
          (this.mediumProblemsSolved * 25) + 
          (this.hardProblemsSolved * 50);
 };
-
 
 userSchema.methods.updateStreak = function() {
   const now = new Date();
@@ -119,8 +117,8 @@ userSchema.methods.updateStreak = function() {
     const daysDiff = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
     
     if (daysDiff === 1) {
-      this.currentStreak += 1;
-      this.longestStreak = Math.max(this.longestStreak, this.currentStreak);
+      this.currentStreak = (this.currentStreak || 0) + 1;
+      this.longestStreak = Math.max(this.longestStreak || 0, this.currentStreak);
     } else if (daysDiff > 1) {
       this.currentStreak = 1;
     }

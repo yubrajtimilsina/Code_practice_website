@@ -6,30 +6,30 @@ export const getLearnerDashboard = async(userId) => {
         throw new Error("User not found");
     }
 
+    // Calculate rank: sort by rankPoints DESC
+    const allUsers = await User.find({ isActive: true, role: 'learner' })
+      .select('_id rankPoints solvedProblemsCount')
+      .sort({ rankPoints: -1, solvedProblemsCount: -1 })
+      .lean();
     
-    const allUsers = await User.find({ isActive: true });
-    const userRank = allUsers
-        .filter(u => u.solvedProblemsCount > 0)
-        .sort((a, b) => b.solvedProblemsCount - a.solvedProblemsCount)
-        .findIndex(u => u._id.toString() === userId.toString()) + 1;
+    const userRank = allUsers.findIndex(u => u._id.toString() === userId.toString()) + 1;
 
-  
+    // Accuracy: accepted / total submissions (NOT solved / total)
     const accuracy = user.totalSubmissionsCount > 0
-        ? ((user.solvedProblemsCount / user.totalSubmissionsCount) * 100).toFixed(1)
+        ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
         : 0;
 
- 
-    const streak = user.totalSubmissionsCount > 0 ? Math.min(user.totalSubmissionsCount, 30) : 0;
-
-  
+    // Streak from user model (already updated on acceptance)
+    const streak = user.currentStreak || 0;
     const solvedCount = user.solvedProblemsCount || 0;
+
+    // Learning path progress
     const beginnerProgress = Math.min((solvedCount / 5) * 100, 100);
     const intermediateProgress = Math.max(0, Math.min(((solvedCount - 5) / 10) * 100, 100));
     const advancedProgress = Math.max(0, Math.min(((solvedCount - 15) / 20) * 100, 100));
 
-  
-    const thisWeekProblems = 0; 
-    const thisWeekStreak = streak > 0 ? Math.floor(Math.random() * 7) + 1 : 0; 
+    const thisWeekProblems = solvedCount; 
+    const thisWeekStreak = streak;
 
     return {
         message: `Welcome to the learner dashboard, ${user.name}!`, 
@@ -37,7 +37,7 @@ export const getLearnerDashboard = async(userId) => {
             solvedProblems: solvedCount,
             submissions: user.totalSubmissionsCount,
             rank: userRank || "Unranked",
-            accuracy: accuracy,
+            accuracy: Number(accuracy),
         },
 
         learningPath: {

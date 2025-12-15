@@ -95,7 +95,6 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             //  ONLY UPDATE STATS FOR LEARNERS, NOT ADMINS
             if (!isAdmin && result.isAccepted) {
                 await updateUserStatistics(userId, problemId, result.isAccepted, submission._id);
-                await updateProblemStatistics(problemId, result.isAccepted);
                 console.log(' User and problem stats updated');
             } else if (isAdmin) {
                 console.log(' Admin test mode - Stats NOT updated');
@@ -118,7 +117,6 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
     }
 };
 
-//  Update user statistics (only for learners)
 async function updateUserStatistics(userId, problemId, isAccepted, submissionId) {
     try {
         const user = await User.findById(userId);
@@ -129,14 +127,12 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
             return;
         }
 
-        //  DOUBLE CHECK: Don't update stats for admins
         if (user.role === 'admin' || user.role === 'super-admin') {
             console.log(' Admin detected - Skipping stats update');
             return;
         }
 
-        // Always increment total submissions
-        user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
+         user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
 
         if (isAccepted) {
             // Increment accepted submissions
@@ -151,36 +147,53 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
             });
 
             if (!previousAccepted && problem) {
-                //  First time solving this problem!
+                
                 console.log(' First accepted solution for this problem!');
                 
                 user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
 
-                // Update difficulty-specific counts
-                if (problem.difficulty === 'Easy') {
+                const difficulty = (problem.difficulty || '').toLowerCase();
+                if (difficulty.includes('easy')) {
                     user.easyProblemsSolved = (user.easyProblemsSolved || 0) + 1;
-                } else if (problem.difficulty === 'Medium') {
+                } else if (difficulty.includes('medium')) {
                     user.mediumProblemsSolved = (user.mediumProblemsSolved || 0) + 1;
-                } else if (problem.difficulty === 'Hard') {
+                } else if (difficulty.includes('hard')) {
                     user.hardProblemsSolved = (user.hardProblemsSolved || 0) + 1;
                 }
 
-                // Recalculate rank points
-                user.rankPoints = user.calculateRankPoints();
+                // Recalculate rank points: Easy=10, Medium=25, Hard=50
+                user.rankPoints = (user.easyProblemsSolved * 10) + 
+                                 (user.mediumProblemsSolved * 25) + 
+                                 (user.hardProblemsSolved * 50);
                 
-                console.log('Updated stats:', {
-                    solvedProblems: user.solvedProblemsCount,
-                    rankPoints: user.rankPoints,
-                    difficulty: problem.difficulty
+                console.log('Updated difficulty counts:', {
+                    easy: user.easyProblemsSolved,
+                    medium: user.mediumProblemsSolved,
+                    hard: user.hardProblemsSolved,
+                    rankPoints: user.rankPoints
                 });
             }
 
-            // Update streak for accepted submissions
-            user.updateStreak();
+             const now = new Date();
+            const lastDate = user.lastSubmissionDate;
+            
+            if (!lastDate) {
+                user.currentStreak = 1;
+                user.longestStreak = 1;
+            } else {
+                const daysDiff = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff === 1) {
+                    user.currentStreak = (user.currentStreak || 0) + 1;
+                    user.longestStreak = Math.max(user.longestStreak || 0, user.currentStreak);
+                } else if (daysDiff > 1) {
+                    user.currentStreak = 1;
+                }
+            }
+            
+            user.lastSubmissionDate = now;
         }
-
-        // Update last active date
-        user.lastActiveDate = new Date();
+         user.lastActiveDate = new Date();
 
         await user.save();
 
@@ -189,15 +202,18 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
             acceptedSubmissions: user.acceptedSubmissionsCount,
             solvedProblems: user.solvedProblemsCount,
             rankPoints: user.rankPoints,
-            streak: user.currentStreak
+            currentStreak: user.currentStreak,
+            longestStreak: user.longestStreak
         });
 
     } catch (error) {
         console.error(' Error updating user stats:', error);
+        
     }
 }
 
-// Update problem statistics (only count learner submissions)
+
+
 async function updateProblemStatistics(problemId, isAccepted) {
     try {
         const problem = await Problem.findById(problemId);
