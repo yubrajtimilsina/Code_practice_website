@@ -44,13 +44,19 @@ export const getGlobalLeaderboard = async (req, res) => {
     
     const total = allActiveUsers.length;
 
-    // Attach correct global ranks
+    // Attach correct global ranks and ensure all fields exist
     const leaderboard = users.map((user) => ({
       ...user,
       rank: ranksMap.get(user._id.toString()) || 0,
       accuracy: user.totalSubmissionsCount > 0 
         ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
-        : '0.00'
+        : '0.00',
+      // Ensure difficulty fields are never undefined
+      easyProblemsSolved: user.easyProblemsSolved || 0,
+      mediumProblemsSolved: user.mediumProblemsSolved || 0,
+      hardProblemsSolved: user.hardProblemsSolved || 0,
+      currentStreak: user.currentStreak || 0,
+      longestStreak: user.longestStreak || 0
     }));
 
     res.json({
@@ -79,19 +85,20 @@ export const getUserRank = async (req, res) => {
     
      if (user.role === 'admin' || user.role === 'super-admin') {
       return res.json({
+        userId: user._id,
         rank: null,
         totalUsers: 0,
         percentile: 0,
         rankPoints: user.rankPoints || 0,
         solvedProblems: user.solvedProblemsCount || 0,
-        message: "Admins are not ranked in the leaderboard"
+        message: "Admins are not ranked in the leaderboard",
+        isAdmin: true
       });
     }
 
     // FIX: Calculate rank correctly based on ALL active users
     const allActiveUsers = await User.find({
       isActive: true,
-      solvedProblemsCount: { $gt: 0 },
       role: 'learner'
     })
       .select('_id rankPoints solvedProblemsCount')
@@ -103,11 +110,13 @@ export const getUserRank = async (req, res) => {
     const totalUsers = allActiveUsers.length;
     
     res.json({
+      userId: user._id,
       rank,
       totalUsers,
       percentile: totalUsers > 0 && rank ? (100 - (rank / totalUsers * 100)).toFixed(2) : 0,
-      rankPoints: user.rankPoints,
-      solvedProblems: user.solvedProblemsCount
+      rankPoints: user.rankPoints || 0,
+      solvedProblems: user.solvedProblemsCount || 0,
+      isAdmin: false
     });
   } catch (error) {
     console.error("Get user rank error:", error);
@@ -139,6 +148,10 @@ export const getUserProgress = async (req, res) => {
       submissions.filter(s => s.isAccepted).map(s => s.problemId ? String(s.problemId._id || s.problemId) : null).filter(Boolean)
     );
     const solvedProblems = solvedProblemIds.size;
+
+     const accuracy = totalSubmissions > 0 
+      ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(2) 
+      : "0.00";
 
     // Language & verdict stats
     const languageStats = {};
@@ -178,11 +191,6 @@ export const getUserProgress = async (req, res) => {
         activityCalendar[date] = (activityCalendar[date] || 0) + 1;
       });
 
-    // Accuracy: use accepted / total submissions (NOT solvedProblems / total)
-    const accuracy = totalSubmissions > 0 
-      ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(2) 
-      : "0.00";
-
     // Use stored counts with computed as fallback
     const normalizedUser = {
       id: user._id,
@@ -210,6 +218,104 @@ export const getUserProgress = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user progress" });
   }
 };
+
+async function updateUserStatistics(userId, problemId, isAccepted, submissionId) {
+    try {
+        const user = await User.findById(userId);
+        const problem = await Problem.findById(problemId);
+
+        if (!user) {
+            console.error('User not found:', userId);
+            return;
+        }
+
+        if (user.role === 'admin' || user.role === 'super-admin') {
+            console.log(' Admin detected - Skipping stats update');
+            return;
+        }
+
+        user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
+
+        if (isAccepted) {
+            // Increment accepted submissions
+            user.acceptedSubmissionsCount = (user.acceptedSubmissionsCount || 0) + 1;
+
+            // Check if this is the FIRST accepted solution for this problem
+            const previousAccepted = await Submission.findOne({
+                userId,
+                problemId,
+                isAccepted: true,
+                _id: { $ne: submissionId },
+            });
+
+            if (!previousAccepted && problem) {
+                console.log(' First accepted solution for this problem!');
+                user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
+
+                const difficulty = (problem.difficulty || '').toLowerCase();
+                if (difficulty.includes('easy')) {
+                    user.easyProblemsSolved = (user.easyProblemsSolved || 0) + 1;
+                } else if (difficulty.includes('medium')) {
+                    user.mediumProblemsSolved = (user.mediumProblemsSolved || 0) + 1;
+                } else if (difficulty.includes('hard')) {
+                    user.hardProblemsSolved = (user.hardProblemsSolved || 0) + 1;
+                }
+
+                // Recalculate rank points: Easy=10, Medium=25, Hard=50
+                user.rankPoints = (user.easyProblemsSolved * 10) + 
+                                 (user.mediumProblemsSolved * 25) + 
+                                 (user.hardProblemsSolved * 50);
+                
+                console.log('Updated difficulty counts:', {
+                    easy: user.easyProblemsSolved,
+                    medium: user.mediumProblemsSolved,
+                    hard: user.hardProblemsSolved,
+                    rankPoints: user.rankPoints
+                });
+            }
+
+            const now = new Date();
+            const lastDate = user.lastSubmissionDate;
+            
+            if (!lastDate) {
+                user.currentStreak = 1;
+                user.longestStreak = 1;
+            } else {
+                const daysDiff = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff === 0) {
+                    // Same day - no streak change
+                } else if (daysDiff === 1) {
+                    // Consecutive day - increment streak
+                    user.currentStreak = (user.currentStreak || 0) + 1;
+                    user.longestStreak = Math.max(user.longestStreak || 0, user.currentStreak);
+                } else {
+                    // Gap in streak - reset
+                    user.currentStreak = 1;
+                }
+            }
+            
+            user.lastSubmissionDate = now;
+        }
+
+        user.lastActiveDate = new Date();
+
+        await user.save();
+
+        console.log(' User stats updated:', {
+            totalSubmissions: user.totalSubmissionsCount,
+            acceptedSubmissions: user.acceptedSubmissionsCount,
+            solvedProblems: user.solvedProblemsCount,
+            rankPoints: user.rankPoints,
+            currentStreak: user.currentStreak,
+            longestStreak: user.longestStreak
+        });
+
+    } catch (error) {
+        console.error(' Error updating user stats:', error);
+    }
+};
+
 
 export const getProblemStatistics = async (req, res) => {
   try {

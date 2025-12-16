@@ -178,10 +178,10 @@ export const updateUserStats = async (userId, problemId, isAccepted) => {
         userId,
         problemId,
         isAccepted: true,
-        createdAt: { $lt: new Date() }
       });
-      
-      if (previousAccepted === 1) { // Including current submission
+
+      // If there were no previous accepted submissions, this is the first
+      if (previousAccepted === 0) {
         user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
         
         // Update difficulty-specific counts

@@ -114,9 +114,7 @@ export default function LearnerDashboard() {
             </div>
             <p className={TEXT_SUB + " text-sm font-medium"}>Accuracy Rate</p>
             <p className="text-3xl font-bold text-slate-900 mt-1">
-              {stats.solvedProblems > 0
-                ? ((stats.solvedProblems / stats.submissions) * 100).toFixed(1)
-                : 0}%
+              {stats.accuracy}%
             </p>
             <p className="text-xs text-slate-500 mt-2">View detailed stats →</p>
           </div>

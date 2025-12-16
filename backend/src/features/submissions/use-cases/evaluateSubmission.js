@@ -92,11 +92,14 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 
             console.log(` Submission updated with verdict: ${submission.verdict}`);
 
-            //  ONLY UPDATE STATS FOR LEARNERS, NOT ADMINS
-            if (!isAdmin && result.isAccepted) {
+            // ONLY UPDATE STATS FOR LEARNERS, NOT ADMINS
+            if (!isAdmin) {
+                // Update user stats for every learner submission (accepted or not)
                 await updateUserStatistics(userId, problemId, result.isAccepted, submission._id);
+                // Also update problem-level statistics
+                await updateProblemStatistics(problemId, result.isAccepted);
                 console.log(' User and problem stats updated');
-            } else if (isAdmin) {
+            } else {
                 console.log(' Admin test mode - Stats NOT updated');
             }
 

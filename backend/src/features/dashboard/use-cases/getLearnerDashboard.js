@@ -14,13 +14,14 @@ export const getLearnerDashboard = async(userId) => {
     
     const userRank = allUsers.findIndex(u => u._id.toString() === userId.toString()) + 1;
 
-    // Accuracy: accepted / total submissions (NOT solved / total)
+    // ✅ FIXED: Accuracy = accepted / total (NOT solved / total)
     const accuracy = user.totalSubmissionsCount > 0
         ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
         : 0;
 
     // Streak from user model (already updated on acceptance)
     const streak = user.currentStreak || 0;
+
     const solvedCount = user.solvedProblemsCount || 0;
 
     // Learning path progress
