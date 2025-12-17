@@ -1,10 +1,20 @@
+// frontend/src/features/leaderboard/pages/Progress.jsx
 import { useEffect, useState } from "react";
 import { getMyProgressApi } from "../api/leaderboardApi.js";
-import { TrendingUp, Target, Code2, Zap, Calendar, Award, BarChart3, Activity, CheckCircle, XCircle, Clock } from "lucide-react";
+import { TrendingUp, Target, Code2, Zap, Calendar, Award, BarChart3, Activity, CheckCircle, XCircle, Clock, ChevronDown, Filter } from "lucide-react";
+import Pagination from "../../../components/Pagination";
 
 export default function Progress() {
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    // Pagination for recent activity
+    const [activityPage, setActivityPage] = useState(1);
+    const [activityPerPage] = useState(10);
+    const [showFilters, setShowFilters] = useState(false);
+    
+    // Filter for activity
+    const [activityFilter, setActivityFilter] = useState("all"); // all, accepted, failed
 
     useEffect(() => {
         fetchProgress();
@@ -54,11 +64,7 @@ export default function Progress() {
     };
 
     const CARD_BASE = "bg-white border border-slate-200 shadow-sm";
-    const CARD_HOVER = "hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer";
     const TEXT_SUB = "text-slate-600";
-
-
-
 
     if (loading) {
         return (
@@ -73,12 +79,37 @@ export default function Progress() {
     }
 
     const { user, problemsByDifficulty, languageStats, verdictStats, recentActivity, activityCalendar } = progress;
+    
+    // Calculate verdict percentages
     const totalVerdict = Object.values(verdictStats).reduce((a, b) => a + b, 0);
     const verdictPercentages = Object.entries(verdictStats).map(([verdict, count]) => ({
         verdict,
         count,
         percentage: totalVerdict > 0 ? ((count / totalVerdict) * 100).toFixed(1) : 0
     })).sort((a, b) => b.count - a.count);
+
+    // Filter recent submissions
+    const filteredSubmissions = recentActivity.submissions.filter(sub => {
+        if (activityFilter === "accepted") return sub.isAccepted;
+        if (activityFilter === "failed") return !sub.isAccepted;
+        return true;
+    });
+
+    // Paginate submissions
+    const totalActivityPages = Math.ceil(filteredSubmissions.length / activityPerPage);
+    const startIdx = (activityPage - 1) * activityPerPage;
+    const paginatedSubmissions = filteredSubmissions.slice(startIdx, startIdx + activityPerPage);
+
+    const handleActivityPageChange = (newPage) => {
+        setActivityPage(newPage);
+        // Scroll to activity section
+        document.getElementById('recent-activity')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleActivityFilterChange = (filter) => {
+        setActivityFilter(filter);
+        setActivityPage(1); // Reset to first page
+    };
 
     return (
         <div className="min-h-screen bg-slate-100 p-6 md:p-8">
@@ -95,8 +126,6 @@ export default function Progress() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
-                    {/* Solved Problems */}
                     <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-blue-100 rounded-lg">
@@ -108,7 +137,6 @@ export default function Progress() {
                         <p className="text-4xl font-bold text-slate-900">{user.solvedProblems}</p>
                     </div>
 
-                    {/* Accuracy */}
                     <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-green-100 rounded-lg">
@@ -120,7 +148,6 @@ export default function Progress() {
                         <p className="text-xs text-slate-500 mt-1">{user.acceptedSubmissions}/{user.totalSubmissions} accepted</p>
                     </div>
 
-                    {/* Rank Points */}
                     <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-yellow-100 rounded-lg">
@@ -131,7 +158,6 @@ export default function Progress() {
                         <p className="text-4xl font-bold text-slate-900">{user.rankPoints}</p>
                     </div>
 
-                    {/* Current Streak */}
                     <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-3 bg-orange-100 rounded-lg">
@@ -139,14 +165,13 @@ export default function Progress() {
                             </div>
                         </div>
                         <p className="text-slate-600 text-sm mb-1">Current Streak</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.currentStreak} </p>
+                        <p className="text-4xl font-bold text-slate-900">{user.currentStreak}</p>
                         <p className="text-xs text-slate-500 mt-1">Longest: {user.longestStreak} days</p>
                     </div>
                 </div>
 
+                {/* Problems & Languages */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-                    {/* Problems by Difficulty */}
                     <div className={`${CARD_BASE} rounded-2xl p-6`}>
                         <div className="flex items-center gap-3 mb-4">
                             <BarChart3 className="w-6 h-6 text-green-500" />
@@ -157,10 +182,8 @@ export default function Progress() {
 
                         {(() => {
                             const totalSolved = Math.max(user.solvedProblems, 1);
-
                             return (
                                 <div className="space-y-4">
-                                    {/* Easy */}
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className={TEXT_SUB}>Easy</span>
@@ -171,14 +194,11 @@ export default function Progress() {
                                         <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                                             <div
                                                 className="bg-green-500 h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${(problemsByDifficulty.easy / totalSolved) * 100}%`,
-                                                }}
+                                                style={{ width: `${(problemsByDifficulty.easy / totalSolved) * 100}%` }}
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Medium */}
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className={TEXT_SUB}>Medium</span>
@@ -189,14 +209,11 @@ export default function Progress() {
                                         <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                                             <div
                                                 className="bg-yellow-500 h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${(problemsByDifficulty.medium / totalSolved) * 100}%`,
-                                                }}
+                                                style={{ width: `${(problemsByDifficulty.medium / totalSolved) * 100}%` }}
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Hard */}
                                     <div>
                                         <div className="flex justify-between mb-1">
                                             <span className={TEXT_SUB}>Hard</span>
@@ -207,9 +224,7 @@ export default function Progress() {
                                         <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                                             <div
                                                 className="bg-red-500 h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${(problemsByDifficulty.hard / totalSolved) * 100}%`,
-                                                }}
+                                                style={{ width: `${(problemsByDifficulty.hard / totalSolved) * 100}%` }}
                                             />
                                         </div>
                                     </div>
@@ -218,7 +233,6 @@ export default function Progress() {
                         })()}
                     </div>
 
-                    {/* Language Usage */}
                     <div className={`${CARD_BASE} rounded-2xl p-6`}>
                         <div className="flex items-center gap-3 mb-4">
                             <Code2 className="w-6 h-6 text-blue-500" />
@@ -239,9 +253,9 @@ export default function Progress() {
                                             className="bg-blue-500 h-full rounded-full"
                                             style={{
                                                 width: `${user.totalSubmissions > 0
-                                                        ? (count / user.totalSubmissions) * 100
-                                                        : 0
-                                                    }%`,
+                                                    ? (count / user.totalSubmissions) * 100
+                                                    : 0
+                                                }%`,
                                             }}
                                         />
                                     </div>
@@ -249,11 +263,9 @@ export default function Progress() {
                             ))}
                         </div>
                     </div>
-
                 </div>
 
-
-
+                {/* Submission Statistics */}
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Submission Statistics</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -286,16 +298,102 @@ export default function Progress() {
                     </div>
                 </div>
 
+                {/* Recent Activity with Pagination */}
+                <div id="recent-activity" className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Calendar className="w-6 h-6 text-blue-600" />
+                            <h3 className="text-xl font-bold text-slate-900">
+                                Recent Activity (Last 30 Days)
+                            </h3>
+                        </div>
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors text-sm"
+                        >
+                            <Filter className="w-4 h-4" />
+                            Filter
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
 
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                    <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <Calendar className="w-6 h-6 text-blue-600" />
-                        Recent Activity (Last 30 Days)
-                    </h3>
                     <p className="text-slate-600 mb-4">
                         You made <span className="font-bold text-blue-600">{recentActivity.last30Days}</span> submissions in the last 30 days
                     </p>
 
+                    {/* Filter Buttons */}
+                    {showFilters && (
+                        <div className="flex gap-2 mb-4">
+                            {["all", "accepted", "failed"].map(filter => (
+                                <button
+                                    key={filter}
+                                    onClick={() => handleActivityFilterChange(filter)}
+                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                                        activityFilter === filter
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                    }`}
+                                >
+                                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Submissions List */}
+                    {paginatedSubmissions.length > 0 ? (
+                        <>
+                            <div className="space-y-2 mb-4">
+                                {paginatedSubmissions.map((sub, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            {sub.isAccepted ? (
+                                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                            ) : (
+                                                <XCircle className="w-5 h-5 text-red-600" />
+                                            )}
+                                            <div>
+                                                <p className="font-medium text-slate-900">
+                                                    {sub.problemId?.title || 'Problem'}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {sub.language} • {new Date(sub.createdAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                            sub.isAccepted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                        }`}>
+                                            {sub.verdict}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Pagination for Activity */}
+                            {totalActivityPages > 1 && (
+                                <Pagination
+                                    currentPage={activityPage}
+                                    totalPages={totalActivityPages}
+                                    totalItems={filteredSubmissions.length}
+                                    itemsPerPage={activityPerPage}
+                                    onPageChange={handleActivityPageChange}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-center text-slate-500 py-8">
+                            No submissions found for selected filter
+                        </p>
+                    )}
+                </div>
+
+                {/* Activity Calendar */}
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                    <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Calendar className="w-6 h-6 text-blue-600" />
+                        Activity Calendar (Last 90 Days)
+                    </h3>
 
                     <div className="grid grid-cols-10 gap-1">
                         {Object.entries(activityCalendar).slice(-90).map(([date, count]) => (
@@ -306,7 +404,7 @@ export default function Progress() {
                                     count <= 2 ? 'bg-green-200' :
                                         count <= 5 ? 'bg-green-400' :
                                             'bg-green-600'
-                                    }`}
+                                }`}
                             ></div>
                         ))}
                     </div>

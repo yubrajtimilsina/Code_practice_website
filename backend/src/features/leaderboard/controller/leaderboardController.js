@@ -4,9 +4,30 @@ import Problem from "../../problems/models/ProblemModel.js";
 
 export const getGlobalLeaderboard = async (req, res) => {
   try {
-    const { page = 1, limit = 50, sortBy = 'rankPoints' } = req.query;
+    const { 
+      page = 1, 
+      limit = 50, 
+      sortBy = 'rankPoints',
+      search = '' 
+    } = req.query;
+    
     const skip = (page - 1) * limit;
 
+    // Build query
+    const query = {
+      isActive: true,
+      role: 'learner'
+    };
+
+    // Add search if provided
+    if (search && search.trim()) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Define sort options
     const sortOptions = {
       rankPoints: { rankPoints: -1, solvedProblemsCount: -1 },
       solved: { solvedProblemsCount: -1, rankPoints: -1 },
@@ -16,8 +37,8 @@ export const getGlobalLeaderboard = async (req, res) => {
 
     const sort = sortOptions[sortBy] || sortOptions.rankPoints;
     
-    // FIX: Get ALL learners (including those with 0 solved) to calculate correct ranks
-    const allActiveUsers = await User.find({ 
+    // Get ALL active learners for correct rank calculation
+    const allActiveUsers = await User.find({
       isActive: true,
       role: 'learner'
     })
@@ -31,33 +52,36 @@ export const getGlobalLeaderboard = async (req, res) => {
       ranksMap.set(user._id.toString(), index + 1);
     });
     
-    // Now get paginated results (ALL learners, not filtered)
-    const users = await User.find({ 
-      isActive: true,
-      role: 'learner'
-    })
+    // Get paginated results with search filter
+    const users = await User.find(query)
       .select('name email solvedProblemsCount totalSubmissionsCount acceptedSubmissionsCount rankPoints currentStreak longestStreak easyProblemsSolved mediumProblemsSolved hardProblemsSolved')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
     
-    const total = allActiveUsers.length;
+    // Get total count for pagination
+    const total = await User.countDocuments(query);
 
-    // Attach correct global ranks and ensure all fields exist
-    const leaderboard = users.map((user) => ({
-      ...user,
-      rank: ranksMap.get(user._id.toString()) || 0,
-      accuracy: user.totalSubmissionsCount > 0 
-        ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
-        : '0.00',
-      // Ensure difficulty fields are never undefined
-      easyProblemsSolved: user.easyProblemsSolved || 0,
-      mediumProblemsSolved: user.mediumProblemsSolved || 0,
-      hardProblemsSolved: user.hardProblemsSolved || 0,
-      currentStreak: user.currentStreak || 0,
-      longestStreak: user.longestStreak || 0
-    }));
+    // Attach correct ranks and ensure all fields exist
+    const leaderboard = users.map((user) => {
+      // Find user's rank from the complete sorted list
+      const userRankIndex = allActiveUsers.findIndex(u => u._id.toString() === user._id.toString());
+      const rank = userRankIndex >= 0 ? userRankIndex + 1 : 0;
+      
+      return {
+        ...user,
+        rank,
+        accuracy: user.totalSubmissionsCount > 0 
+          ? ((user.acceptedSubmissionsCount / user.totalSubmissionsCount) * 100).toFixed(2)
+          : '0.00',
+        easyProblemsSolved: user.easyProblemsSolved || 0,
+        mediumProblemsSolved: user.mediumProblemsSolved || 0,
+        hardProblemsSolved: user.hardProblemsSolved || 0,
+        currentStreak: user.currentStreak || 0,
+        longestStreak: user.longestStreak || 0
+      };
+    });
 
     res.json({
       leaderboard,
@@ -72,7 +96,7 @@ export const getGlobalLeaderboard = async (req, res) => {
     console.error("Get leaderboard error:", error);
     res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
-};
+}
 
 export const getUserRank = async (req, res) => {
   try {
@@ -83,7 +107,7 @@ export const getUserRank = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-     if (user.role === 'admin' || user.role === 'super-admin') {
+    if (user.role === 'admin' || user.role === 'super-admin') {
       return res.json({
         userId: user._id,
         rank: null,
@@ -96,7 +120,7 @@ export const getUserRank = async (req, res) => {
       });
     }
 
-    // FIX: Calculate rank correctly based on ALL active users
+    // Calculate rank correctly based on ALL active learners
     const allActiveUsers = await User.find({
       isActive: true,
       role: 'learner'
@@ -124,6 +148,7 @@ export const getUserRank = async (req, res) => {
   }
 };
 
+
 export const getUserProgress = async (req, res) => {
   try{
     const userId = req.user._id;
@@ -139,21 +164,18 @@ export const getUserProgress = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Totals
     const totalSubmissions = submissions.length;
     const acceptedSubmissions = submissions.filter(s => s.isAccepted).length;
 
-    // Solved problems = distinct problemIds where accepted
     const solvedProblemIds = new Set(
       submissions.filter(s => s.isAccepted).map(s => s.problemId ? String(s.problemId._id || s.problemId) : null).filter(Boolean)
     );
     const solvedProblems = solvedProblemIds.size;
 
-     const accuracy = totalSubmissions > 0 
+    const accuracy = totalSubmissions > 0 
       ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(2) 
       : "0.00";
 
-    // Language & verdict stats
     const languageStats = {};
     const verdictStats = {};
     submissions.forEach(sub => {
@@ -162,7 +184,6 @@ export const getUserProgress = async (req, res) => {
       verdictStats[v] = (verdictStats[v] || 0) + 1;
     });
 
-    // Problems by difficulty (count accepted per difficulty)
     const problemsByDifficulty = { easy: 0, medium: 0, hard: 0 };
     submissions.forEach(sub => {
       if (sub.isAccepted && sub.problemId && sub.problemId.difficulty) {
@@ -173,7 +194,6 @@ export const getUserProgress = async (req, res) => {
       }
     });
 
-    // Recent activity (last 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const last30 = submissions.filter(s => new Date(s.createdAt) > thirtyDaysAgo);
     const recentActivity = {
@@ -181,7 +201,6 @@ export const getUserProgress = async (req, res) => {
       submissions: last30.slice(0, 50)
     };
 
-    // Activity calendar (last 90 days) -> date => count
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const activityCalendar = {};
     submissions
@@ -191,7 +210,6 @@ export const getUserProgress = async (req, res) => {
         activityCalendar[date] = (activityCalendar[date] || 0) + 1;
       });
 
-    // Use stored counts with computed as fallback
     const normalizedUser = {
       id: user._id,
       name: user.name,
@@ -218,6 +236,7 @@ export const getUserProgress = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch user progress" });
   }
 };
+
 
 async function updateUserStatistics(userId, problemId, isAccepted, submissionId) {
     try {
@@ -326,7 +345,6 @@ export const getProblemStatistics = async (req, res) => {
       return res.status(404).json({ error: "Problem not found" });
     }
     
- 
     const submissions = await Submission.find({ problemId })
       .select('verdict language executionTime memoryUsed userId createdAt')
       .lean();
@@ -344,7 +362,6 @@ export const getProblemStatistics = async (req, res) => {
       ? ((stats.acceptedSubmissions / stats.totalSubmissions) * 100).toFixed(2)
       : 0;
     
-    // Language distribution
     const languageStats = {};
     submissions.forEach(sub => {
       languageStats[sub.language] = (languageStats[sub.language] || 0) + 1;
@@ -358,7 +375,6 @@ export const getProblemStatistics = async (req, res) => {
         }, 0) / acceptedSolutions.length).toFixed(2)
       : 0;
     
-    // Unique solvers
     const uniqueSolvers = new Set(
       submissions.filter(s => s.verdict === 'Accepted').map(s => s.userId.toString())
     ).size;
@@ -398,7 +414,6 @@ export const getSystemHealth = async (req, res) => {
       Submission.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } })
     ]);
     
-    // Database health
     const dbHealth = {
       status: 'healthy',
       collections: {
@@ -408,7 +423,6 @@ export const getSystemHealth = async (req, res) => {
       }
     };
     
-    // System metrics
     const systemMetrics = {
       uptime: process.uptime(),
       memory: process.memoryUsage(),

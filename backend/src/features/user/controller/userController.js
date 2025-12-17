@@ -3,7 +3,6 @@ import User from "../../auth/models/UserModels.js";
 export const getProfile = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-    // req.user already has no password thanks to findUserById select in authMiddleware
     const { _id: id, name, email, role, isActive, createdAt, solvedProblemsCount, totalSubmissionsCount } = req.user;
     res.json({ id, name, email, role, isActive, createdAt, solvedProblemsCount, totalSubmissionsCount });
   } catch (error) {
@@ -13,9 +12,48 @@ export const getProfile = async (req, res) => {
 
 export const listUsers = async (req, res) => {
   try {
-    // Only authenticated users can call this; optionally restrict to admin
-    const users = await User.find().select("_id name email role isActive createdAt solvedProblemsCount totalSubmissionsCount");
-    res.json(users);
+    const { page = 1, limit = 10, role, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+    
+    // Build query
+    const query = {};
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Build sort
+    const sortOptions = {};
+    sortOptions[sortBy] = order === 'asc' ? 1 : -1;
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get total count
+    const total = await User.countDocuments(query);
+    
+    // Fetch users
+    const users = await User.find(query)
+      .select("_id name email role isActive createdAt solvedProblemsCount totalSubmissionsCount")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    res.json({
+      users,
+      total,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        hasNextPage: skip + users.length < total,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

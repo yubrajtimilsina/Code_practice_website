@@ -17,12 +17,17 @@ import {
   Info,
 } from "lucide-react";
 
+import Pagination from "../../../components/Pagination.jsx";
+
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [userPage, setUserPage] = useState(1);
+  const [usersPerPage] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -37,13 +42,22 @@ export default function AdminDashboard() {
       setData(dashRes.data);
 
       console.log("Dashboard data:", dashRes.data);
+
+      // Fetch users with pagination
       try {
-        const usersRes = await api.get("/users/all");
+        const usersRes = await api.get("/users/all", {
+          params: {
+            page: userPage,
+            limit: usersPerPage
+          }
+        });
         console.log("Users data:", usersRes.data);
-        setUsers(usersRes.data || []);
+        setUsers(usersRes.data.users || usersRes.data || []);
+        setTotalUsers(usersRes.data.total || usersRes.data.length);
       } catch (err) {
         console.warn("Could not fetch users:", err.message);
         setUsers([]);
+        setTotalUsers(0);
       }
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -57,7 +71,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [userPage]);
 
 
 
@@ -320,80 +334,91 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-600" />
-              Recent Users
+              User Management
             </h2>
-            <span className="text-slate-500 text-sm">Total: {users.length}</span>
+            <span className="text-slate-500 text-sm">Total: {totalUsers}</span>
           </div>
 
           {users.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="pb-4 text-slate-600">Name</th>
-                    <th className="pb-4 text-slate-600">Email</th>
-                    <th className="pb-4 text-slate-600">Role</th>
-                    <th className="pb-4 text-slate-600">Status</th>
-                    <th className="pb-4 text-slate-600">Joined</th>
-                    <th className="pb-4 text-slate-600">Actions</th>
-                  </tr>
-                </thead>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="pb-4 text-slate-600 text-left">Name</th>
+                      <th className="pb-4 text-slate-600 text-left">Email</th>
+                      <th className="pb-4 text-slate-600 text-left">Role</th>
+                      <th className="pb-4 text-slate-600 text-left">Status</th>
+                      <th className="pb-4 text-slate-600 text-left">Joined</th>
+                      <th className="pb-4 text-slate-600 text-left">Actions</th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {users.slice(0, 10).map((userItem, idx) => (
-                    <tr key={idx} className="border-b border-slate-100">
-                      <td className="py-4 text-slate-900 font-medium">
-                        {userItem.name}
-                      </td>
-                      <td className="py-4 text-slate-600">{userItem.email}</td>
-                      <td className="py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.role === "admin"
+                  <tbody>
+                    {users.map((userItem, idx) => (
+                      <tr key={idx} className="border-b border-slate-100">
+                        <td className="py-4 text-slate-900 font-medium">
+                          {userItem.name}
+                        </td>
+                        <td className="py-4 text-slate-600">{userItem.email}</td>
+                        <td className="py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.role === "admin"
                               ? "bg-red-100 text-red-700"
                               : userItem.role === "super-admin"
                                 ? "bg-yellow-100 text-yellow-700"
                                 : "bg-blue-100 text-blue-700"
-                            }`}
-                        >
-                          {userItem.role}
-                        </span>
-                      </td>
+                              }`}
+                          >
+                            {userItem.role}
+                          </span>
+                        </td>
 
-                      <td className="py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.isActive
+                        <td className="py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.isActive
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
-                            }`}
-                        >
-                          {userItem.isActive ? "Active" : "Blocked"}
-                        </span>
-                      </td>
+                              }`}
+                          >
+                            {userItem.isActive ? "Active" : "Blocked"}
+                          </span>
+                        </td>
 
-                      <td className="py-4 text-slate-500">
-                        {new Date(userItem.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-4 text-right flex gap-2 justify-end items-center">
-                        <button
-                          onClick={() => handleBlockUser(userItem._id)}
-                          disabled={refreshing || !userItem.isActive}
-                          className={`px-3 py-1 text-sm rounded-md font-medium ${userItem.isActive ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-slate-100 text-slate-500 cursor-not-allowed'}`}
-                        >
-                          {userItem.isActive ? "Block" : "Blocked"}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(userItem._id)}
-                          disabled={refreshing}
-                          className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <td className="py-4 text-slate-500">
+                          {new Date(userItem.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 text-right flex gap-2 justify-end items-center">
+                          <button
+                            onClick={() => handleBlockUser(userItem._id)}
+                            disabled={refreshing || !userItem.isActive}
+                            className={`px-3 py-1 text-sm rounded-md font-medium ${userItem.isActive ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-slate-100 text-slate-500 cursor-not-allowed'}`}
+                          >
+                            {userItem.isActive ? "Block" : "Blocked"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(userItem._id)}
+                            disabled={refreshing}
+                            className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination for Users */}
+              <Pagination
+                currentPage={userPage}
+                totalPages={Math.ceil(totalUsers / usersPerPage)}
+                totalItems={totalUsers}
+                itemsPerPage={usersPerPage}
+                onPageChange={setUserPage}
+              />
+            </>
           ) : (
             <div className="text-center py-12 text-slate-500">
               No users found

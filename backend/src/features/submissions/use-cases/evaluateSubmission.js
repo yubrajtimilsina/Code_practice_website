@@ -214,9 +214,6 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
         
     }
 }
-
-
-
 async function updateProblemStatistics(problemId, isAccepted) {
     try {
         const problem = await Problem.findById(problemId);
@@ -245,20 +242,45 @@ async function updateProblemStatistics(problemId, isAccepted) {
     }
 }
 
-export const getSubmissionHistory = async (userId, problemId = null, limit = 10) => {
+export const getSubmissionHistory = async (userId, filters= {} ) => {
     try {
+        const { 
+            problemId = null, 
+            page = 1, 
+            limit = 20,
+            verdict = null 
+        } = filters;
+
         const query = { userId };
         if (problemId) {
             query.problemId = problemId;
         }
+         if (verdict && verdict !== "all") {
+            query.verdict = verdict;
+        }
+         const skip = (page - 1) * limit;
+
+         const total = await Submission.countDocuments(query);
+
 
         const submissions = await Submission.find(query)
             .sort({ createdAt: -1 })
-            .limit(limit)
-            .populate('problemId', 'title slug')
+            .skip(skip)
+            .limit(parseInt(limit))
+            .populate('problemId', 'title slug difficulty')
             .lean();
 
-        return submissions;
+             return {
+            submissions,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
+        };
     } catch (error) {
         console.error("Error fetching submission history:", error.message);
         throw error;

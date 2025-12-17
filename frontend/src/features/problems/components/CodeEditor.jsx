@@ -13,6 +13,7 @@ export default function CodeEditor({
   problemExamples,
   problemConstraints,
   problemTopics,
+  problemHints,
   sampleInput,
   sampleOutput,
   onRun,
@@ -32,6 +33,7 @@ export default function CodeEditor({
   const [outputTab, setOutputTab] = useState("input");
   const [autoSaveStatus, setAutoSaveStatus] = useState("");
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [showHints, setShowHints] = useState(false);
 
   const [outputHeight, setOutputHeight] = useState(200);
   const [editorMinHeight, setEditorMinHeight] = useState(200);
@@ -313,9 +315,45 @@ export default function CodeEditor({
                       </ul>
                     </div>
                   )}
+
+
+                  {/* Hints Section */}
+                  {problemHints && problemHints.length > 0 && (
+                    <div className="border border-yellow-200 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setShowHints(!showHints)}
+                        className="w-full flex items-center justify-between px-5 py-3 bg-yellow-50 text-yellow-800 font-semibold"
+                      >
+                        <span className="flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5" />
+                          Hints
+                        </span>
+                        <ChevronRight
+                          className={`w-4 h-4 transition-transform ${showHints ? "rotate-90" : ""
+                            }`}
+                        />
+                      </button>
+
+                      {showHints && (
+                        <div className="p-5 bg-white space-y-3">
+                          {problemHints.map((hint, idx) => (
+                            <div key={idx} className="text-sm text-gray-800">
+                              <strong>{idx + 1}.</strong> {hint}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+
                 </div>
               )}
+
+
+
             </div>
+
           </div>
         </div>
 

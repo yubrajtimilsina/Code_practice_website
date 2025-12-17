@@ -50,6 +50,15 @@ const ProblemSchema = new mongoose.Schema({
 lastViewedAt: { type: Date, default: null }
 });
 
+
+
+ProblemSchema.index({ title: 'text', description: 'text' });
+
+ProblemSchema.index({ difficulty: 1 });
+ProblemSchema.index({ tags: 1 });
+ProblemSchema.index({ createdAt: -1 });
+ProblemSchema.index({ slug: 1 });
+
 ProblemSchema.pre('save', function () {
     this.updatedAt = Date.now();
 

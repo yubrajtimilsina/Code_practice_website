@@ -144,15 +144,33 @@ export const getSubmission = async (req, res) => {
 export const getHistory = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { problemId, limit = 10 } = req.query;
+        const { 
+            problemId, 
+            page = 1, 
+            limit = 20,
+            verdict 
+        } = req.query;
 
-        console.log("Get history request:", { userId, problemId, limit });
+        console.log("Get history request:", { 
+            userId, 
+            problemId, 
+            page, 
+            limit, 
+            verdict 
+        });
 
-        const submissions = await getSubmissionHistory(userId, problemId, parseInt(limit));
+        const result = await getSubmissionHistory(userId, {
+            problemId,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            verdict
+        });
 
         res.status(200).json({
-            submissions,
-            count: submissions.length,
+            submissions: result.submissions,
+            total: result.pagination.total,
+            pagination: result.pagination,
+            count: result.submissions.length,
         });
     } catch (error) {
         console.error("Get history error:", error);

@@ -22,12 +22,42 @@ export default function LearnerDashboard() {
   const CARD_HOVER = "hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer";
   const TEXT_SUB = "text-slate-600";
 
+  const SkeletonCard = () => (
+  <div className="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse">
+    <div className="flex items-center justify-between mb-4">
+      <div className="w-12 h-12 bg-slate-200 rounded-lg"></div>
+    </div>
+    <div className="h-4 bg-slate-200 rounded w-24 mb-2"></div>
+    <div className="h-8 bg-slate-300 rounded w-16"></div>
+  </div>
+);
+
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
-          <p className="text-slate-700 text-lg font-medium">Loading your dashboard...</p>
+       <div className="min-h-screen bg-slate-50 p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header Skeleton */}
+        <div className="mb-8 animate-pulse">
+          <div className="h-10 bg-slate-200 rounded w-96 mb-3"></div>
+          <div className="h-5 bg-slate-200 rounded w-72"></div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Large Sections Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse h-64"></div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 animate-pulse h-64"></div>
+        </div>
+  
         </div>
       </div>
     );
@@ -178,7 +208,7 @@ export default function LearnerDashboard() {
 
               <div className="flex items-center justify-between">
                 <span className={TEXT_SUB}>Streak</span>
-                <span className="text-lg font-bold text-yellow-600">{data.dashboard.thisWeek.streak} days 🔥</span>
+                <span className="text-lg font-bold text-yellow-600">{data.dashboard.thisWeek.streak} days</span>
               </div>
 
               <div className="w-full h-px bg-slate-200 my-2"></div>
