@@ -1,8 +1,7 @@
-# judge0-setup/docker-compose.yml
 version: '3.8'
 
 services:
-  # Judge0 Server - FIXED for Java memory issues
+  # Judge0 Server - FULLY FIXED
   judge0-server:
     image: judge0/judge0:1.13.0
     container_name: judge0-server
@@ -21,49 +20,52 @@ services:
       - POSTGRES_USER=judge0
       - POSTGRES_PASSWORD=judge0_password
       
-      # CRITICAL FIX: Reduced memory limits for Java compatibility
+      # CRITICAL FIX: Match your .env token EXACTLY
+      - AUTHENTICATION_HEADER=X-Auth-Token
+      - AUTHENTICATION_TOKENS=CodePracticeSecretKey2024
+      
+      # Enable Features
       - ENABLE_WAIT_RESULT=true
       - ENABLE_COMPILER_OPTIONS=true
       - ALLOWED_LANGUAGES_FOR_COMPILE_OPTIONS=44,46,48,52,54,62,63,71
       
       # Queue Settings
-      - MAX_QUEUE_SIZE=200
+      - MAX_QUEUE_SIZE=500
       - ENABLE_BATCHED_SUBMISSIONS=true
       
-      # CPU Time Limits (seconds)
-      - MAX_CPU_TIME_LIMIT=5
-      - MAX_MAX_CPU_TIME_LIMIT=10
-      - CPU_TIME_LIMIT=2
-      - CPU_EXTRA_TIME=1
+      # CPU Time Limits (seconds) - INCREASED
+      - MAX_CPU_TIME_LIMIT=10
+      - MAX_MAX_CPU_TIME_LIMIT=15
+      - CPU_TIME_LIMIT=5
+      - CPU_EXTRA_TIME=2
       
-      # Wall Time Limits (seconds)
-      - MAX_WALL_TIME_LIMIT=10
+      # Wall Time Limits (seconds) - INCREASED
+      - MAX_WALL_TIME_LIMIT=15
       - MAX_MAX_WALL_TIME_LIMIT=20
-      - WALL_TIME_LIMIT=5
+      - WALL_TIME_LIMIT=10
       
-      # CRITICAL FIX: Memory Limits (KB) - Reduced for Java
-      # Old value: 256000KB caused "Could not reserve enough space for object heap"
-      - MAX_MEMORY_LIMIT=128000
-      - MAX_MAX_MEMORY_LIMIT=256000
-      - MEMORY_LIMIT=64000
+      # CRITICAL FIX: Memory Limits (KB) - SIGNIFICANTLY INCREASED for Java
+      - MAX_MEMORY_LIMIT=512000
+      - MAX_MAX_MEMORY_LIMIT=1024000
+      - MEMORY_LIMIT=256000
       
-      # CRITICAL FIX: Stack Limits (KB) - Reduced
-      - MAX_STACK_LIMIT=64000
-      - MAX_MAX_STACK_LIMIT=128000
-      - STACK_LIMIT=32000
+      # CRITICAL FIX: Stack Limits (KB) - INCREASED
+      - MAX_STACK_LIMIT=128000
+      - MAX_MAX_STACK_LIMIT=256000
+      - STACK_LIMIT=64000
       
-      # Process/Thread Limits
-      - MAX_PROCESSES_AND_OR_THREADS=30
-      - MAX_MAX_PROCESSES_AND_OR_THREADS=60
+      # Process/Thread Limits - INCREASED
+      - MAX_PROCESSES_AND_OR_THREADS=60
+      - MAX_MAX_PROCESSES_AND_OR_THREADS=120
       - ENABLE_PER_PROCESS_AND_THREAD_TIME_LIMIT=true
       - ENABLE_PER_PROCESS_AND_THREAD_MEMORY_LIMIT=true
       
       # File Size Limits (KB)
-      - MAX_FILE_SIZE=1024
-      - MAX_MAX_FILE_SIZE=2048
+      - MAX_FILE_SIZE=2048
+      - MAX_MAX_FILE_SIZE=4096
       
-      # Compilation Settings - CRITICAL FIX
-      - COMPILER_OPTIONS_EXTRA=-J-Xmx64m -J-Xms32m
+      # Compilation Settings - CRITICAL FIX for Java
+      - COMPILER_OPTIONS_EXTRA=-J-Xmx256m -J-Xms128m
       - ENABLE_COMPILER_OPTIONS_EXTRA=true
       
       # Other Settings
@@ -73,31 +75,38 @@ services:
       - MAX_EXTRACT_SIZE=10240
       - ENABLE_NETWORK=false
       
-      # Authentication
-      - AUTHENTICATION_HEADER=X-Auth-Token
-      - AUTHENTICATION_TOKENS=CodePracticeSecretKey2024
-      
       # Performance Tuning
-      - WORKERS_COUNT=2
+      - WORKERS_COUNT=4
+      
+      # Callbacks - CRITICAL for status updates
+      - ENABLE_CALLBACKS=true
+      - CALLBACKS_MAX_TRIES=3
+      - CALLBACKS_TIMEOUT=5
       
     depends_on:
-      - judge0-db
-      - judge0-redis
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_healthy
     volumes:
       - ./judge0-data:/var/lib/judge0
-    # CRITICAL FIX: Increased container resources
     deploy:
       resources:
         limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
           cpus: '2.0'
           memory: 4G
-        reservations:
-          cpus: '1.0'
-          memory: 2G
-    # Add shared memory for better performance
-    shm_size: '1gb'
+    shm_size: '2gb'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2358/about"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
-  # PostgreSQL Database
+  # PostgreSQL Database - OPTIMIZED
   judge0-db:
     image: postgres:13
     container_name: judge0-db
@@ -106,6 +115,7 @@ services:
       - POSTGRES_DB=judge0
       - POSTGRES_USER=judge0
       - POSTGRES_PASSWORD=judge0_password
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - judge0-postgres-data:/var/lib/postgresql/data
     ports:
@@ -113,24 +123,38 @@ services:
     command: 
       - "postgres"
       - "-c"
-      - "shared_buffers=256MB"
+      - "shared_buffers=512MB"
       - "-c"
-      - "max_connections=200"
+      - "max_connections=300"
       - "-c"
-      - "effective_cache_size=1GB"
+      - "effective_cache_size=2GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U judge0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Redis Cache
+  # Redis Cache - OPTIMIZED
   judge0-redis:
     image: redis:6
     container_name: judge0-redis
     restart: always
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
     volumes:
       - judge0-redis-data:/data
     ports:
       - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Judge0 Workers - FIXED for Java memory issues
+  # Judge0 Workers - FIXED
   judge0-worker:
     image: judge0/judge0:1.13.0
     container_name: judge0-worker
@@ -144,25 +168,29 @@ services:
       - POSTGRES_DB=judge0
       - POSTGRES_USER=judge0
       - POSTGRES_PASSWORD=judge0_password
-      - WORKERS_COUNT=2
-      - MEMORY_LIMIT=64000
-      - STACK_LIMIT=32000
-      - COMPILER_OPTIONS_EXTRA=-J-Xmx64m -J-Xms32m
+      - WORKERS_COUNT=4
+      - MEMORY_LIMIT=256000
+      - STACK_LIMIT=64000
+      - COMPILER_OPTIONS_EXTRA=-J-Xmx256m -J-Xms128m
     depends_on:
-      - judge0-db
-      - judge0-redis
+      judge0-db:
+        condition: service_healthy
+      judge0-redis:
+        condition: service_healthy
     volumes:
       - ./judge0-data:/var/lib/judge0
     deploy:
       resources:
         limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
           cpus: '2.0'
           memory: 4G
-        reservations:
-          cpus: '1.0'
-          memory: 2G
-    shm_size: '1gb'
+    shm_size: '2gb'
 
 volumes:
   judge0-postgres-data:
+    driver: local
   judge0-redis-data:
+    driver: local
