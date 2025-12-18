@@ -4,6 +4,7 @@ import { getDraftApi, saveDraftApi } from "../api/submissionApi";
 import { useNavigate } from "react-router-dom";
 import { CODE_TEMPLATES } from "../../../utils/codeTemplates";
 import Editor from "@monaco-editor/react";
+import HintsPanel from "./HintsPanel";
 
 export default function CodeEditor({
   problemId,
@@ -319,31 +320,7 @@ export default function CodeEditor({
 
                   {/* Hints Section */}
                   {problemHints && problemHints.length > 0 && (
-                    <div className="border border-yellow-200 rounded-xl overflow-hidden">
-                      <button
-                        onClick={() => setShowHints(!showHints)}
-                        className="w-full flex items-center justify-between px-5 py-3 bg-yellow-50 text-yellow-800 font-semibold"
-                      >
-                        <span className="flex items-center gap-2">
-                          <AlertTriangle className="w-5 h-5" />
-                          Hints
-                        </span>
-                        <ChevronRight
-                          className={`w-4 h-4 transition-transform ${showHints ? "rotate-90" : ""
-                            }`}
-                        />
-                      </button>
-
-                      {showHints && (
-                        <div className="p-5 bg-white space-y-3">
-                          {problemHints.map((hint, idx) => (
-                            <div key={idx} className="text-sm text-gray-800">
-                              <strong>{idx + 1}.</strong> {hint}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <HintsPanel hints={problemHints} />
                   )}
 
 
@@ -412,28 +389,37 @@ export default function CodeEditor({
             style={{ height: outputHeight }}
           >
             {/* Output Tabs */}
-            <div className="flex border-b border-gray-300 items-center">
+            <div className="flex border-b border-gray-300 items-center overflow-x-auto">
               <button
                 onClick={() => setOutputTab("input")}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "input" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${outputTab === "input" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
                   }`}
               >
                 Input
               </button>
               <button
                 onClick={() => setOutputTab("output")}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "output" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${outputTab === "output" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
                   }`}
               >
                 Output
               </button>
               <button
                 onClick={() => setOutputTab("expected")}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${outputTab === "expected" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
+                className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${outputTab === "expected" ? "text-gray-900 bg-white" : "text-gray-500 hover:text-gray-700"
                   }`}
               >
                 Expected
               </button>
+              {problemHints && problemHints.length > 0 && (
+                <button
+                  onClick={() => setOutputTab("hints")}
+                  className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1 ${outputTab === "hints" ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                >
+                   Hints
+                </button>
+              )}
 
               {verdict && (
                 <div
@@ -449,6 +435,9 @@ export default function CodeEditor({
             {/* Output Content */}
             <div className="flex-1 overflow-y-auto p-4 text-gray-900">
               {outputTab === "input" && <pre className="text-sm font-mono whitespace-pre-wrap">{sampleInput || "No input"}</pre>}
+              {outputTab === "hints" && problemHints && problemHints.length > 0 && (
+                <HintsPanel hints={problemHints} />
+              )}
               {outputTab === "output" && (
                 <div>
                   {error && <pre className="text-red-600 text-sm font-mono bg-red-100 p-3 rounded">{error}</pre>}

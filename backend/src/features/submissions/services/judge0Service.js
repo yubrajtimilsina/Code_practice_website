@@ -40,7 +40,6 @@ const normalizeVerdict = (statusId) => {
     return verdict;
 };
 
-// Helper functions for base64 encoding/decoding
 const encodeBase64 = (str) => {
     return Buffer.from(str || '', 'utf-8').toString('base64');
 };
@@ -51,7 +50,7 @@ const decodeBase64 = (str) => {
         return Buffer.from(str, 'base64').toString('utf-8');
     } catch (e) {
         console.error('Base64 decode error:', e);
-        return str; // Return original if decode fails
+        return str;
     }
 };
 
@@ -62,7 +61,7 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             throw new Error(`Language ${languageKey} is not supported.`);
         }
 
-        console.log(' Submitting to Judge0:', {
+        console.log('📤 Submitting to Judge0:', {
             language: languageKey,
             languageId,
             codeLength: code.length,
@@ -70,15 +69,20 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             expectedOutputLength: expectedOutput.length,
         });
 
-        // FIXED: Use base64 encoding
+        // ENHANCED: Better resource limits to prevent timeouts
         const payload = {
             language_id: languageId,
             source_code: encodeBase64(code),
             stdin: encodeBase64(input),
             expected_output: encodeBase64(expectedOutput),
-            cpu_time_limit: 5,
-            memory_limit: 128000,
-            wall_time_limit: 10,
+            cpu_time_limit: 3, // Reduced from 5 to 3 seconds
+            cpu_extra_time: 1, // Extra buffer time
+            wall_time_limit: 5, // Reduced from 10 to 5 seconds
+            memory_limit: 128000, // 128 MB
+            stack_limit: 64000, // 64 MB
+            max_processes_and_or_threads: 30,
+            enable_per_process_and_thread_time_limit: true,
+            enable_per_process_and_thread_memory_limit: true,
             max_file_size: 1024,
             enable_network: false,
         };
@@ -91,7 +95,6 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
         }
 
-        // FIXED: Add base64_encoded=true parameter
         const response = await axios.post(
             `${JUDGE0_API_URL}/submissions?base64_encoded=true&wait=false`,
             payload,
@@ -101,7 +104,7 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
             }
         );
 
-        console.log(' Judge0 submission created:', response.data);
+        console.log('✅ Judge0 submission created:', response.data);
 
         if (!response.data || !response.data.token) {
             throw new Error("Invalid response from Judge0 API");
@@ -109,7 +112,7 @@ export const submitToJudge0 = async (code, languageKey, input = '', expectedOutp
 
         return response.data.token;
     } catch (error) {
-        console.error(" Judge0 submission error:", {
+        console.error("❌ Judge0 submission error:", {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
@@ -140,7 +143,6 @@ export const fetchResult = async (token) => {
             headers['X-Auth-Token'] = JUDGE0_AUTH_TOKEN;
         }
 
-        // FIXED: Add base64_encoded=true parameter
         const response = await axios.get(
             `${JUDGE0_API_URL}/submissions/${token}?base64_encoded=true&fields=*`,
             { 
@@ -151,14 +153,13 @@ export const fetchResult = async (token) => {
 
         const result = response.data;
 
-        console.log('Judge0 result:', {
+        console.log('📊 Judge0 result:', {
             token,
             status: result.status,
             statusId: result.status?.id,
             verdict: VERDICTS[result.status?.id],
         });
 
-        // FIXED: Decode base64 responses
         const actualOutput = decodeBase64(result.stdout || "").trim();
         const expectedOutput = decodeBase64(result.expected_output || "").trim();
         const stderr = decodeBase64(result.stderr || "");
@@ -187,7 +188,7 @@ export const fetchResult = async (token) => {
             isWrongAnswer: result.status?.id === 4 || (!isAccepted && isJudge0Accepted),
         };
     } catch (error) {
-        console.error("Judge0 fetch result error:", {
+        console.error("❌ Judge0 fetch result error:", {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status
@@ -201,35 +202,37 @@ export const fetchResult = async (token) => {
     }
 };
 
-export const pollResult = async (token, maxAttempts = 30, interval = 500) => {
+export const pollResult = async (token, maxAttempts = 40, interval = 500) => {
     try {
-        console.log(`Polling Judge0 result for token: ${token}`);
+        console.log(`⏳ Polling Judge0 result for token: ${token}`);
 
         for (let i = 0; i < maxAttempts; i++) {
             const result = await fetchResult(token);
 
-            console.log(` Attempt ${i + 1}/${maxAttempts}:`, {
+            console.log(`🔄 Attempt ${i + 1}/${maxAttempts}:`, {
                 status: result.statusText,
                 verdict: result.verdict,
                 isProcessing: result.isProcessing
             });
 
             if (!result.isProcessing) {
-                console.log('Final result:', {
+                console.log('✅ Final result:', {
                     verdict: result.verdict,
                     isAccepted: result.isAccepted,
-                    output: result.output?.substring(0, 50),
-                    expectedOutput: result.expectedOutput?.substring(0, 50),
+                    executionTime: result.executionTime,
+                    memoryUsed: result.memoryUsed,
                 });
                 return result;
             }
 
-            await new Promise(resolve => setTimeout(resolve, interval));
+            // Exponential backoff for longer running submissions
+            const waitTime = i < 10 ? interval : interval * 1.5;
+            await new Promise(resolve => setTimeout(resolve, waitTime));
         }
 
         throw new Error("Execution timeout. The code is taking too long to execute.");
     } catch (error) {
-        console.error("Judge0 poll result error:", error.message);
+        console.error("❌ Judge0 poll result error:", error.message);
         throw error;
     }
 };
@@ -254,14 +257,14 @@ export const testJudge0Connection = async () => {
             { headers, timeout: 5000 }
         );
 
-        console.log(' Judge0 connection successful:', response.data);
+        console.log('✅ Judge0 connection successful:', response.data);
         return {
             success: true,
             version: response.data?.version || 'unknown',
             data: response.data
         };
     } catch (error) {
-        console.error('Judge0 connection failed:', error.message);
+        console.error('❌ Judge0 connection failed:', error.message);
         return {
             success: false,
             error: error.message

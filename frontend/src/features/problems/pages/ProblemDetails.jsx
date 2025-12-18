@@ -106,6 +106,7 @@ export default function ProblemDetails() {
         problemExamples={problem.examples || []}
         problemConstraints={problem.constraints || []}
         problemTopics={problem.tags || []}
+        problemHints={problem.hints || []}
         sampleInput={problem.sampleInput}
         sampleOutput={problem.sampleOutput}
         onRun={handleRunCode}
