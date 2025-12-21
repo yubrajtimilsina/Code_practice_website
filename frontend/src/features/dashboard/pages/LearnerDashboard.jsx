@@ -214,7 +214,7 @@ export default function LearnerDashboard() {
               <div className="w-full h-px bg-slate-200 my-2"></div>
 
               <button
-                onClick={() => navigate("/problems")}
+                onClick={() => navigate("/daily-challenge")}
                 className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
               >
                 View Challenges →

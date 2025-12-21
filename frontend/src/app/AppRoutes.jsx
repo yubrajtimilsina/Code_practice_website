@@ -17,6 +17,10 @@ import SubmissionDetails from "../features/problems/pages/SubmissionDetails.jsx"
 
 import Leaderboard from "../features/leaderboard/pages/leaderboard.jsx";
 import Progress from "../features/leaderboard/pages/Progress.jsx";
+import DailyChallenge from "../features/dailyChallenge/pages/DailyChallenge.jsx";
+import ChallengeHistory from "../features/dailyChallenge/pages/ChallengeHistory.jsx";
+import ChallengeLeaderboard from "../features/dailyChallenge/pages/ChallengeLeaderboard.jsx";
+
 
 export default function AppRoutes() {
   return (
@@ -157,6 +161,30 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["learner"]}>
             <Progress />
+          </ProtectedRoute>
+        }
+      />
+       <Route
+        path="/daily-challenge"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <DailyChallenge />
+          </ProtectedRoute>
+        }
+      />
+       <Route
+        path="/daily-challenge/history"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <ChallengeHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/daily-challenge/leaderboard/:challengeId"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <ChallengeLeaderboard />
           </ProtectedRoute>
         }
       />
