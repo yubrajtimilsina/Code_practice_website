@@ -20,7 +20,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("Ërror:", err.stack);
+  console.error("Error:", err.stack);
   res.status(err.status || 500).json({ 
     error: err.message || "Internal Server Error" 
   });

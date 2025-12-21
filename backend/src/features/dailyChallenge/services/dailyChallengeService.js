@@ -6,10 +6,9 @@ import { createDailyChallenge, findTodayChallenge } from '../repository/dailyCha
 export const generateDailyChallenge = async () => {
   try {
     console.log(' Generating daily challenge...');
-    
-    // Check if today's challenge already exists
+   
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     
     const existingChallenge = await DailyChallenge.findOne({
       date: today,
@@ -45,7 +44,7 @@ export const generateDailyChallenge = async () => {
       .lean();
     
     if (!problem) {
-      // Fallback: pick any problem if no unused ones available
+  
       const fallbackProblem = await Problem.findOne({
         difficulty: targetDifficulty
       })

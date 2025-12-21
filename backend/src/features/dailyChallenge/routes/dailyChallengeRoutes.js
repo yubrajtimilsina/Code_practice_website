@@ -13,22 +13,19 @@ import {
 
 const router = Router();
 
-// Public route - Get today's challenge
+
 router.get('/today', authMiddleware, getTodayChallenge);
 
-// Get challenge history
 router.get('/history', authMiddleware, getChallengeHistory);
 
-// Get challenge by date
+
 router.get('/date/:date', authMiddleware, getChallengeByDate);
 
 // Get challenge leaderboard
 router.get('/leaderboard/:challengeId', authMiddleware, getDailyChallengeLeaderboard);
 
-// Get user's completion history
 router.get('/my-history', authMiddleware, getMyHistory);
 
-// Complete challenge (internal - called after submission)
 router.post('/complete', authMiddleware, completeDailyChallenge);
 
 // Admin only - Manually generate challenge

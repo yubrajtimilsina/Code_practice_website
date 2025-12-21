@@ -8,6 +8,7 @@ export default function ChallengeLeaderboard() {
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -16,10 +17,12 @@ export default function ChallengeLeaderboard() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await getChallengeLeaderboard(challengeId);
-      setLeaderboard(res.data.leaderboard);
+      setLeaderboard(res.data.leaderboard || []);
     } catch (err) {
       console.error("Failed to fetch leaderboard:", err);
+      setError(err.response?.data?.error || "Failed to load leaderboard");
     } finally {
       setLoading(false);
     }
@@ -48,6 +51,32 @@ export default function ChallengeLeaderboard() {
               <div className="w-20 h-4 bg-slate-200 rounded" />
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => navigate("/daily-challenge")}
+              className="p-2 rounded-lg hover:bg-slate-200 transition"
+            >
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
+            </button>
+          </div>
+          <div className="bg-red-100 border border-red-300 rounded-lg p-6 text-center">
+            <p className="text-red-700 font-semibold mb-4">{error}</p>
+            <button
+              onClick={fetchLeaderboard}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
     );

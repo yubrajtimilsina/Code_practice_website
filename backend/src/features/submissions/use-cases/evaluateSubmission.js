@@ -30,6 +30,13 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 
         const isAdmin = user.role === 'admin' || user.role === 'super-admin';
 
+        if (isAdmin) {
+            submission.verdict = `Test - ${result.verdict}`;
+            submission.isAccepted = false;
+
+            return submission.toObject();
+        }
+
         // Create initial submission record
         let submission = await Submission.create({
             userId,
@@ -66,7 +73,7 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
             });
 
             let finalVerdict = result.verdict;
-            
+
             // Double-check verdict accuracy
             if (result.verdict === "Accepted" && !result.isAccepted) {
                 finalVerdict = "Wrong Answer";
@@ -135,7 +142,7 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
             return;
         }
 
-         user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
+        user.totalSubmissionsCount = (user.totalSubmissionsCount || 0) + 1;
 
         if (isAccepted) {
             // Increment accepted submissions
@@ -150,9 +157,9 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
             });
 
             if (!previousAccepted && problem) {
-                
+
                 console.log(' First accepted solution for this problem!');
-                
+
                 user.solvedProblemsCount = (user.solvedProblemsCount || 0) + 1;
 
                 const difficulty = (problem.difficulty || '').toLowerCase();
@@ -165,10 +172,10 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
                 }
 
                 // Recalculate rank points: Easy=10, Medium=25, Hard=50
-                user.rankPoints = (user.easyProblemsSolved * 10) + 
-                                 (user.mediumProblemsSolved * 25) + 
-                                 (user.hardProblemsSolved * 50);
-                
+                user.rankPoints = (user.easyProblemsSolved * 10) +
+                    (user.mediumProblemsSolved * 25) +
+                    (user.hardProblemsSolved * 50);
+
                 console.log('Updated difficulty counts:', {
                     easy: user.easyProblemsSolved,
                     medium: user.mediumProblemsSolved,
@@ -177,15 +184,15 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
                 });
             }
 
-             const now = new Date();
+            const now = new Date();
             const lastDate = user.lastSubmissionDate;
-            
+
             if (!lastDate) {
                 user.currentStreak = 1;
                 user.longestStreak = 1;
             } else {
                 const daysDiff = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
-                
+
                 if (daysDiff === 1) {
                     user.currentStreak = (user.currentStreak || 0) + 1;
                     user.longestStreak = Math.max(user.longestStreak || 0, user.currentStreak);
@@ -193,10 +200,10 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
                     user.currentStreak = 1;
                 }
             }
-            
+
             user.lastSubmissionDate = now;
         }
-         user.lastActiveDate = new Date();
+        user.lastActiveDate = new Date();
 
         await user.save();
 
@@ -211,7 +218,7 @@ async function updateUserStatistics(userId, problemId, isAccepted, submissionId)
 
     } catch (error) {
         console.error(' Error updating user stats:', error);
-        
+
     }
 }
 async function updateProblemStatistics(problemId, isAccepted) {
@@ -220,7 +227,7 @@ async function updateProblemStatistics(problemId, isAccepted) {
         if (!problem) return;
 
         problem.totalSubmissions = (problem.totalSubmissions || 0) + 1;
-        
+
         if (isAccepted) {
             problem.acceptedSubmissions = (problem.acceptedSubmissions || 0) + 1;
         }
@@ -242,25 +249,25 @@ async function updateProblemStatistics(problemId, isAccepted) {
     }
 }
 
-export const getSubmissionHistory = async (userId, filters= {} ) => {
+export const getSubmissionHistory = async (userId, filters = {}) => {
     try {
-        const { 
-            problemId = null, 
-            page = 1, 
+        const {
+            problemId = null,
+            page = 1,
             limit = 20,
-            verdict = null 
+            verdict = null
         } = filters;
 
         const query = { userId };
         if (problemId) {
             query.problemId = problemId;
         }
-         if (verdict && verdict !== "all") {
+        if (verdict && verdict !== "all") {
             query.verdict = verdict;
         }
-         const skip = (page - 1) * limit;
+        const skip = (page - 1) * limit;
 
-         const total = await Submission.countDocuments(query);
+        const total = await Submission.countDocuments(query);
 
 
         const submissions = await Submission.find(query)
@@ -270,7 +277,7 @@ export const getSubmissionHistory = async (userId, filters= {} ) => {
             .populate('problemId', 'title slug difficulty')
             .lean();
 
-             return {
+        return {
             submissions,
             pagination: {
                 page: parseInt(page),

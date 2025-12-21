@@ -78,7 +78,7 @@ const handleValidationErrors = (req, res, next) => {
 
 // Public routes
 router.get("/", listProblemsController);
-router.get("/:id", authMiddleware, getProblemController);
+router.get("/:id", getProblemController);
 
 
 router.post(

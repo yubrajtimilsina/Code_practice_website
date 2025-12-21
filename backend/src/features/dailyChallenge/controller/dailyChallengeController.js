@@ -17,7 +17,7 @@ export const getTodayChallenge = async (req, res) => {
   try {
     const userId = req.user?._id;
     
-    const challenge = await getTodayChallengeService();
+    let challenge = await getTodayChallengeService();
     
     if (!challenge) {
       return res.status(404).json({ 
@@ -25,17 +25,24 @@ export const getTodayChallenge = async (req, res) => {
       });
     }
     
+   
+    if (challenge.problemId && typeof challenge.problemId === 'object') {
+      // Already populated
+    } else {
+      
+      challenge = await challenge.populate('problemId');
+    }
 
     const hasCompleted = userId ? await hasUserCompletedToday(userId) : false;
     const userAttempts = challenge.completedBy
-      .filter(c => c.userId._id.toString() === userId?.toString())
+      .filter(c => c.userId?.toString() === userId?.toString())
       .reduce((sum, c) => sum + c.attempts, 0);
     
     // Get user's rank if completed
     let userRank = null;
     if (hasCompleted) {
       const leaderboardEntry = challenge.leaderboard.find(
-        entry => entry.userId.toString() === userId.toString()
+        entry => entry.userId?.toString() === userId?.toString()
       );
       userRank = leaderboardEntry?.rank || null;
     }
@@ -44,7 +51,19 @@ export const getTodayChallenge = async (req, res) => {
       challenge: {
         _id: challenge._id,
         date: challenge.date,
-        problem: challenge.problemId,
+        problem: challenge.problemId ? {
+          _id: challenge.problemId._id,
+          title: challenge.problemId.title,
+          description: challenge.problemId.description,
+          difficulty: challenge.problemId.difficulty,
+          tags: challenge.problemId.tags,
+          examples: challenge.problemId.examples,
+          constraints: challenge.problemId.constraints,
+          sampleInput: challenge.problemId.sampleInput,
+          sampleOutput: challenge.problemId.sampleOutput,
+          timeLimitSec: challenge.problemId.timeLimitSec,
+          memoryLimitMB: challenge.problemId.memoryLimitMB
+        } : null,
         difficulty: challenge.difficulty,
         totalAttempts: challenge.totalAttempts,
         totalCompletions: challenge.totalCompletions,
@@ -128,7 +147,63 @@ export const getMyHistory = async (req, res) => {
     const userId = req.user._id;
     const { limit = 30 } = req.query;
     
-    const history = await getUserChallengeHistory(userId, parseInt(limit));
+    console.log(' ========== GET MY HISTORY DEBUG ==========');
+    console.log(' User ID:', userId);
+    console.log(' User object:', req.user);
+    console.log(' Limit:', limit);
+    
+    const challenges = await getUserChallengeHistory(userId, parseInt(limit));
+    
+    console.log(' Challenges found:', challenges.length);
+    if (challenges.length > 0) {
+      console.log(' First challenge:', {
+        _id: challenges[0]._id,
+        date: challenges[0].date,
+        problemId: challenges[0].problemId?.title,
+        completedByCount: challenges[0].completedBy?.length,
+        leaderboardCount: challenges[0].leaderboard?.length
+      });
+    } else {
+      console.log(' No challenges found for this user!');
+    }
+    
+    // Transform challenges to extract user-specific completion data
+    const history = challenges.map((challenge, idx) => {
+      const userCompletion = challenge.completedBy.find(
+        c => c.userId?.toString() === userId.toString()
+      );
+      
+      // Also find in leaderboard for language and executionTime
+      const userLeaderboardEntry = challenge.leaderboard?.find(
+        entry => entry.userId?.toString() === userId.toString()
+      );
+      
+      const transformedChallenge = {
+        _id: challenge._id,
+        date: challenge.date,
+        difficulty: challenge.difficulty,
+        problemId: {
+          _id: challenge.problemId?._id,
+          title: challenge.problemId?.title,
+          tags: challenge.problemId?.tags,
+          description: challenge.problemId?.description
+        },
+        completedAt: userCompletion?.completedAt,
+        attempts: userCompletion?.attempts || 0,
+        language: userLeaderboardEntry?.language || userCompletion?.language,
+        executionTime: userLeaderboardEntry?.executionTime || userCompletion?.executionTime
+      };
+      
+      if (idx === 0) {
+        console.log(' Sample transformed challenge:', transformedChallenge);
+        console.log(' User completion:', userCompletion);
+        console.log(' Leaderboard entry:', userLeaderboardEntry);
+      }
+      
+      return transformedChallenge;
+    });
+    
+    console.log(' Transformed history count:', history.length);
     
     // Calculate stats
     const stats = {

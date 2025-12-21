@@ -13,8 +13,18 @@ import {
 
 export default function ChallengeHistory() {
   const [history, setHistory] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalCompleted: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    byDifficulty: {
+      Easy: 0,
+      Medium: 0,
+      Hard: 0
+    }
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,11 +34,40 @@ export default function ChallengeHistory() {
   const fetchHistory = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log(' Fetching daily challenge history...');
       const response = await getMyHistory(30);
-      setHistory(response.data.history);
-      setStats(response.data.stats);
+      console.log(' Response received:', response);
+      console.log(' History data:', response.data.history);
+      console.log(' Stats data:', response.data.stats);
+      
+      const historyData = response.data.history || [];
+      const statsData = response.data.stats || {
+        totalCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        byDifficulty: {
+          Easy: 0,
+          Medium: 0,
+          Hard: 0
+        }
+      };
+      
+      console.log(' Setting history:', historyData.length, 'challenges');
+      console.log(' Setting stats:', statsData);
+      
+      setHistory(historyData);
+      setStats(statsData);
+      
+      if (!historyData || historyData.length === 0) {
+        console.warn(' No history data returned from API');
+      }
+      
     } catch (err) {
-      console.error("Failed to fetch challenge history:", err);
+      console.error(" Failed to fetch challenge history:", err);
+      console.error(' Error details:', err.response?.data);
+      console.error(' Status code:', err.response?.status);
+      setError(err.response?.data?.error || err.message || "Failed to load challenge history");
     } finally {
       setLoading(false);
     }
@@ -38,6 +77,24 @@ export default function ChallengeHistory() {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-100 border border-red-300 rounded-lg p-6 text-center">
+            <p className="text-red-700 font-semibold mb-4">{error}</p>
+            <button
+              onClick={fetchHistory}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

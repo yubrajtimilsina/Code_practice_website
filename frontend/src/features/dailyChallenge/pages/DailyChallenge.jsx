@@ -1,5 +1,3 @@
-// frontend/src/features/dailyChallenge/pages/DailyChallenge.jsx
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTodayChallenge } from "../api/dailyChallengeApi";

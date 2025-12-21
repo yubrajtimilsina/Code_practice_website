@@ -127,6 +127,7 @@ userSchema.methods.updateStreak = function() {
   this.lastSubmissionDate = now;
 };
 
+userSchema.index({ role: 1, isActive: 1, rankPoints: -1 });
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
 

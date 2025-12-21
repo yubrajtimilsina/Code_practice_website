@@ -48,7 +48,7 @@ const DailyChallengeSchema = new mongoose.Schema({
       default: 1
     }
   }],
-  // Leaderboard for this challenge
+ 
   leaderboard: [{
     userId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -273,39 +273,49 @@ export const fetchResult = async (token) => {
 };
 
 export const pollResult = async (token, maxAttempts = 60, interval = 1000) => {
-    try {
-        console.log(` Polling Judge0 result for token: ${token}`);
+  const startTime = Date.now();
+  const maxWaitTime = 60000; // 60 seconds hard timeout
 
-        for (let i = 0; i < maxAttempts; i++) {
-            const result = await fetchResult(token);
+  try {
+    console.log(` Polling Judge0 result for token: ${token}`);
 
-            console.log(` Attempt ${i + 1}/${maxAttempts}:`, {
-                status: result.statusText,
-                verdict: result.verdict,
-                isProcessing: result.isProcessing
-            });
+    for (let i = 0; i < maxAttempts; i++) {
 
-            if (!result.isProcessing) {
-                console.log(' Final result:', {
-                    verdict: result.verdict,
-                    isAccepted: result.isAccepted,
-                    executionTime: result.executionTime,
-                    memoryUsed: result.memoryUsed,
-                });
-                return result;
-            }
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error("Execution timeout after 60 seconds");
+      }
 
-            // Exponential backoff
-            const waitTime = i < 10 ? interval : Math.min(interval * 1.5, 3000);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
+      const result = await fetchResult(token);
 
-        throw new Error("Execution timeout. The code is taking too long to execute.");
-    } catch (error) {
-        console.error(" Judge0 poll result error:", error.message);
-        throw error;
+      console.log(` Attempt ${i + 1}/${maxAttempts}:`, {
+        status: result.statusText,
+        verdict: result.verdict,
+        isProcessing: result.isProcessing
+      });
+
+      if (!result.isProcessing) {
+        console.log(' Final result:', {
+          verdict: result.verdict,
+          isAccepted: result.isAccepted,
+          executionTime: result.executionTime,
+          memoryUsed: result.memoryUsed
+        });
+
+        return result;
+      }
+      const waitTime =
+        i < 10 ? interval : Math.min(interval * 1.5, 3000);
+
+      await new Promise(resolve => setTimeout(resolve, waitTime));
     }
+
+    throw new Error("Execution timeout. The code is taking too long to execute.");
+  } catch (error) {
+    console.error(" Judge0 poll result error:", error.message);
+    throw error;
+  }
 };
+
 
 export const testJudge0Connection = async () => {
     try {
