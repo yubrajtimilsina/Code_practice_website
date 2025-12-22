@@ -9,6 +9,8 @@ import problemRoutes from "../features/problems/routes/problemRoutes.js";
 import submissionRoutes from "../features/submissions/routes/submissionRoutes.js";
 import leaderboardRoutes from "../features/leaderboard/routes/leaderboardRoutes.js";
 import dailyChallengeRoutes from "../features/dailyChallenge/routes/dailyChallengeRoutes.js"
+import discussionRoute from "../features/discussion/routes/discussionRoute.js";
+
 
 const router = Router();
 
@@ -22,6 +24,6 @@ router.use("/problems", problemRoutes);
 router.use("/submissions", submissionRoutes);
 router.use("/leaderboard", leaderboardRoutes);
 router.use("/daily-challenge", dailyChallengeRoutes);
-
+router.use("/discussion", discussionRoute);
 
 export default router;  
