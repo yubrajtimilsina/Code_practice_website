@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { logout } from "../features/auth/slice/authSlice.js";
-import { LogOut, User, Shield, LayoutDashboard, Code2, Settings } from "lucide-react";
+import { LogOut, User, Shield, LayoutDashboard, Code2, Settings, MessageSquare } from "lucide-react";
 
 export default function Navbar() {
   const { user } = useSelector((state) => state.auth);
@@ -48,7 +48,6 @@ export default function Navbar() {
           </Link>
 
           {/* Problems Link */}
-          {/* Problems Link (only learner) */}
           {user.role === "learner" && (
             <Link
               to="/problems"
@@ -58,6 +57,16 @@ export default function Navbar() {
               Problems
             </Link>
           )}
+
+          {user.role === "learner" && (
+  <Link
+    to="/discussion"
+    className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+  >
+    <MessageSquare className="w-4 h-4" />
+    Discussion
+  </Link>
+)}
 
 
           {/* Admin / Super Admin Only */}
