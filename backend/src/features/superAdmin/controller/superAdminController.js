@@ -3,65 +3,128 @@ import Problem from "../../problems/models/ProblemModel.js";
 import Submission from "../../submissions/models/submissionModel.js";
 import DailyChallenge from "../../dailyChallenge/models/DailyChallengeModel.js";
 
-// Get super admin dashboard
+
 export const getSuperAdminDashboard = async (req, res) => {
   try {
-    // All stats from admin dashboard
+    // Get all user statistics
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ isActive: true });
-    
-    const usersByRole = await User.aggregate([
-      { $group: { _id: "$role", count: { $sum: 1 } } }
-    ]);
+    const totalAdmins = await User.countDocuments({ 
+      role: { $in: ["admin", "super-admin"] } 
+    });
+    const activeLearners = await User.countDocuments({ 
+      role: "learner", 
+      isActive: true 
+    });
 
+    // Get all problems and submissions
     const totalProblems = await Problem.countDocuments();
     const totalSubmissions = await Submission.countDocuments();
     const acceptedSubmissions = await Submission.countDocuments({ isAccepted: true });
 
-    // Admin-specific stats
-    const totalAdmins = await User.countDocuments({ role: "admin" });
-    const activeLearners = await User.countDocuments({ role: "learner", isActive: true });
-
-    // System health metrics
+    // Calculate system metrics
     const avgProblemsPerUser = totalUsers > 0 
-      ? (await Submission.countDocuments() / totalUsers).toFixed(2)
+      ? (totalSubmissions / totalUsers).toFixed(2)
       : 0;
 
-    // Recent admin actions (last 10 users created/modified)
-    const recentUsers = await User.find()
-      .select('name email role isActive createdAt')
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+    const platformAccuracy = totalSubmissions > 0
+      ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(2)
+      : 0;
 
-    // Platform statistics
-    const platformStats = {
-      totalUsers,
-      activeUsers,
-      totalProblems,
-      totalSubmissions,
-      acceptedSubmissions,
-      totalAdmins,
-      activeLearners,
-      avgProblemsPerUser: Number(avgProblemsPerUser)
-    };
+    // Get role distribution
+    const roleDistribution = await User.aggregate([
+      {
+        $group: {
+          _id: "$role",
+          count: { $sum: 1 },
+          active: {
+            $sum: { $cond: ["$isActive", 1, 0] }
+          }
+        }
+      }
+    ]);
 
-    const roleDistribution = usersByRole.reduce((acc, item) => {
-      acc[item._id] = item.count;
-      return acc;
-    }, {});
+    // Get daily challenge stats
+    const totalDailyChallenges = await DailyChallenge.countDocuments();
+    const activeDailyChallenges = await DailyChallenge.countDocuments({ isActive: true });
+
+    // Get recent activity (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentUsers = await User.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
+    
+    const recentSubmissions = await Submission.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
+
+    // System health metrics
+    const problemsWithSubmissions = await Problem.countDocuments({
+      totalSubmissions: { $gt: 0 }
+    });
+
+    const problemEngagementRate = totalProblems > 0
+      ? ((problemsWithSubmissions / totalProblems) * 100).toFixed(2)
+      : 0;
+
+    // Get top contributors
+    const topContributors = await User.aggregate([
+      { $match: { role: "learner" } },
+      { $sort: { solvedProblemsCount: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          solvedProblemsCount: 1,
+          totalSubmissionsCount: 1,
+          rankPoints: 1
+        }
+      }
+    ]);
 
     res.json({
       message: "Super Admin Dashboard",
-      stats: platformStats,
-      roleDistribution,
-      recentUsers
+      stats: {
+        totalUsers,
+        activeUsers,
+        inactiveUsers: totalUsers - activeUsers,
+        totalAdmins,
+        activeLearners,
+        totalProblems,
+        totalSubmissions,
+        acceptedSubmissions,
+        avgProblemsPerUser: Number(avgProblemsPerUser),
+        platformAccuracy: Number(platformAccuracy),
+        problemEngagementRate: Number(problemEngagementRate),
+        totalDailyChallenges,
+        activeDailyChallenges,
+        recentUsers,
+        recentSubmissions
+      },
+      roleDistribution: roleDistribution.reduce((acc, role) => {
+        acc[role._id] = {
+          total: role.count,
+          active: role.active
+        };
+        return acc;
+      }, {}),
+      topContributors,
+      systemHealth: {
+        status: "operational",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      }
     });
 
   } catch (error) {
+    console.error("Super Admin Dashboard Error:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Existing functions
 export const manageAdmins = async (req, res) => {
@@ -116,7 +179,6 @@ export const revokeAdmin = async (req, res) => {
   }
 };
 
-// NEW: Get all users for super admin
 export const getAllUsersForSuperAdmin = async (req, res) => {
   try {
     const { page = 1, limit = 20, role, search } = req.query;
