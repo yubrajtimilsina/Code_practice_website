@@ -19,14 +19,13 @@ export const listUsers = async (req, res) => {
     if (role && role !== 'all') {
       query.role = role;
     }
-    if (search) {
+    if (search && search.trim()) {
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { name: { $regex: search.trim(), $options: 'i' } },
+        { email: { $regex: search.trim(), $options: 'i' } }
       ];
     }
-    
-    // Build sort
+ 
     const sortOptions = {};
     sortOptions[sortBy] = order === 'asc' ? 1 : -1;
     
@@ -35,10 +34,9 @@ export const listUsers = async (req, res) => {
     
     // Get total count
     const total = await User.countDocuments(query);
-    
-    // Fetch users
+   
     const users = await User.find(query)
-      .select("_id name email role isActive createdAt solvedProblemsCount totalSubmissionsCount")
+      .select("_id name email role isActive createdAt solvedProblemsCount totalSubmissionsCount acceptedSubmissionsCount rankPoints currentStreak longestStreak easyProblemsSolved mediumProblemsSolved hardProblemsSolved")
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
@@ -55,6 +53,7 @@ export const listUsers = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('List users error:', error);
     res.status(500).json({ error: error.message });
   }
 };

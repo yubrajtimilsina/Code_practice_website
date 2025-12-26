@@ -3,7 +3,7 @@ import api from "../../../utils/api.js";
 export const getDiscussions = (params) => api.get("/discussion", { params });
 
 export const getDiscussionById = (id) => api.get(`/discussion/${id}`);
-export const createDiscussion = (data) => api.post("/discusssion", data);
+export const createDiscussion = (data) => api.post("/discussion", data);
 export const updateDiscussion = (id, data) => api.put(`/discussion/${id}`, data);
 export const deleteDiscussion = (id) => api.delete(`/discussion/${id}`);
 export const voteDiscussion = (id, voteType) => api.post(`/discussion/${id}/vote`, { voteType });
