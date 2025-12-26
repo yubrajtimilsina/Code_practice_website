@@ -28,45 +28,44 @@ export default function AdminDashboard() {
   const [userPage, setUserPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [totalUsers, setTotalUsers] = useState(0);
-
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
 
-  const fetchDashboardData = async () => {
+
+const fetchDashboardData = async () => {
+  try {
+    setRefreshing(true);
+    setError(null);
+
+    const dashRes = await getAdminDashboardApi();
+    setData(dashRes.data);
+
+ 
     try {
-      setRefreshing(true);
-      setError(null);
-
-      const dashRes = await getAdminDashboardApi();
-      setData(dashRes.data);
-
-      console.log("Dashboard data:", dashRes.data);
-
-      // Fetch users with pagination
-      try {
-        const usersRes = await api.get("/users/all", {
-          params: {
-            page: userPage,
-            limit: usersPerPage
-          }
-        });
-        console.log("Users data:", usersRes.data);
-        setUsers(usersRes.data.users || usersRes.data || []);
-        setTotalUsers(usersRes.data.total || usersRes.data.length);
-      } catch (err) {
-        console.warn("Could not fetch users:", err.message);
-        setUsers([]);
-        setTotalUsers(0);
-      }
+      const usersRes = await api.get("/admin/users", {
+        params: {
+          page: userPage,
+          limit: usersPerPage
+        }
+      });
+      console.log(" Users data:", usersRes.data);
+      setUsers(usersRes.data.users || []);
+      setTotalUsers(usersRes.data.pagination?.total || 0);
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.response?.data?.error || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      console.warn(" Could not fetch users:", err.message);
+      setUsers([]);
+      setTotalUsers(0);
     }
-  };
+  } catch (err) {
+    console.error(" Error fetching dashboard data:", err);
+    setError(err.response?.data?.error || "Failed to load dashboard data");
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+};
+
+
 
 
   useEffect(() => {
@@ -80,18 +79,18 @@ export default function AdminDashboard() {
   };
 
   const handleBlockUser = async (userId) => {
-    if (!confirm("Are you sure you want to block this user?")) return;
-    try {
-      setRefreshing(true);
-      await blockUserApi(userId);
-      fetchDashboardData(); // Re-fetch data to update the user list
-    } catch (err) {
-      console.error("Error blocking user:", err);
-      setError(err.response?.data?.error || "Failed to block user");
-    } finally {
-      setRefreshing(false);
-    }
-  };
+  if (!confirm("Are you sure you want to toggle this user's status?")) return;
+  try {
+    setRefreshing(true);
+    await api.put(`/admin/users/${userId}/toggle-status`);
+    fetchDashboardData();
+  } catch (err) {
+    console.error("Error toggling user status:", err);
+    setError(err.response?.data?.error || "Failed to toggle user status");
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   const handleDeleteUser = async (userId) => {
     if (!confirm("Are you sure you want to permanently delete this user?")) return;
@@ -166,12 +165,13 @@ export default function AdminDashboard() {
     );
   }
 
-
-  const stats = data?.dashboard?.stats || {
-    totalUsers: 0,
-    totalProblems: 0,
-    totalSubmissions: 0,
-  };
+  const stats = data?.dashboard?.stats || {};
+  const usersByRole = data?.dashboard?.usersByRole || {};
+  const problemsByDifficulty = data?.dashboard?.problemsByDifficulty || {};
+  const submissionsByVerdict = data?.dashboard?.submissionsByVerdict || [];
+  const popularProblems = data?.dashboard?.popularProblems || [];
+  const recentUsers = data?.dashboard?.recentUsers || [];
+  
 
   return (
     <div className={`${BG_GRADIENT} min-h-screen p-6`}>

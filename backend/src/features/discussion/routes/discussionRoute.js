@@ -12,7 +12,7 @@ router.get('/:id', getDiscussionById);
 
 router.post('/', authMiddleware, createDiscussion);
 router.put('/:id', authMiddleware, updateDiscussion);
-router.delete('/:id', authMiddleware, deleteDiscussion);
+router.delete('/:id', authMiddleware, role('admin', 'super-admin'), deleteDiscussion);
 router.post('/:id/vote', authMiddleware, voteDiscussion);
 
 
