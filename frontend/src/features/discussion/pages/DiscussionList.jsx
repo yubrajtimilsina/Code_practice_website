@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDiscussions } from "../api/discussionApi.js";
+import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
 
 import { 
   MessageSquare, 
@@ -42,60 +43,23 @@ export default function DiscussionList() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (page === 1) fetchDiscussions();
-      else setPage(1);
+      fetchDiscussions();
     }, 500);
     return () => clearTimeout(timeout);
   }, [search]);
 
   const fetchDiscussions = async() =>{
-    try {
-        setLoading(true);
-        const params = { page, limit:20, sortBy};
-        if (category !=="all") params.category = category;
-        if (search.trim()) params.search = search.trim();
+    setLoading(true);
+    const params = { page, limit:20, sortBy};
+    if (category !=="all") params.category = category;
+    if (search.trim()) params.search = search.trim();
 
-        const response = await getDiscussions(params);
-        setDiscussions(response.data.discussions);
-        setPagination(response.data.pagination);
-    } catch( error) {
-        console.error("Failed to fetch discussion:", error);
-    } finally {
-        setLoading(false);
-    }
+    const response = await getDiscussions(params);
+    setDiscussions(response.data.discussions);
+    setPagination(response.data.pagination);
+    setLoading(false);
   };
 
-   const getTimeSince = (date) => {
-    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    const intervals = {
-      year: 31536000,
-      month: 2592000,
-      week: 604800,
-      day: 86400,
-      hour: 3600,
-      minute: 60
-    };
-
-     for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-      const interval = Math.floor(seconds / secondsInUnit);
-      if (interval >= 1) {
-        return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
-      }
-    }
-    return 'just now';
-  };
-
-   const getCategoryColor = (cat) => {
-    const colors = {
-      general: "bg-blue-100 text-blue-700",
-      "problem-help": "bg-green-100 text-green-700",
-      algorithm: "bg-purple-100 text-purple-700",
-      interview: "bg-yellow-100 text-yellow-700",
-      "bug-report": "bg-red-100 text-red-700",
-      "feature-request": "bg-indigo-100 text-indigo-700"
-    };
-    return colors[cat] || "bg-slate-100 text-slate-700";
-  };
 
    return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">

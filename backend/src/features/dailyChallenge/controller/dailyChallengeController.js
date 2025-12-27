@@ -147,10 +147,6 @@ export const getMyHistory = async (req, res) => {
     const userId = req.user._id;
     const { limit = 30 } = req.query;
     
-    console.log(' ========== GET MY HISTORY DEBUG ==========');
-    console.log(' User ID:', userId);
-    console.log(' User object:', req.user);
-    console.log(' Limit:', limit);
     
     const challenges = await getUserChallengeHistory(userId, parseInt(limit));
     

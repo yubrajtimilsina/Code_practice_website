@@ -1,36 +1,30 @@
 import * as repo from "../repository/discussionRepository.js";
 
 export const createDiscussion = async (req, res) => {
-    try {
-        const { title, content, category, tags, problemId } = req.body;
-        const userId = req.user._id;
+    const { title, content, category, tags, problemId } = req.body;
+    const userId = req.user._id;
 
-        if (!title || !content) {
-            return res.status(400).json({ error: 'Title and content are required' });
-        }
-        const discussion = await repo.createDiscussion({
-            title,
-            content,
-            category: category || 'general',
-            tags: tags || [],
-            userId,
-            problemId: problemId || null
-        });
-
-        const populatedDiscussion = await repo.findDiscussionById(discussion._id);
-
-        res.status(201).json({
-            message: 'Discussion created successfully',
-            discussion: populatedDiscussion
-        });
-    } catch (error) {
-        console.error('Create discussion error:', error);
-        res.status(500).json({ error: 'Failed to create discussion' });
+    if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
     }
+    const discussion = await repo.createDiscussion({
+        title,
+        content,
+        category: category || 'general',
+        tags: tags || [],
+        userId,
+        problemId: problemId || null
+    });
+
+    const populatedDiscussion = await repo.findDiscussionById(discussion._id);
+
+    res.status(201).json({
+        message: 'Discussion created successfully',
+        discussion: populatedDiscussion
+    });
 };
 
 export const getAllDiscussions = async (req, res) => {
-  try {
     const { 
       page = 1, 
       limit = 20, 
@@ -62,32 +56,22 @@ export const getAllDiscussions = async (req, res) => {
     const result = await repo.findAllDiscussions(filters, { page, limit, sortBy });
 
     res.json(result);
-  } catch (error) {
-    console.error('Get discussions error:', error);
-    res.status(500).json({ error: 'Failed to fetch discussions' });
-  }
 };
 
 export const getDiscussionById = async (req, res) => {
-  try {
     const { id } = req.params;
 
     await repo.incrementViews(id);
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     res.json({ discussion });
-  } catch (error) {
-    console.error('Get discussion error:', error);
-    res.status(500).json({ error: 'Failed to fetch discussion' });
-  }
 };
 
 export const updateDiscussion = async (req, res) => {
-  try {
     const { id } = req.params;
     const { title, content, category, tags, isResolved, isClosed } = req.body;
     const userId = req.user._id;
@@ -95,11 +79,11 @@ export const updateDiscussion = async (req, res) => {
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     if (discussion.userId._id.toString() !== userId.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to update this discussion' });
+        return res.status(403).json({ error: 'Not authorized to update this discussion' });
     }
 
     const updates = {};
@@ -113,121 +97,101 @@ export const updateDiscussion = async (req, res) => {
     const updatedDiscussion = await repo.updateDiscussion(id, updates);
 
     res.json({
-      message: 'Discussion updated successfully',
-      discussion: updatedDiscussion
+        message: 'Discussion updated successfully',
+        discussion: updatedDiscussion
     });
-  } catch (error) {
-    console.error('Update discussion error:', error);
-    res.status(500).json({ error: 'Failed to update discussion' });
-  }
 };
 
 export const deleteDiscussion = async (req, res) => {
-  try {
     const { id } = req.params;
     const userId = req.user._id;
 
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     if (discussion.userId._id.toString() !== userId.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to delete this discussion' });
+        return res.status(403).json({ error: 'Not authorized to delete this discussion' });
     }
 
     await repo.deleteDiscussion(id);
 
     res.json({ message: 'Discussion deleted successfully' });
-  } catch (error) {
-    console.error('Delete discussion error:', error);
-    res.status(500).json({ error: 'Failed to delete discussion' });
-  }
 };
 
 export const voteDiscussion = async (req, res) => {
-  try {
     const { id } = req.params;
     const { voteType } = req.body;
     const userId = req.user._id;
 
     if (!['upvote', 'downvote'].includes(voteType)) {
-      return res.status(400).json({ error: 'Invalid vote type' });
+        return res.status(400).json({ error: 'Invalid vote type' });
     }
 
     const discussion = await repo.toggleVote(id, userId, voteType);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     res.json({
-      message: 'Vote recorded',
-      upvoteCount: discussion.upvotes.length,
-      downvoteCount: discussion.downvotes.length
+        message: 'Vote recorded',
+        upvoteCount: discussion.upvotes.length,
+        downvoteCount: discussion.downvotes.length
     });
-  } catch (error) {
-    console.error('Vote discussion error:', error);
-    res.status(500).json({ error: 'Failed to vote' });
-  }
 };
 
 export const addComment = async (req, res) => {
-  try {
     const { id } = req.params;
     const { content } = req.body;
     const userId = req.user._id;
 
     if (!content || !content.trim()) {
-      return res.status(400).json({ error: 'Comment content is required' });
+        return res.status(400).json({ error: 'Comment content is required' });
     }
 
     const discussion = await repo.addComment(id, {
-      userId,
-      content: content.trim()
+        userId,
+        content: content.trim()
     });
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     const updatedDiscussion = await repo.findDiscussionById(id);
 
     res.status(201).json({
-      message: 'Comment added successfully',
-      discussion: updatedDiscussion
+        message: 'Comment added successfully',
+        discussion: updatedDiscussion
     });
-  } catch (error) {
-    console.error('Add comment error:', error);
-    res.status(500).json({ error: 'Failed to add comment' });
-  }
 };
 
 export const updateComment = async (req, res) => {
-  try {
     const { id, commentId } = req.params;
     const { content } = req.body;
     const userId = req.user._id;
 
     if (!content || !content.trim()) {
-      return res.status(400).json({ error: 'Comment content is required' });
+        return res.status(400).json({ error: 'Comment content is required' });
     }
 
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     const comment = discussion.comments.find(c => c._id.toString() === commentId);
 
     if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+        return res.status(404).json({ error: 'Comment not found' });
     }
 
     if (comment.userId._id.toString() !== userId.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to update this comment' });
+        return res.status(403).json({ error: 'Not authorized to update this comment' });
     }
 
     const updatedDiscussion = await repo.updateComment(id, commentId, content.trim());
@@ -235,34 +199,29 @@ export const updateComment = async (req, res) => {
     const finalDiscussion = await repo.findDiscussionById(id);
 
     res.json({
-      message: 'Comment updated successfully',
-      discussion: finalDiscussion
+        message: 'Comment updated successfully',
+        discussion: finalDiscussion
     });
-  } catch (error) {
-    console.error('Update comment error:', error);
-    res.status(500).json({ error: 'Failed to update comment' });
-  }
 };
 
 export const deleteComment = async (req, res) => {
-  try {
     const { id, commentId } = req.params;
     const userId = req.user._id;
 
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     const comment = discussion.comments.find(c => c._id.toString() === commentId);
 
     if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+        return res.status(404).json({ error: 'Comment not found' });
     }
 
     if (comment.userId._id.toString() !== userId.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to delete this comment' });
+        return res.status(403).json({ error: 'Not authorized to delete this comment' });
     }
 
     await repo.deleteComment(id, commentId);
@@ -270,66 +229,52 @@ export const deleteComment = async (req, res) => {
     const updatedDiscussion = await repo.findDiscussionById(id);
 
     res.json({
-      message: 'Comment deleted successfully',
-      discussion: updatedDiscussion
+        message: 'Comment deleted successfully',
+        discussion: updatedDiscussion
     });
-  } catch (error) {
-    console.error('Delete comment error:', error);
-    res.status(500).json({ error: 'Failed to delete comment' });
-  }
 };
 
 export const voteComment = async (req, res) => {
-  try {
     const { id, commentId } = req.params;
     const { voteType } = req.body;
     const userId = req.user._id;
 
     if (!['upvote', 'downvote'].includes(voteType)) {
-      return res.status(400).json({ error: 'Invalid vote type' });
+        return res.status(400).json({ error: 'Invalid vote type' });
     }
 
     const discussion = await repo.toggleCommentVote(id, commentId, userId, voteType);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion or comment not found' });
+        return res.status(404).json({ error: 'Discussion or comment not found' });
     }
 
     const comment = discussion.comments.id(commentId);
 
     res.json({
-      message: 'Vote recorded',
-      upvoteCount: comment.upvotes.length,
-      downvoteCount: comment.downvotes.length
+        message: 'Vote recorded',
+        upvoteCount: comment.upvotes.length,
+        downvoteCount: comment.downvotes.length
     });
-  } catch (error) {
-    console.error('Vote comment error:', error);
-    res.status(500).json({ error: 'Failed to vote' });
-  }
 };
 
 export const pinDiscussion = async (req, res) => {
-  try {
     const { id } = req.params;
 
     if (req.user.role !== 'admin' && req.user.role !== 'super-admin') {
-      return res.status(403).json({ error: 'Only admins can pin discussions' });
+        return res.status(403).json({ error: 'Only admins can pin discussions' });
     }
 
     const discussion = await repo.findDiscussionById(id);
 
     if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
+        return res.status(404).json({ error: 'Discussion not found' });
     }
 
     const updated = await repo.updateDiscussion(id, { isPinned: !discussion.isPinned });
 
     res.json({
-      message: updated.isPinned ? 'Discussion pinned' : 'Discussion unpinned',
-      discussion: updated
+        message: updated.isPinned ? 'Discussion pinned' : 'Discussion unpinned',
+        discussion: updated
     });
-  } catch (error) {
-    console.error('Pin discussion error:', error);
-    res.status(500).json({ error: 'Failed to pin discussion' });
-  }
 };

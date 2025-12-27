@@ -5,7 +5,6 @@ import { createDailyChallenge, findTodayChallenge } from '../repository/dailyCha
 
 export const generateDailyChallenge = async () => {
   try {
-    console.log(' Generating daily challenge...');
    
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
@@ -15,10 +14,6 @@ export const generateDailyChallenge = async () => {
       isActive: true
     });
     
-    if (existingChallenge) {
-      console.log('Today\'s challenge already exists');
-      return existingChallenge;
-    }
     
     // Get all challenges from last 30 days to avoid repeats
     const thirtyDaysAgo = new Date(today);
@@ -61,7 +56,6 @@ export const generateDailyChallenge = async () => {
     return await createChallenge(problem, today);
     
   } catch (error) {
-    console.error(' Error generating daily challenge:', error);
     throw error;
   }
 };
@@ -80,7 +74,6 @@ const createChallenge = async (problem, date) => {
     isActive: true
   });
   
-  console.log(` Daily challenge created: ${problem.title} (${problem.difficulty})`);
   
   return challenge;
 };
@@ -125,7 +118,6 @@ export const deactivateExpiredChallenges = async () => {
     }
   );
   
-  console.log(` Deactivated ${result.modifiedCount} expired challenges`);
   
   return result;
 };

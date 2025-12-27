@@ -40,11 +40,6 @@ export default function CodeEditor({
   const [editorMinHeight, setEditorMinHeight] = useState(200);
 
   // FIXED: Log received data
-  useEffect(() => {
-    console.log("CodeEditor received:");
-    console.log("Examples:", problemExamples);
-    console.log("Constraints:", problemConstraints);
-  }, [problemExamples, problemConstraints]);
 
   const initResize = (e) => {
     e.preventDefault();
@@ -70,16 +65,11 @@ export default function CodeEditor({
 
   useEffect(() => {
     const loadDraft = async () => {
-      try {
-        const response = await getDraftApi(problemId);
-        if (response.data.draft) {
-          setCode(response.data.draft.code);
-          setLanguage(response.data.draft.language);
-        } else {
-          setCode(CODE_TEMPLATES[language]);
-        }
-      } catch (err) {
-        console.error("Failed to load Draft code:", err);
+      const response = await getDraftApi(problemId);
+      if (response.data.draft) {
+        setCode(response.data.draft.code);
+        setLanguage(response.data.draft.language);
+      } else {
         setCode(CODE_TEMPLATES[language]);
       }
     };
@@ -89,16 +79,10 @@ export default function CodeEditor({
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (code && code.trim() !== "" && code !== CODE_TEMPLATES[language]) {
-        try {
-          setAutoSaveStatus("Saving...");
-          await saveDraftApi(problemId, { code, language });
-          setAutoSaveStatus("Saved ✓");
-          setTimeout(() => setAutoSaveStatus(""), 2000);
-        } catch (err) {
-          console.error("Auto-save failed:", err);
-          setAutoSaveStatus("Save failed ✗");
-          setTimeout(() => setAutoSaveStatus(""), 3000);
-        }
+        setAutoSaveStatus("Saving...");
+        await saveDraftApi(problemId, { code, language });
+        setAutoSaveStatus("Saved ✓");
+        setTimeout(() => setAutoSaveStatus(""), 2000);
       }
     }, 2000);
 
@@ -118,30 +102,25 @@ export default function CodeEditor({
     setOutput("");
     setVerdict(null);
 
-    try {
-      const result = await onRun({
-        code,
-        language,
-        problemId,
-        input: sampleInput,
-      });
-      if (result.verdict === "Accepted") {
-        setVerdict({ type: "success", text: "✓ Accepted" });
-      } else if (result.verdict === "Compilation Error") {
-        setError(result.compilationError);
-      } else if (result.verdict === "Runtime Error") {
-        setError(result.stderr);
-      } else if (result.verdict === "Wrong Answer") {
-        setError(`Expected: ${result.expectedOutput}\nGot: ${result.output}`);
-      } else {
-        setError(result.verdict);
-      }
-      setOutput(result.output || "");
-    } catch (err) {
-      setError(err.message || "Failed to run code");
-    } finally {
-      setIsRunning(false);
+    const result = await onRun({
+      code,
+      language,
+      problemId,
+      input: sampleInput,
+    });
+    if (result.verdict === "Accepted") {
+      setVerdict({ type: "success", text: "✓ Accepted" });
+    } else if (result.verdict === "Compilation Error") {
+      setError(result.compilationError);
+    } else if (result.verdict === "Runtime Error") {
+      setError(result.stderr);
+    } else if (result.verdict === "Wrong Answer") {
+      setError(`Expected: ${result.expectedOutput}\nGot: ${result.output}`);
+    } else {
+      setError(result.verdict);
     }
+    setOutput(result.output || "");
+    setIsRunning(false);
   };
 
   const handleSubmit = async () => {

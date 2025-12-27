@@ -2,7 +2,9 @@ import { Router} from "express";
 import { role } from "../../../middlewares/roleMiddleware.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 
-import { getGlobalLeaderboard, getUserRank, getUserProgress, getProblemStatistics, getSystemHealth } from "../controller/leaderboardController.js";
+import { getGlobalLeaderboard, getUserRank, getUserProgress } from "../controller/leaderboardController.js";
+import { getProblemStatistics } from "../../problems/services/problemService.js";
+import { getSystemHealth } from "../../superAdmin/controller/superAdminController.js";
 
 const router = Router();
 

@@ -32,45 +32,25 @@ export default function ChallengeHistory() {
   }, []);
 
   const fetchHistory = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log(' Fetching daily challenge history...');
-      const response = await getMyHistory(30);
-      console.log(' Response received:', response);
-      console.log(' History data:', response.data.history);
-      console.log(' Stats data:', response.data.stats);
-      
-      const historyData = response.data.history || [];
-      const statsData = response.data.stats || {
-        totalCompleted: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        byDifficulty: {
-          Easy: 0,
-          Medium: 0,
-          Hard: 0
-        }
-      };
-      
-      console.log(' Setting history:', historyData.length, 'challenges');
-      console.log(' Setting stats:', statsData);
-      
-      setHistory(historyData);
-      setStats(statsData);
-      
-      if (!historyData || historyData.length === 0) {
-        console.warn(' No history data returned from API');
+    setLoading(true);
+    setError(null);
+    const response = await getMyHistory(30);
+    
+    const historyData = response.data.history || [];
+    const statsData = response.data.stats || {
+      totalCompleted: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      byDifficulty: {
+        Easy: 0,
+        Medium: 0,
+        Hard: 0
       }
-      
-    } catch (err) {
-      console.error(" Failed to fetch challenge history:", err);
-      console.error(' Error details:', err.response?.data);
-      console.error(' Status code:', err.response?.status);
-      setError(err.response?.data?.error || err.message || "Failed to load challenge history");
-    } finally {
-      setLoading(false);
-    }
+    };
+    
+    setHistory(historyData);
+    setStats(statsData);
+    setLoading(false);
   };
 
   if (loading) {

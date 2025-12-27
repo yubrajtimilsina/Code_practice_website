@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../slice/authSlice.js";
 import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
+import { navigateToDashboard } from "../../../utils/navigation.js";
 
 export default function Register() {
     const dispatch = useDispatch();
@@ -30,17 +31,6 @@ export default function Register() {
         dispatch(register(formData));
     };
 
-    useEffect(() => {
-   if (user) {
-    if (user.role === "super-admin") {
-      navigate("/dashboard/super-admin");
-    } else if (user.role === "admin") {
-      navigate("/dashboard/admin");
-    } else {
-      navigate("/dashboard/learner");
-    }
-  }
-}, [user, navigate]);
 
     const isFormValid = formData.name && formData.email && formData.password;
 

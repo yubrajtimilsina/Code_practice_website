@@ -24,26 +24,20 @@ export default function SubmissionHistory() {
     const fetchSubmissions = async (page, verdict) => {
         setLoading(true);
         setError(null);
-        try {
-            const params = { 
-                page, 
-                limit: itemsPerPage 
-            };
-            
-            // Add verdict filter if not "all"
-            if (verdict !== "all") {
-                params.verdict = verdict;
-            }
-            
-            const response = await getSubmissionHistoryApi(params);
-            setSubmissions(response.data.submissions || []);
-            setTotalSubmissions(response.data.total || response.data.submissions?.length || 0);
-        } catch (err) {
-            console.error("Failed to fetch submissions:", err);
-            setError(err.response?.data?.error || "Failed to load submission history");
-        } finally {
-            setLoading(false);
+        const params = { 
+            page, 
+            limit: itemsPerPage 
+        };
+        
+        // Add verdict filter if not "all"
+        if (verdict !== "all") {
+            params.verdict = verdict;
         }
+        
+        const response = await getSubmissionHistoryApi(params);
+        setSubmissions(response.data.submissions || []);
+        setTotalSubmissions(response.data.total || response.data.submissions?.length || 0);
+        setLoading(false);
     };
 
     const handlePageChange = (newPage) => {

@@ -40,32 +40,23 @@ export default function SuperAdminDashboard() {
   const [usersPagination, setUsersPagination] = useState(null);
 
   const fetchAllData = async () => {
-    try {
-      setRefreshing(true);
-      setError(null);
+    setRefreshing(true);
+    setError(null);
 
-      // Fetch dashboard data
-      const dashRes = await api.get("/super-admin/dashboard");
-      setData(dashRes.data);
+    const dashRes = await api.get("/super-admin/dashboard");
+    setData(dashRes.data);
 
-      // Fetch admins
-      const adminsRes = await api.get("/super-admin/manage-admins");
-      setAdmins(adminsRes.data.admins || []);
+    const adminsRes = await api.get("/super-admin/manage-admins");
+    setAdmins(adminsRes.data.admins || []);
 
-      // Fetch users with pagination
-      const usersRes = await api.get("/super-admin/users", {
-        params: { page: userPage, limit: 20 }
-      });
-      setAllUsers(usersRes.data.users || []);
-      setUsersPagination(usersRes.data.pagination);
+    const usersRes = await api.get("/super-admin/users", {
+      params: { page: userPage, limit: 20 }
+    });
+    setAllUsers(usersRes.data.users || []);
+    setUsersPagination(usersRes.data.pagination);
 
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.response?.data?.error || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    setLoading(false);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -78,27 +69,29 @@ export default function SuperAdminDashboard() {
 
   const handleSetAdmin = async (userId) => {
     if (!confirm("Are you sure you want to make this user an admin?")) return;
-    try {
-      setRefreshing(true);
-      await api.put(`/super-admin/${userId}/set-admin`);
-      fetchAllData();
-    } catch (err) {
-      console.error("Error setting admin:", err);
-      setError(err.response?.data?.error || "Failed to set admin");
-    } finally {
-      setRefreshing(false);
-    }
+    setRefreshing(true);
+    await api.put(`/super-admin/${userId}/set-admin`);
+    fetchAllData();
+    setRefreshing(false);
   };
 
   const handleRevokeAdmin = async (userId) => {
     if (!confirm("Are you sure you want to revoke admin status for this user?")) return;
+    setRefreshing(true);
+    await api.put(`/super-admin/${userId}/revoke-admin`);
+    fetchAllData();
+    setRefreshing(false);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("⚠️ This will permanently delete the user. Continue?")) return;
+
     try {
       setRefreshing(true);
-      await api.put(`/super-admin/${userId}/revoke-admin`);
+      await api.delete(`/super-admin/users/${userId}`);
       fetchAllData();
     } catch (err) {
-      console.error("Error revoking admin:", err);
-      setError(err.response?.data?.error || "Failed to revoke admin");
+      alert("Failed to delete user");
     } finally {
       setRefreshing(false);
     }
@@ -566,6 +559,13 @@ export default function SuperAdminDashboard() {
                                 Revoke Admin
                               </button>
                             )}
+                            <button
+                              onClick={() => handleDeleteUser(userItem._id)}
+                              disabled={refreshing}
+                              className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
                           </td>
                         </tr>
                       ))}

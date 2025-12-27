@@ -60,10 +60,6 @@ export default function AdminProblemForm() {
             setTestCases(p.testCases);
           }
         })
-        .catch(err => {
-          console.error(err);
-          setError("Failed to load problem details");
-        })
         .finally(() => setLoading(false));
     }
   }, [id]);
@@ -117,63 +113,49 @@ export default function AdminProblemForm() {
     setLoading(true);
     setError(null);
 
-    try {
-      if (!form.title.trim()) {
-        throw new Error("Title is required");
-      }
-      if (!form.description.trim()) {
-        throw new Error("Description is required");
-      }
-      if (!form.sampleInput.trim() || !form.sampleOutput.trim()) {
-        throw new Error("Sample input and output are required");
-      }
-
-      const payload = {
-        ...form,
-        tags: form.tags
-          .split(",")
-          .map(t => t.trim())
-          .filter(Boolean),
-        constraints: form.constraints
-          .split("\n")
-          .map(c => c.trim())
-          .filter(Boolean),
-        hints: form.hints
-          .split("\n")
-          .map(h => h.trim())
-          .filter(Boolean),
-        examples: examples.filter(ex => ex.input.trim() && ex.output.trim()),
-        testCases: testCases.filter(tc => tc.input.trim() && tc.expectedOutput.trim()),
-      };
-
-      console.log("Submitting problem payload:", payload);
-
-      if (id) {
-        await updateProblem(id, payload);
-      } else {
-        await createProblem(payload);
-      }
-      navigate("/admin/problems");
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Failed to save problem");
-    } finally {
-      setLoading(false);
+    if (!form.title.trim()) {
+      throw new Error("Title is required");
     }
+    if (!form.description.trim()) {
+      throw new Error("Description is required");
+    }
+    if (!form.sampleInput.trim() || !form.sampleOutput.trim()) {
+      throw new Error("Sample input and output are required");
+    }
+
+    const payload = {
+      ...form,
+      tags: form.tags
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean),
+      constraints: form.constraints
+        .split("\n")
+        .map(c => c.trim())
+        .filter(Boolean),
+      hints: form.hints
+        .split("\n")
+        .map(h => h.trim())
+        .filter(Boolean),
+      examples: examples.filter(ex => ex.input.trim() && ex.output.trim()),
+      testCases: testCases.filter(tc => tc.input.trim() && tc.expectedOutput.trim()),
+    };
+
+    if (id) {
+      await updateProblem(id, payload);
+    } else {
+      await createProblem(payload);
+    }
+    navigate("/admin/problems");
+    setLoading(false);
   };
 
   const onDelete = async () => {
     if (!confirm("Delete this problem? This action cannot be undone.")) return;
-    try {
-      setLoading(true);
-      await deleteProblem(id);
-      navigate("/admin/problems");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to delete problem");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    await deleteProblem(id);
+    navigate("/admin/problems");
+    setLoading(false);
   };
 
   return (

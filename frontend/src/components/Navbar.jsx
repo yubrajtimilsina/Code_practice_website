@@ -13,6 +13,10 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const getNavLinkClasses = (colorClass) => {
+    return `flex items-center gap-2 px-4 py-2 ${colorClass} text-white rounded-lg transition-colors`;
+  };
+
   if (!user) return null;
 
   const isAdmin = user.role === 'admin' || user.role === 'super-admin';
@@ -43,7 +47,7 @@ export default function Navbar() {
                 ? "/dashboard/admin"
                 : "/dashboard/learner"
             }
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            className={getNavLinkClasses("bg-blue-500 hover:bg-blue-600")}
           >
             <LayoutDashboard className="w-4 h-4" />
             Dashboard
@@ -54,7 +58,7 @@ export default function Navbar() {
             <>
               <Link
                 to="/problems"
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                className={getNavLinkClasses("bg-green-500 hover:bg-green-600")}
               >
                 <Code2 className="w-4 h-4" />
                 Problems
@@ -62,7 +66,7 @@ export default function Navbar() {
 
               <Link
                 to="/discussion"
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors"
+                className={getNavLinkClasses("bg-indigo-500 hover:bg-indigo-600")}
               >
                 <MessageSquare className="w-4 h-4" />
                 Discussion
@@ -75,26 +79,19 @@ export default function Navbar() {
             <>
               <Link
                 to="/admin/problems"
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                className={getNavLinkClasses("bg-purple-500 hover:bg-purple-600")}
               >
                 <Settings className="w-4 h-4" />
                 Manage
               </Link>
 
-              <Link
-                to="/problems"
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-              >
-                <Code2 className="w-4 h-4" />
-                Test Editor
-              </Link>
             </>
           )}
 
           {isLearner && (
             <Link
               to="/learner/profile"
-              className="flex items-center gap-2 px-4 py-2 bg-slate-500 hover:bg-slate-600 text-white rounded-lg transition-colors"
+              className={getNavLinkClasses("bg-slate-500 hover:bg-slate-600")}
             >
               <User className="w-4 h-4" />
               Profile
@@ -104,7 +101,7 @@ export default function Navbar() {
           {/* LOGOUT */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+            className={getNavLinkClasses("bg-red-500 hover:bg-red-600")}
           >
             <LogOut className="w-4 h-4" />
             Logout
