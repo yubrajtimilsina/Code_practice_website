@@ -25,18 +25,12 @@ export default function DailyChallenge() {
     }, []);
 
     const fetchTodayChallenge = async () => {
-        try {
-            setLoading(true);
-            const response = await getTodayChallenge();
-            setChallenge(response.data.challenge);
-            setUserProgress(response.data.userProgress);
-            setError(null);
-        } catch (err) {
-            console.error("Failed to fetch daily challenge:", err);
-            setError(err.response?.data?.error || "Failed to load daily challenge");
-        } finally {
-            setLoading(false);
-        }
+        setLoading(true);
+        const response = await getTodayChallenge();
+        setChallenge(response.data.challenge);
+        setUserProgress(response.data.userProgress);
+        setError(null);
+        setLoading(false);
     };
 
     const handleStartChallenge = () => {

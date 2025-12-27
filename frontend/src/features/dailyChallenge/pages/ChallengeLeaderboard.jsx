@@ -15,17 +15,11 @@ export default function ChallengeLeaderboard() {
   }, [challengeId]);
 
   const fetchLeaderboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await getChallengeLeaderboard(challengeId);
-      setLeaderboard(res.data.leaderboard || []);
-    } catch (err) {
-      console.error("Failed to fetch leaderboard:", err);
-      setError(err.response?.data?.error || "Failed to load leaderboard");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    setError(null);
+    const res = await getChallengeLeaderboard(challengeId);
+    setLeaderboard(res.data.leaderboard || []);
+    setLoading(false);
   };
 
   const getRankBadge = (rank) => {

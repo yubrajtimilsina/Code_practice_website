@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../slice/authSlice.js";  
+import { login } from "../slice/authSlice.js";
+import { navigateToDashboard } from "../../../utils/navigation.js";
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
@@ -13,17 +14,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
  
-  useEffect(() => {
-  if (user) {
-    if (user.role === "super-admin") {
-      navigate("/dashboard/super-admin");
-    } else if (user.role === "admin") {
-      navigate("/dashboard/admin");
-    } else {
-      navigate("/dashboard/learner");
-    }
-  }
-}, [user, navigate]);
 
 
   const onChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));

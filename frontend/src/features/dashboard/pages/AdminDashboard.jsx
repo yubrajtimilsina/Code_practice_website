@@ -30,32 +30,24 @@ export default function AdminDashboard() {
   const { user: currentUser } = useSelector((state) => state.auth);
 
   const fetchDashboardData = async () => {
+    setRefreshing(true);
+    setError(null);
+
+    const dashRes = await getAdminDashboardApi();
+    setData(dashRes.data);
+
     try {
-      setRefreshing(true);
-      setError(null);
-
-      const dashRes = await getAdminDashboardApi();
-      console.log("📊 Dashboard data received:", dashRes.data);
-      setData(dashRes.data);
-
-      try {
-        const usersRes = await api.get("/admin/users", {
-          params: { page: userPage, limit: usersPerPage },
-        });
-        setUsers(usersRes.data.users || []);
-        setTotalUsers(usersRes.data.pagination?.total || 0);
-      } catch (err) {
-        console.warn("Could not fetch users:", err.message);
-        setUsers([]);
-        setTotalUsers(0);
-      }
+      const usersRes = await api.get("/admin/users", {
+        params: { page: userPage, limit: usersPerPage },
+      });
+      setUsers(usersRes.data.users || []);
+      setTotalUsers(usersRes.data.pagination?.total || 0);
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.response?.data?.error || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      setUsers([]);
+      setTotalUsers(0);
     }
+    setLoading(false);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -68,13 +60,21 @@ export default function AdminDashboard() {
 
   const handleBlockUser = async (userId) => {
     if (!confirm("Are you sure you want to toggle this user's status?")) return;
+    setRefreshing(true);
+    await api.put(`/admin/users/${userId}/toggle-status`);
+    fetchDashboardData();
+    setRefreshing(false);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("⚠️ This will permanently delete the user. Continue?")) return;
+
     try {
       setRefreshing(true);
-      await api.put(`/admin/users/${userId}/toggle-status`);
+      await api.delete(`/admin/users/${userId}`);
       fetchDashboardData();
     } catch (err) {
-      console.error("Error toggling user status:", err);
-      setError(err.response?.data?.error || "Failed to toggle user status");
+      alert("Failed to delete user");
     } finally {
       setRefreshing(false);
     }
@@ -233,11 +233,10 @@ export default function AdminDashboard() {
                   <div
                     className="bg-green-500 h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${
-                        stats.totalProblems > 0
+                      width: `${stats.totalProblems > 0
                           ? ((problemsByDifficulty.Easy || 0) / stats.totalProblems) * 100
                           : 0
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -252,11 +251,10 @@ export default function AdminDashboard() {
                   <div
                     className="bg-yellow-500 h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${
-                        stats.totalProblems > 0
+                      width: `${stats.totalProblems > 0
                           ? ((problemsByDifficulty.Medium || 0) / stats.totalProblems) * 100
                           : 0
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -271,11 +269,10 @@ export default function AdminDashboard() {
                   <div
                     className="bg-red-500 h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${
-                        stats.totalProblems > 0
+                      width: `${stats.totalProblems > 0
                           ? ((problemsByDifficulty.Hard || 0) / stats.totalProblems) * 100
                           : 0
-                      }%`,
+                        }%`,
                     }}
                   ></div>
                 </div>
@@ -298,11 +295,10 @@ export default function AdminDashboard() {
                       <div
                         className="bg-blue-500 h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${
-                            stats.totalSubmissions > 0
+                          width: `${stats.totalSubmissions > 0
                               ? (verdict.count / stats.totalSubmissions) * 100
                               : 0
-                          }%`,
+                            }%`,
                         }}
                       ></div>
                     </div>
@@ -349,13 +345,12 @@ export default function AdminDashboard() {
                       <td className="py-4 text-slate-900 font-medium">{problem.title}</td>
                       <td className="py-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            problem.difficulty === "Easy"
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${problem.difficulty === "Easy"
                               ? "bg-green-100 text-green-700"
                               : problem.difficulty === "Medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {problem.difficulty}
                         </span>
@@ -402,40 +397,50 @@ export default function AdminDashboard() {
                         <td className="py-4 text-slate-600">{userItem.email}</td>
                         <td className="py-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              userItem.role === "admin"
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.role === "admin"
                                 ? "bg-red-100 text-red-700"
                                 : userItem.role === "super-admin"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
                           >
                             {userItem.role}
                           </span>
                         </td>
                         <td className="py-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              userItem.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                            }`}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                              }`}
                           >
                             {userItem.isActive ? "Active" : "Blocked"}
                           </span>
                         </td>
                         <td className="py-4 text-slate-600 text-sm">{new Date(userItem.createdAt).toLocaleDateString()}</td>
                         <td className="py-4">
-                          <button
-                            onClick={() => handleBlockUser(userItem._id)}
-                            disabled={refreshing || !userItem.isActive}
-                            className={`px-3 py-1 text-sm rounded-md font-medium ${
-                              userItem.isActive
-                                ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                                : "bg-slate-100 text-slate-500 cursor-not-allowed"
-                            }`}
-                          >
-                            {userItem.isActive ? "Block" : "Blocked"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {/* Block / Unblock */}
+                            <button
+                              onClick={() => handleBlockUser(userItem._id)}
+                              disabled={refreshing}
+                              className={`px-3 py-1 text-sm rounded-md font-medium ${userItem.isActive
+                                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                                  : "bg-green-100 text-green-700 hover:bg-green-200"
+                                }`}
+                            >
+                              {userItem.isActive ? "Block" : "Unblock"}
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => handleDeleteUser(userItem._id)}
+                              disabled={refreshing}
+                              className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
+
                       </tr>
                     ))}
                   </tbody>

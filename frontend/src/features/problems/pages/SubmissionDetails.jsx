@@ -24,17 +24,11 @@ export default function SubmissionDetails() {
   }, [submissionId]);
 
   const fetchSubmissionDetails = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/submissions/${submissionId}`);
-      setSubmission(response.data);
-      setError(null);
-    } catch (err) {
-      console.error("Failed to fetch submission:", err);
-      setError(err.response?.data?.error || "Failed to load submission details");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const response = await api.get(`/submissions/${submissionId}`);
+    setSubmission(response.data);
+    setError(null);
+    setLoading(false);
   };
 
   const getVerdictIcon = (verdict) => {

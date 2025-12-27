@@ -1,5 +1,15 @@
 import DailyChallenge from '../models/DailyChallengeModel.js';
 
+const populateChallengeDetails = (query) => {
+  return query
+    .populate({
+      path: 'problemId',
+      select: 'title description difficulty tags examples constraints sampleInput sampleOutput timeLimitSec memoryLimitMB'
+    })
+    .populate('completedBy.userId', 'name email')
+    .populate('leaderboard.userId', 'name email');
+};
+
 export const createDailyChallenge = async (challengeData) => {
   const challenge = new DailyChallenge(challengeData);
   return await challenge.save();
@@ -12,29 +22,16 @@ export const findTodayChallenge = async () => {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  return await DailyChallenge.findOne({
+  return await populateChallengeDetails(DailyChallenge.findOne({
     date: { $gte: today, $lt: tomorrow },
     isActive: true
-  })
-    .populate({
-      path: 'problemId',
-      select: 'title description difficulty tags examples constraints sampleInput sampleOutput timeLimitSec memoryLimitMB'
-    })
-    .populate('completedBy.userId', 'name email')
-    .populate('leaderboard.userId', 'name email')
-    .exec();
+  })).exec();
 };
 
 export const findChallengeByDate = async (date) => {
-  return await DailyChallenge.findOne({ date })
-    .populate({
-      path: 'problemId',
-      select: 'title description difficulty tags examples constraints sampleInput sampleOutput timeLimitSec memoryLimitMB'
-    })
-    .populate('completedBy.userId', 'name email')
-    .populate('leaderboard.userId', 'name email')
-    .exec();
+  return await populateChallengeDetails(DailyChallenge.findOne({ date })).exec();
 };
+
 
 export const findAllChallenges = async (limit = 30) => {
   return await DailyChallenge.find()
@@ -124,8 +121,6 @@ export const getChallengeLeaderboard = async (challengeId) => {
 };
 
 export const getUserChallengeHistory = async (userId, limit = 30) => {
-  console.log(' Repository: Getting challenge history for user:', userId);
-  
   const query = DailyChallenge.find({
     'completedBy.userId': userId
   })
@@ -137,24 +132,8 @@ export const getUserChallengeHistory = async (userId, limit = 30) => {
     })
     .populate('completedBy.userId', 'name email')
     .populate('leaderboard.userId', 'name email');
-  
-  console.log(' Query filter:', { 'completedBy.userId': userId });
-  console.log(' Query limit:', limit);
-  
+
   const results = await query.exec();
-  
-  console.log(' Query returned:', results.length, 'documents');
-  
-  if (results.length === 0) {
-    console.log(' Query found NO results. Checking if any challenges exist at all...');
-    const totalChallenges = await DailyChallenge.countDocuments();
-    console.log(' Total challenges in DB:', totalChallenges);
-    
-    const challengesWithCompletions = await DailyChallenge.countDocuments({
-      'completedBy.userId': userId
-    });
-    console.log(' Challenges with this user:', challengesWithCompletions);
-  }
   
   return results;
 };

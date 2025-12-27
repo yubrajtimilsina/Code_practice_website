@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getLearnerProfileApi } from '../api/dashboardApi';
-import { User, Mail, Calendar, Hash, Award } from 'lucide-react';
+import { getLearnerDashboardApi } from '../api/dashboardApi';
+import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Flame, Activity, Target } from 'lucide-react';
 
 export default function LearnerProfile() {
   const [profile, setProfile] = useState(null);
@@ -9,15 +9,22 @@ export default function LearnerProfile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const response = await getLearnerProfileApi();
-        setProfile(response.data);
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        setError("Failed to load profile data.");
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      const response = await getLearnerDashboardApi();
+      const dashboardData = response.data.dashboard;
+      
+      const learnerProfile = {
+        ...dashboardData.user,
+        solvedProblems: dashboardData.stats.solvedProblems,
+        totalSubmissions: dashboardData.stats.submissions,
+        rank: dashboardData.stats.rank,
+        accuracy: dashboardData.stats.accuracy,
+        currentStreak: dashboardData.stats.currentStreak,
+        longestStreak: dashboardData.stats.longestStreak,
+        lastActive: dashboardData.user.lastActiveDate,
+      };
+      setProfile(learnerProfile);
+      setLoading(false);
     };
     fetchProfile();
   }, []);
@@ -66,8 +73,6 @@ export default function LearnerProfile() {
             <span>{profile.email}</span>
           </div>
 
-    
-
           <div className="flex items-center space-x-4 text-slate-700 text-lg">
             <Calendar className="w-6 h-6 text-blue-500" />
             <span>Joined: {new Date(profile.createdAt).toLocaleDateString()}</span>
@@ -79,6 +84,60 @@ export default function LearnerProfile() {
               <span>Role: <span className="font-medium capitalize">{profile.role}</span></span>
             </div>
           )}
+        </div>
+
+        {/* Coding Stats */}
+        <div className="mt-8 pt-8 border-t border-slate-200">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+            <Code2 className="w-7 h-7 text-green-600" />
+            Coding Stats
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-green-50 p-6 rounded-lg border border-green-200 flex items-center justify-between">
+              <div>
+                <p className="text-green-700 text-sm font-medium mb-1">Problems Solved</p>
+                <p className="text-3xl font-bold text-green-800">{profile.solvedProblems}</p>
+              </div>
+              <Target className="w-10 h-10 text-green-400" />
+            </div>
+            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 flex items-center justify-between">
+              <div>
+                <p className="text-blue-700 text-sm font-medium mb-1">Accuracy Rate</p>
+                <p className="text-3xl font-bold text-blue-800">{profile.accuracy}%</p>
+              </div>
+              <Zap className="w-10 h-10 text-blue-400" />
+            </div>
+            <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 flex items-center justify-between">
+              <div>
+                <p className="text-yellow-700 text-sm font-medium mb-1">Rank Points</p>
+                <p className="text-3xl font-bold text-yellow-800">{profile.rankPoints}</p>
+              </div>
+              <TrendingUp className="w-10 h-10 text-yellow-400" />
+            </div>
+            <div className="bg-orange-50 p-6 rounded-lg border border-orange-200 flex items-center justify-between">
+              <div>
+                <p className="text-orange-700 text-sm font-medium mb-1">Current Streak</p>
+                <p className="text-3xl font-bold text-orange-800">{profile.currentStreak} days</p>
+                <p className="text-xs text-orange-600 mt-1">Longest: {profile.longestStreak} days</p>
+              </div>
+              <Flame className="w-10 h-10 text-orange-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Activity Summary */}
+        <div className="mt-8 pt-8 border-t border-slate-200">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+            <Activity className="w-7 h-7 text-purple-600" />
+            Activity Summary
+          </h2>
+          <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 flex items-center justify-between">
+            <div>
+              <p className="text-purple-700 text-sm font-medium mb-1">Last Active</p>
+              <p className="text-xl font-bold text-purple-800">{new Date(profile.lastActive).toLocaleString()}</p>
+            </div>
+            <Calendar className="w-10 h-10 text-purple-400" />
+          </div>
         </div>
       </div>
     </div>

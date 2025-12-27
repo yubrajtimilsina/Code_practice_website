@@ -21,46 +21,41 @@ export default function Progress() {
     }, []);
 
     const fetchProgress = async () => {
-        try {
-            setLoading(true);
-            const response = await getMyProgressApi();
+        setLoading(true);
+        const response = await getMyProgressApi();
 
-            const d = response.data || {};
+        const d = response.data || {};
 
-            const u = d.user || {};
-            const normalizedUser = {
-                solvedProblems: u.solvedProblems ?? u.solvedProblemsCount ?? 0,
-                accuracy: (u.accuracy !== undefined && u.accuracy !== null)
-                    ? String(u.accuracy)
-                    : (u.acceptedSubmissions != null && u.totalSubmissions != null && u.totalSubmissions > 0)
-                        ? ((u.acceptedSubmissions / u.totalSubmissions) * 100).toFixed(2)
-                        : "0.00",
-                acceptedSubmissions: u.acceptedSubmissions ?? u.acceptedSubmissionsCount ?? 0,
-                totalSubmissions: u.totalSubmissions ?? u.totalSubmissionsCount ?? 0,
-                rankPoints: u.rankPoints ?? 0,
-                currentStreak: u.currentStreak ?? 0,
-                longestStreak: u.longestStreak ?? 0,
-            };
+        const u = d.user || {};
+        const normalizedUser = {
+            solvedProblems: u.solvedProblems ?? u.solvedProblemsCount ?? 0,
+            accuracy: (u.accuracy !== undefined && u.accuracy !== null)
+                ? String(u.accuracy)
+                : (u.acceptedSubmissions != null && u.totalSubmissions != null && u.totalSubmissions > 0)
+                    ? ((u.acceptedSubmissions / u.totalSubmissions) * 100).toFixed(2)
+                    : "0.00",
+            acceptedSubmissions: u.acceptedSubmissions ?? u.acceptedSubmissionsCount ?? 0,
+            totalSubmissions: u.totalSubmissions ?? u.totalSubmissionsCount ?? 0,
+            rankPoints: u.rankPoints ?? 0,
+            currentStreak: u.currentStreak ?? 0,
+            longestStreak: u.longestStreak ?? 0,
+        };
 
-            const normalized = {
-                user: normalizedUser,
-                problemsByDifficulty: {
-                    easy: d.problemsByDifficulty?.easy ?? u.easyProblemsSolved ?? 0,
-                    medium: d.problemsByDifficulty?.medium ?? u.mediumProblemsSolved ?? 0,
-                    hard: d.problemsByDifficulty?.hard ?? u.hardProblemsSolved ?? 0,
-                },
-                languageStats: d.languageStats || {},
-                verdictStats: d.verdictStats || {},
-                recentActivity: d.recentActivity || { last30Days: 0, submissions: [] },
-                activityCalendar: d.activityCalendar || {},
-            };
+        const normalized = {
+            user: normalizedUser,
+            problemsByDifficulty: {
+                easy: d.problemsByDifficulty?.easy ?? u.easyProblemsSolved ?? 0,
+                medium: d.problemsByDifficulty?.medium ?? u.mediumProblemsSolved ?? 0,
+                hard: d.problemsByDifficulty?.hard ?? u.hardProblemsSolved ?? 0,
+            },
+            languageStats: d.languageStats || {},
+            verdictStats: d.verdictStats || {},
+            recentActivity: d.recentActivity || { last30Days: 0, submissions: [] },
+            activityCalendar: d.activityCalendar || {},
+        };
 
-            setProgress(normalized);
-        } catch (error) {
-            console.error("Failed to fetch progress:", error);
-        } finally {
-            setLoading(false);
-        }
+        setProgress(normalized);
+        setLoading(false);
     };
 
     const CARD_BASE = "bg-white border border-slate-200 shadow-sm";

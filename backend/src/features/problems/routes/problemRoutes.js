@@ -8,9 +8,12 @@ import {
   getProblemController 
 } from "../controller/problemController.js";
 import { role } from "../../../middlewares/roleMiddleware.js";
+import { handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 
 const router = Router();
+
+router.use(authMiddleware);
 
 const problemValidation = [
   body("title")
@@ -63,43 +66,14 @@ const problemValidation = [
     .withMessage("Test cases must be an array"),
 ];
 
-// Middleware to handle validation errors
-const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: "Validation failed",
-      details: errors.array().map(err => ({ field: err.param, message: err.msg }))
-    });
-  }
-  next();
-};
-
+const adminAuth = [authMiddleware, role("admin", "super-admin")];
 
 // Public routes
 router.get("/", listProblemsController);
 router.get("/:id", getProblemController);
 
-
-router.post(
-  "/",
-  authMiddleware,
-  role("admin", "super-admin"),
-  createProblemController
-);
-
-router.put(
-  "/:id",
-  authMiddleware,
-  role("admin", "super-admin"),
-  updateProblemController
-);
-
-router.delete(
-  "/:id",
-  authMiddleware,
-  role("admin", "super-admin"),
-  deleteProblemController
-);
+router.post("/", adminAuth, problemValidation, handleValidationErrors, createProblemController);
+router.put("/:id", adminAuth, problemValidation, handleValidationErrors, updateProblemController);
+router.delete("/:id", adminAuth, deleteProblemController);
 
 export default router;

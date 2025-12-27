@@ -42,102 +42,64 @@ export default function DiscussionDetails() {
   }, [id]);
 
   const fetchDiscussion = async () => {
-    try {
-      setLoading(true);
-      const response = await getDiscussionById(id);
-      setDiscussion(response.data.discussion);
-    } catch (error) {
-      console.error("Failed to fetch discussion:", error);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const response = await getDiscussionById(id);
+    setDiscussion(response.data.discussion);
+    setLoading(false);
   };
 
   const handleVoteDiscussion = async (voteType) => {
-    try {
-      await voteDiscussion(id, voteType);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Vote failed:", error);
-    }
+    await voteDiscussion(id, voteType);
+    await fetchDiscussion();
   };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentContent.trim()) return;
 
-    try {
-      setSubmitting(true);
-      await addComment(id, commentContent.trim());
-      setCommentContent("");
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Failed to add comment:", error);
-    } finally {
-      setSubmitting(false);
-    }
+    setSubmitting(true);
+    await addComment(id, commentContent.trim());
+    setCommentContent("");
+    await fetchDiscussion();
+    setSubmitting(false);
   };
 
   const handleEditComment = async (commentId) => {
     if (!editContent.trim()) return;
 
-    try {
-      await updateComment(id, commentId, editContent.trim());
-      setEditingComment(null);
-      setEditContent("");
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Failed to update comment:", error);
-    }
+    await updateComment(id, commentId, editContent.trim());
+    setEditingComment(null);
+    setEditContent("");
+    await fetchDiscussion();
   };
 
   const handleDeleteComment = async (commentId) => {
     if (!confirm("Delete this comment?")) return;
 
-    try {
-      await deleteComment(id, commentId);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Failed to delete comment:", error);
-    }
+    await deleteComment(id, commentId);
+    await fetchDiscussion();
   };
 
   const handleVoteComment = async (commentId, voteType) => {
-    try {
-      await voteComment(id, commentId, voteType);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Vote failed:", error);
-    }
+    await voteComment(id, commentId, voteType);
+    await fetchDiscussion();
   };
 
   const handleDeleteDiscussion = async () => {
     if (!confirm("Delete this discussion? This cannot be undone.")) return;
 
-    try {
-      await deleteDiscussion(id);
-      navigate("/discussion");
-    } catch (error) {
-      console.error("Failed to delete discussion:", error);
-    }
+    await deleteDiscussion(id);
+    navigate("/discussion");
   };
 
   const handleMarkResolved = async () => {
-    try {
-      await updateDiscussion(id, { isResolved: !discussion.isResolved });
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Failed to update discussion:", error);
-    }
+    await updateDiscussion(id, { isResolved: !discussion.isResolved });
+    await fetchDiscussion();
   };
 
   const handlePinDiscussion = async () => {
-    try {
-      await pinDiscussion(id);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Failed to pin discussion:", error);
-    }
+    await pinDiscussion(id);
+    await fetchDiscussion();
   };
 
   const getTimeSince = (date) => {

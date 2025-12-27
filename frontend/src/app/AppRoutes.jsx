@@ -4,6 +4,7 @@ import Register from "../features/auth/pages/Register.jsx";
 import Login from "../features/auth/pages/Login.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import PublicRoute from "../components/PublicRoute.jsx";
+
 import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
 import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminDashboard.jsx";
@@ -24,6 +25,19 @@ import ChallengeLeaderboard from "../features/dailyChallenge/pages/ChallengeLead
 import DiscussionList from "../features/discussion/pages/DiscussionList.jsx";
 import CreateDiscussion from "../features/discussion/pages/CreateDiscussion.jsx";
 import DiscussionDetails from "../features/discussion/pages/DiscussionDetails.jsx";
+
+function createProtectedRoute(path, element, roles) {
+  return (
+    <Route
+      path={path}
+      element={
+        <ProtectedRoute requiredRoles={roles}>
+          {element}
+        </ProtectedRoute>
+      }
+    />
+  );
+}
 
 export default function AppRoutes() {
   return (
@@ -49,44 +63,16 @@ export default function AppRoutes() {
       />
 
 
-      <Route
-        path="/dashboard/learner"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <LearnerDashboard />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/dashboard/learner", <LearnerDashboard />, ["learner"])}
 
 
-      <Route
-        path="/dashboard/admin"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/dashboard/admin", <AdminDashboard />, ["admin"])}
 
 
-      <Route
-        path="/dashboard/super-admin"
-        element={
-          <ProtectedRoute requiredRoles={["super-admin"]}>
-            <SuperAdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/dashboard/super-admin", <SuperAdminDashboard />, ["super-admin"])}
 
 
-      <Route
-        path="/learner/profile"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <LearnerProfile />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/learner/profile", <LearnerProfile />, ["learner"])}
 
       <Route
         path="/problems"
@@ -97,128 +83,25 @@ export default function AppRoutes() {
         element={<ProblemDetails />}
       />
 
-      <Route
-        path="/admin/problems"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <ProblemList adminView={true} />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/admin/problems", <ProblemList adminView={true} />, ["admin"])}
 
 
-      <Route
-        path="/admin/problems/new"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <AdminProblemForm />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/problems/:id/edit"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <AdminProblemForm />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/admin/problems/new", <AdminProblemForm />, ["admin"])}
+      {createProtectedRoute("/admin/problems/:id/edit", <AdminProblemForm />, ["admin"])}
 
-      <Route
-        path="/editor/:problemId"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <CodeEditor />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <SubmissionHistory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/submissions/:submissionId"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <SubmissionDetails />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/progress"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <Progress />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/daily-challenge"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <DailyChallenge />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/daily-challenge/history"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <ChallengeHistory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/daily-challenge/leaderboard/:challengeId"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <ChallengeLeaderboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/discussion"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
-            <DiscussionList />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/discussion/new"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
-            <CreateDiscussion />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/discussion/:id"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
-            <DiscussionDetails />
-          </ProtectedRoute>
-        }
-      />
+      {createProtectedRoute("/editor/:problemId", <CodeEditor />, ["learner"])}
+      {createProtectedRoute("/submissions", <SubmissionHistory />, ["learner"])}
+      {createProtectedRoute("/submissions/:submissionId", <SubmissionDetails />, ["learner"])}
+      {createProtectedRoute("/leaderboard", <Leaderboard />, ["learner", "admin"])}
+      {createProtectedRoute("/progress", <Progress />, ["learner"])}
+      {createProtectedRoute("/daily-challenge", <DailyChallenge />, ["learner"])}
+      {createProtectedRoute("/daily-challenge/history", <ChallengeHistory />, ["learner"])}
+      {createProtectedRoute("/daily-challenge/leaderboard/:challengeId", <ChallengeLeaderboard />, ["learner"])}
+      {createProtectedRoute("/discussion", <DiscussionList />, ["learner", "admin"])}
+      {createProtectedRoute("/discussion/new", <CreateDiscussion />, ["learner", "admin"])}
+      {createProtectedRoute("/discussion/:id", <DiscussionDetails />, ["learner", "admin"])}
 
 
-      <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

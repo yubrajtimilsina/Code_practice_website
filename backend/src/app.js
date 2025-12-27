@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./features/auth/routes/authRoutes.js";
 import protectedRoutes from "./routes/protected.js";
 import publicRoutes from "./routes/public.js";
 import healthRoutes from "./routes/healthRoutes.js";

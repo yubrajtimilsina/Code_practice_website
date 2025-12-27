@@ -1,14 +1,34 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, registerApi, meApi } from "../api/authApi";
 
-const rawUser = localStorage.getItem("user");
-const user = rawUser && rawUser !== "null" ? JSON.parse(rawUser) : null;
+const setAuthData = (user, token) => {
+  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("token", token);
+};
 
-const rawToken = localStorage.getItem("token");
-const token = rawToken && rawToken !== "null" && rawToken !== "undefined" && rawToken.trim() !== "" 
-  ? rawToken 
-  : null;
-  
+const clearAuthData = () => {
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+};
+
+const getUserFromLocalStorage = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user || null;
+  } catch (error) {
+    console.error("Error parsing user from localStorage:", error);
+    return null;
+  }
+};
+
+const getTokenFromLocalStorage = () => {
+  const token = localStorage.getItem("token");
+  return token && token !== "null" && token.trim() !== "" ? token : null;
+};
+
+const user = getUserFromLocalStorage();
+const token = getTokenFromLocalStorage();
+
 const initialState = {
   user: user,
   loading: false,
@@ -21,22 +41,13 @@ export const register = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await registerApi(payload);
-      if (data.user?.token && typeof data.user.token === 'string' && data.user.token.trim() !== '') {
-        localStorage.setItem("token", data.user.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.user?.token) {
+        setAuthData(data.user, data.user.token);
       }
       return data.user;
     } catch (error) {
-      const responseData = error.response?.data;
-      if (responseData) {
-        if (Array.isArray(responseData.errors)) {
-          return rejectWithValue(responseData.errors.join(", "));
-        }
-        if (typeof responseData.error === "string") {
-          return rejectWithValue(responseData.error);
-        }
-      }
-      return rejectWithValue("Registration failed");
+      const message = error.response?.data?.error || "Registration failed";
+      return rejectWithValue(message);
     }
   }
 );
@@ -46,9 +57,8 @@ export const login = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await loginApi(payload);
-      if (data.user?.token && typeof data.user.token === 'string' && data.user.token.trim() !== '') {
-        localStorage.setItem("token", data.user.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.user?.token) {
+        setAuthData(data.user, data.user.token);
       }
       return data.user;
     } catch (error) {
@@ -65,9 +75,7 @@ export const getMe = createAsyncThunk(
       const { data } = await meApi();
       return data;
     } catch (error) {
-      // If the token is invalid or expired, clear it from localStorage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      clearAuthData();
       return rejectWithValue(error.response?.data?.error || "Failed to fetch user data");
     }
   }
@@ -80,8 +88,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
+      clearAuthData();
     },
   },
   extraReducers: (builder) => {
@@ -130,12 +137,7 @@ const authSlice = createSlice({
       .addCase(getMe.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-       
-        const storedToken = localStorage.getItem("token");
-        if (storedToken && !state.token) {
-          state.token = storedToken;
-        }
-        localStorage.setItem("user", JSON.stringify(action.payload)); 
+        state.token = getTokenFromLocalStorage(); // Ensure token is always synced from localStorage
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loading = false;
