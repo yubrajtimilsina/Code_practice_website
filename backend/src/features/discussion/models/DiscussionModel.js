@@ -22,10 +22,6 @@ const CommentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    downvotes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
 
     isEdited: {
         type: Boolean,
@@ -80,10 +76,6 @@ const DiscussionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    downvotes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
     isPinned: {
         type: Boolean,
         default: false
@@ -123,9 +115,7 @@ DiscussionSchema.virtual('upvoteCount').get(function () {
     return this.upvotes.length;
 });
 
-DiscussionSchema.virtual('downvoteCount').get(function () {
-    return this.downvotes.length;
-});
+
 
 DiscussionSchema.virtual('commentCount').get(function () {
     return this.comments.length;

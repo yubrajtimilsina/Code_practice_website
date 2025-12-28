@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDiscussions } from "../api/discussionApi.js";
-<<<<<<< HEAD
 import { DiscussionSkeleton } from "../loading/DiscussionSkeleton.jsx";
-=======
+
 import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
 
 import { 
   MessageSquare, 

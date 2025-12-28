@@ -82,8 +82,6 @@ export default function SuperAdminDashboard() {
     await api.put(`/super-admin/${userId}/revoke-admin`);
     fetchAllData();
     setRefreshing(false);
-<<<<<<< HEAD
-=======
   };
 
   const handleDeleteUser = async (userId) => {
@@ -98,35 +96,12 @@ export default function SuperAdminDashboard() {
     } finally {
       setRefreshing(false);
     }
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
+
   };
 
-  const handleDeleteUser = async (userId) => {
-  if (!confirm("⚠️ WARNING: This will permanently delete the user and ALL their data (submissions, discussions, progress, etc.). This action CANNOT be undone. Are you absolutely sure?")) {
-    return;
-  }
-
-  try {
-    setRefreshing(true);
-    
-    // ✅ FIXED: Call the correct super-admin endpoint
-    await api.delete(`/super-admin/users/${userId}`);
-    
-    alert('User deleted successfully');
-    
-    // Refresh data
-    fetchAllData();
-  } catch (err) {
-    console.error('Delete user error:', err);
-    const errorMsg = err.response?.data?.error || 'Failed to delete user';
-    alert(`Error: ${errorMsg}`);
-  } finally {
-    setRefreshing(false);
-  }
-};
-
+ 
   if (loading) {
-  return <SuperAdminDashboardSkeleton />;
+  return <DashboardSkeleton />;
 }
 
 

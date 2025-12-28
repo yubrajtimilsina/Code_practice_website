@@ -8,9 +8,10 @@ export default function CreateDiscussion() {
   const [form, setForm] = useState({
     title: "",
     content: "",
-    category: "general",
-    tags: ""
+    category: "general"
   });
+  const [tags, setTags] = useState([]); // dynamic tags array
+  const [tagInput, setTagInput] = useState(""); // current input for new tag
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -23,7 +24,7 @@ export default function CreateDiscussion() {
     { value: "feature-request", label: "Feature Request" }
   ];
 
-   const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
@@ -33,14 +34,19 @@ export default function CreateDiscussion() {
     }
 
     setLoading(true);
-    const payload = {
-      ...form,
-      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean)
-    };
-
-    const response = await createDiscussion(payload);
-    navigate(`/discussion/${response.data.discussion._id}`);
-    setLoading(false);
+    try {
+      const payload = {
+        ...form,
+        tags // send tags array directly
+      };
+      const response = await createDiscussion(payload);
+      navigate(`/discussion/${response.data.discussion._id}`);
+    } catch (err) {
+      setError("Failed to create discussion");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,15 +114,42 @@ export default function CreateDiscussion() {
               />
             </div>
 
+            {/* Dynamic Tag Input */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Tags (optional)
               </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-slate-200 rounded-full text-sm flex items-center gap-1"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
               <input
                 type="text"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                placeholder="arrays, strings, dynamic-programming (comma separated)"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && tagInput.trim()) {
+                    e.preventDefault();
+                    if (!tags.includes(tagInput.trim())) {
+                      setTags([...tags, tagInput.trim()]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Type a tag and press Enter"
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -143,3 +176,4 @@ export default function CreateDiscussion() {
     </div>
   );
 }
+

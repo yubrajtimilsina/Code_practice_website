@@ -55,35 +55,22 @@ export const incrementViews = async (id) =>{
   );
 };
 
-export const toggleVote = async (discussionId, userId, voteType) => {
+export const toggleVote = async (discussionId, userId) => {
   const discussion = await Discussion.findById(discussionId);
   if (!discussion) return null;
 
   const upvoteIndex = discussion.upvotes.indexOf(userId);
-  const downvoteIndex = discussion.downvotes.indexOf(userId);
 
-  if (voteType === 'upvote') {
-    if (upvoteIndex > -1) {
-      discussion.upvotes.splice(upvoteIndex, 1);
-    } else {
-      discussion.upvotes.push(userId);
-      if (downvoteIndex > -1) {
-        discussion.downvotes.splice(downvoteIndex, 1);
-      }
-    }
-  } else if (voteType === 'downvote') {
-    if (downvoteIndex > -1) {
-      discussion.downvotes.splice(downvoteIndex, 1);
-    } else {
-      discussion.downvotes.push(userId);
-      if (upvoteIndex > -1) {
-        discussion.upvotes.splice(upvoteIndex, 1);
-      }
-    }
+  if (upvoteIndex > -1) {
+  
+    discussion.upvotes.splice(upvoteIndex, 1);
+  } else {
+    discussion.upvotes.push(userId);
   }
 
   return await discussion.save();
 };
+
 
 
 export const addComment = async (discussionId, commentData) => {
@@ -118,20 +105,27 @@ export const deleteComment = async (discussionId, commentId) => {
   );
 };
 
-export const toggleCommentVote = async (discussionId, commentId, userId, voteType) => {
-  const updateQuery = {};
+export const toggleCommentVote = async (discussionId, commentId, userId) => {
+  const discussion = await Discussion.findOne({
+    _id: discussionId,
+    "comments._id": commentId
+  });
 
-  if (voteType === 'upvote') {
-    updateQuery.$addToSet = { "comments.$.upvotes": userId };
-    updateQuery.$pull = { "comments.$.downvotes": userId };
-  } else if (voteType === 'downvote') {
-    updateQuery.$addToSet = { "comments.$.downvotes": userId };
-    updateQuery.$pull = { "comments.$.upvotes": userId };
+  if (!discussion) return null;
+
+  const comment = discussion.comments.id(commentId);
+  if (!comment) return null;
+
+  const upvoteIndex = comment.upvotes.indexOf(userId);
+
+  if (upvoteIndex > -1) {
+   
+    comment.upvotes.splice(upvoteIndex, 1);
+  } else {
+    
+    comment.upvotes.push(userId);
   }
 
-  return await Discussion.findOneAndUpdate(
-    { _id: discussionId, "comments._id": commentId },
-    updateQuery,
-    { new: true }
-  );
+  discussion.lastActivityAt = new Date();
+  return await discussion.save();
 };
