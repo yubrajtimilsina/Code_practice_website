@@ -131,7 +131,7 @@ export const voteDiscussion = async (req, res) => {
     return res.status(400).json({ error: 'Invalid vote type' });
   }
 
-  const discussion = await repo.toggleVote(id, userId, voteType);
+  const discussion = await repo.toggleVote(id, userId);
 
   if (!discussion) {
     return res.status(404).json({ error: 'Discussion not found' });
@@ -261,7 +261,7 @@ export const voteComment = async (req, res) => {
     return res.status(400).json({ error: 'Invalid vote type' });
   }
 
-  const discussion = await repo.toggleCommentVote(id, commentId, userId, voteType);
+  const discussion = await repo.toggleCommentVote(id, commentId, userId);
 
   if (!discussion) {
     return res.status(404).json({ error: 'Discussion or comment not found' });
