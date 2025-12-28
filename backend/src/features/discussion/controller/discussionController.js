@@ -174,35 +174,24 @@ export const voteDiscussion = async (req, res) => {
 };
 
 export const addComment = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { content } = req.body;
-    const userId = req.user._id;
+  const { content, parentCommentId } = req.body;
 
-    if (!content || !content.trim()) {
-      return res.status(400).json({ error: 'Comment content is required' });
-    }
-
-    const discussion = await repo.addComment(id, {
-      userId,
-      content: content.trim()
-    });
-
-    if (!discussion) {
-      return res.status(404).json({ error: 'Discussion not found' });
-    }
-
-    const updatedDiscussion = await repo.findDiscussionById(id);
-
-    res.status(201).json({
-      message: 'Comment added successfully',
-      discussion: updatedDiscussion
-    });
-  } catch (error) {
-    console.error('Add comment error:', error);
-    res.status(500).json({ error: 'Failed to add comment' });
+  const discussion = await Discussion.findById(req.params.id);
+  if (!discussion) {
+    return res.status(404).json({ message: "Discussion not found" });
   }
+
+  discussion.comments.push({
+    userId: req.user.id,
+    content,
+    parentCommentId: parentCommentId || null
+  });
+
+  await discussion.save();
+
+  res.status(201).json({ message: "Comment added" });
 };
+
 
 export const updateComment = async (req, res) => {
   try {

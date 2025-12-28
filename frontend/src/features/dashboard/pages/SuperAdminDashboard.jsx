@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../../../utils/api.js";
+import { DashboardSkeleton } from "../loading/DasbboardSkeleton.jsx";
 import {
   Shield,
   Users,
@@ -40,32 +41,23 @@ export default function SuperAdminDashboard() {
   const [usersPagination, setUsersPagination] = useState(null);
 
   const fetchAllData = async () => {
-    try {
-      setRefreshing(true);
-      setError(null);
+    setRefreshing(true);
+    setError(null);
 
-      // Fetch dashboard data
-      const dashRes = await api.get("/super-admin/dashboard");
-      setData(dashRes.data);
+    const dashRes = await api.get("/super-admin/dashboard");
+    setData(dashRes.data);
 
-      // Fetch admins
-      const adminsRes = await api.get("/super-admin/manage-admins");
-      setAdmins(adminsRes.data.admins || []);
+    const adminsRes = await api.get("/super-admin/manage-admins");
+    setAdmins(adminsRes.data.admins || []);
 
-      // Fetch users with pagination
-      const usersRes = await api.get("/super-admin/users", {
-        params: { page: userPage, limit: 20 }
-      });
-      setAllUsers(usersRes.data.users || []);
-      setUsersPagination(usersRes.data.pagination);
+    const usersRes = await api.get("/super-admin/users", {
+      params: { page: userPage, limit: 20 }
+    });
+    setAllUsers(usersRes.data.users || []);
+    setUsersPagination(usersRes.data.pagination);
 
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError(err.response?.data?.error || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    setLoading(false);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -78,43 +70,48 @@ export default function SuperAdminDashboard() {
 
   const handleSetAdmin = async (userId) => {
     if (!confirm("Are you sure you want to make this user an admin?")) return;
-    try {
-      setRefreshing(true);
-      await api.put(`/super-admin/${userId}/set-admin`);
-      fetchAllData();
-    } catch (err) {
-      console.error("Error setting admin:", err);
-      setError(err.response?.data?.error || "Failed to set admin");
-    } finally {
-      setRefreshing(false);
-    }
+    setRefreshing(true);
+    await api.put(`/super-admin/${userId}/set-admin`);
+    fetchAllData();
+    setRefreshing(false);
   };
 
   const handleRevokeAdmin = async (userId) => {
     if (!confirm("Are you sure you want to revoke admin status for this user?")) return;
-    try {
-      setRefreshing(true);
-      await api.put(`/super-admin/${userId}/revoke-admin`);
-      fetchAllData();
-    } catch (err) {
-      console.error("Error revoking admin:", err);
-      setError(err.response?.data?.error || "Failed to revoke admin");
-    } finally {
-      setRefreshing(false);
-    }
+    setRefreshing(true);
+    await api.put(`/super-admin/${userId}/revoke-admin`);
+    fetchAllData();
+    setRefreshing(false);
   };
 
-  // Loading State
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-700 text-lg font-medium">Loading Super Admin Dashboard...</p>
-        </div>
-      </div>
-    );
+  const handleDeleteUser = async (userId) => {
+  if (!confirm("⚠️ WARNING: This will permanently delete the user and ALL their data (submissions, discussions, progress, etc.). This action CANNOT be undone. Are you absolutely sure?")) {
+    return;
   }
+
+  try {
+    setRefreshing(true);
+    
+    // ✅ FIXED: Call the correct super-admin endpoint
+    await api.delete(`/super-admin/users/${userId}`);
+    
+    alert('User deleted successfully');
+    
+    // Refresh data
+    fetchAllData();
+  } catch (err) {
+    console.error('Delete user error:', err);
+    const errorMsg = err.response?.data?.error || 'Failed to delete user';
+    alert(`Error: ${errorMsg}`);
+  } finally {
+    setRefreshing(false);
+  }
+};
+
+  if (loading) {
+  return <SuperAdminDashboardSkeleton />;
+}
+
 
   const stats = data?.stats || {};
   const roleDistribution = data?.roleDistribution || {};
@@ -566,6 +563,13 @@ export default function SuperAdminDashboard() {
                                 Revoke Admin
                               </button>
                             )}
+                            <button
+                              onClick={() => handleDeleteUser(userItem._id)}
+                              disabled={refreshing}
+                              className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
                           </td>
                         </tr>
                       ))}

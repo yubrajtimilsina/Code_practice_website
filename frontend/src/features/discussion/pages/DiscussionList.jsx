@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDiscussions } from "../api/discussionApi.js";
+import { DiscussionSkeleton } from "../loading/DiscussionSkeleton.jsx";
 
 import { 
   MessageSquare, 
@@ -97,6 +98,10 @@ export default function DiscussionList() {
     return colors[cat] || "bg-slate-100 text-slate-700";
   };
 
+  if (loading) {
+    return <DiscussionSkeleton />;
+  }
+  
    return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">

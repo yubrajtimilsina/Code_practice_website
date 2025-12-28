@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { DiscussionSkeleton } from "../loading/DiscussionSkeleton.jsx";
 import {
   getDiscussionById,
   voteDiscussion,
@@ -29,6 +30,12 @@ export default function DiscussionDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
+
+  
+
+  const [replyingTo, setReplyingTo] = useState(null);
+const [replyContent, setReplyContent] = useState("");
+
   
   const [discussion, setDiscussion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,13 +61,51 @@ export default function DiscussionDetails() {
   };
 
   const handleVoteDiscussion = async (voteType) => {
-    try {
-      await voteDiscussion(id, voteType);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Vote failed:", error);
+  if (!user) return;
+
+  // optimistic update
+  setDiscussion(prev => {
+    if (!prev) return prev;
+
+    const hasUpvoted = prev.upvotes.includes(user.id);
+    const hasDownvoted = prev.downvotes.includes(user.id);
+
+    let upvotes = [...prev.upvotes];
+    let downvotes = [...prev.downvotes];
+
+    if (voteType === "upvote") {
+      if (hasUpvoted) {
+        upvotes = upvotes.filter(id => id !== user.id);
+      } else {
+        upvotes.push(user.id);
+        if (hasDownvoted) {
+          downvotes = downvotes.filter(id => id !== user.id);
+        }
+      }
     }
-  };
+
+    if (voteType === "downvote") {
+      if (hasDownvoted) {
+        downvotes = downvotes.filter(id => id !== user.id);
+      } else {
+        downvotes.push(user.id);
+        if (hasUpvoted) {
+          upvotes = upvotes.filter(id => id !== user.id);
+        }
+      }
+    }
+
+    return { ...prev, upvotes, downvotes };
+  });
+
+  try {
+    await voteDiscussion(id, voteType); // backend sync
+  } catch (error) {
+    console.error("Vote failed:", error);
+    fetchDiscussion(); // fallback if API fails
+  }
+};
+
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -103,13 +148,56 @@ export default function DiscussionDetails() {
   };
 
   const handleVoteComment = async (commentId, voteType) => {
-    try {
-      await voteComment(id, commentId, voteType);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Vote failed:", error);
-    }
-  };
+  if (!user) return;
+
+  setDiscussion(prev => {
+    if (!prev) return prev;
+
+    const updatedComments = prev.comments.map(comment => {
+      if (comment._id !== commentId) return comment;
+
+      const hasUpvoted = comment.upvotes.includes(user.id);
+      const hasDownvoted = comment.downvotes.includes(user.id);
+
+      let upvotes = [...comment.upvotes];
+      let downvotes = [...comment.downvotes];
+
+      if (voteType === "upvote") {
+        if (hasUpvoted) {
+          upvotes = upvotes.filter(id => id !== user.id);
+        } else {
+          upvotes.push(user.id);
+          if (hasDownvoted) {
+            downvotes = downvotes.filter(id => id !== user.id);
+          }
+        }
+      }
+
+      if (voteType === "downvote") {
+        if (hasDownvoted) {
+          downvotes = downvotes.filter(id => id !== user.id);
+        } else {
+          downvotes.push(user.id);
+          if (hasUpvoted) {
+            upvotes = upvotes.filter(id => id !== user.id);
+          }
+        }
+      }
+
+      return { ...comment, upvotes, downvotes };
+    });
+
+    return { ...prev, comments: updatedComments };
+  });
+
+  try {
+    await voteComment(id, commentId, voteType);
+  } catch (error) {
+    console.error("Vote failed:", error);
+    fetchDiscussion();
+  }
+};
+
 
   const handleDeleteDiscussion = async () => {
     if (!confirm("Delete this discussion? This cannot be undone.")) return;
@@ -184,16 +272,31 @@ export default function DiscussionDetails() {
     return votes?.some(v => v === user.id || v._id === user.id);
   };
 
+  const handleReply = async (commentId) => {
+  if (!replyContent.trim()) return;
+
+  try {
+    setSubmitting(true);
+    await addComment(id, replyContent.trim(), commentId); // 👈 parent id
+    setReplyContent("");
+    setReplyingTo(null);
+    await fetchDiscussion();
+  } catch (error) {
+    console.error("Reply failed:", error);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
   const isAuthor = discussion?.userId?._id === user?.id;
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+if (loading) {
+  return <DiscussionSkeleton />;
+}
+
+  
 
   if (!discussion) {
     return (
@@ -210,6 +313,15 @@ export default function DiscussionDetails() {
       </div>
     );
   }
+
+  const mainComments = discussion.comments?.filter(
+  c => !c.parentCommentId
+);
+
+const replies = discussion.comments?.filter(
+  c => c.parentCommentId
+);
+
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
@@ -371,7 +483,7 @@ export default function DiscussionDetails() {
 
             {/* Comments List */}
             <div className="space-y-6">
-              {discussion.comments?.map((comment) => (
+              {mainComments?.map((comment) => (
                 <div key={comment._id} className="flex gap-4 p-4 bg-slate-50 rounded-lg">
                   {/* Vote Section */}
                   <div className="flex flex-col items-center gap-1">
@@ -465,7 +577,45 @@ export default function DiscussionDetails() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-slate-700 whitespace-pre-line">{comment.content}</p>
+                      <p className="text-slate-700 whitespace-pre-line">{comment.content}
+                      <button
+  onClick={() => setReplyingTo(comment._id)}
+  className="mt-2 text-sm text-blue-600 hover:underline"
+>
+  Reply
+</button>
+
+{/* Reply Form */}
+{replyingTo === comment._id && (
+  <div className="mt-3 ml-6">
+    <textarea
+      value={replyContent}
+      onChange={(e) => setReplyContent(e.target.value)}
+      rows={2}
+      placeholder="Write a reply..."
+      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+    />
+    <div className="flex gap-2 mt-2">
+      <button
+        onClick={() => handleReply(comment._id)}
+        className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+      >
+        Reply
+      </button>
+      <button
+        onClick={() => {
+          setReplyingTo(null);
+          setReplyContent("");
+        }}
+        className="px-3 py-1 border rounded text-sm"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+
+                      </p>
                     )}
                   </div>
                 </div>
