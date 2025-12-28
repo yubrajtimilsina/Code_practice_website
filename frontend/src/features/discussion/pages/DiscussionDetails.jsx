@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { DiscussionSkeleton } from "../loading/DiscussionSkeleton.jsx";
 import {
   getDiscussionById,
   voteDiscussion,
@@ -23,7 +22,9 @@ import {
   Trash2,
   Send,
   Pin,
-  Check
+  Check,
+  Reply,
+  X
 } from "lucide-react";
 
 export default function DiscussionDetails() {
@@ -31,18 +32,16 @@ export default function DiscussionDetails() {
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
 
-  
-
-  const [replyingTo, setReplyingTo] = useState(null);
-const [replyContent, setReplyContent] = useState("");
-
-  
   const [discussion, setDiscussion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commentContent, setCommentContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ Reply state
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyContent, setReplyContent] = useState("");
 
   useEffect(() => {
     fetchDiscussion();
@@ -55,68 +54,56 @@ const [replyContent, setReplyContent] = useState("");
     setLoading(false);
   };
 
-  const handleVoteDiscussion = async (voteType) => {
-<<<<<<< HEAD
-  if (!user) return;
+  const handleVoteDiscussion = async () => {
+    if (!user) return;
 
-  // optimistic update
-  setDiscussion(prev => {
-    if (!prev) return prev;
+    setDiscussion(prev => {
+      if (!prev) return prev;
 
-    const hasUpvoted = prev.upvotes.includes(user.id);
-    const hasDownvoted = prev.downvotes.includes(user.id);
+      const hasUpvoted = prev.upvotes.includes(user.id);
 
-    let upvotes = [...prev.upvotes];
-    let downvotes = [...prev.downvotes];
+      const upvotes = hasUpvoted
+        ? prev.upvotes.filter(id => id !== user.id)
+        : [...prev.upvotes, user.id];
 
-    if (voteType === "upvote") {
-      if (hasUpvoted) {
-        upvotes = upvotes.filter(id => id !== user.id);
-      } else {
-        upvotes.push(user.id);
-        if (hasDownvoted) {
-          downvotes = downvotes.filter(id => id !== user.id);
-        }
-      }
+      return { ...prev, upvotes };
+    });
+
+    try {
+      await voteDiscussion(id);
+    } catch (error) {
+      console.error("Vote failed:", error);
+      fetchDiscussion();
     }
-
-    if (voteType === "downvote") {
-      if (hasDownvoted) {
-        downvotes = downvotes.filter(id => id !== user.id);
-      } else {
-        downvotes.push(user.id);
-        if (hasUpvoted) {
-          upvotes = upvotes.filter(id => id !== user.id);
-        }
-      }
-    }
-
-    return { ...prev, upvotes, downvotes };
-  });
-
-  try {
-    await voteDiscussion(id, voteType); // backend sync
-  } catch (error) {
-    console.error("Vote failed:", error);
-    fetchDiscussion(); // fallback if API fails
-  }
-};
-
-=======
-    await voteDiscussion(id, voteType);
-    await fetchDiscussion();
   };
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
+
 
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!commentContent.trim()) return;
 
     setSubmitting(true);
-    await addComment(id, commentContent.trim());
+    await addComment(id, commentContent.trim(), null);
     setCommentContent("");
     await fetchDiscussion();
     setSubmitting(false);
+  };
+
+  // ✅ Handle reply
+  const handleReply = async (parentCommentId) => {
+    if (!replyContent.trim()) return;
+
+    try {
+      setSubmitting(true);
+      await addComment(id, replyContent.trim(), parentCommentId);
+      setReplyContent("");
+      setReplyingTo(null);
+      await fetchDiscussion();
+    } catch (error) {
+      console.error("Reply failed:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEditComment = async (commentId) => {
@@ -135,63 +122,35 @@ const [replyContent, setReplyContent] = useState("");
     await fetchDiscussion();
   };
 
-  const handleVoteComment = async (commentId, voteType) => {
-<<<<<<< HEAD
-  if (!user) return;
+  const handleVoteComment = async (commentId) => {
+    if (!user) return;
 
-  setDiscussion(prev => {
-    if (!prev) return prev;
+    setDiscussion(prev => {
+      if (!prev) return prev;
 
-    const updatedComments = prev.comments.map(comment => {
-      if (comment._id !== commentId) return comment;
+      const updatedComments = prev.comments.map(comment => {
+        if (comment._id !== commentId) return comment;
 
-      const hasUpvoted = comment.upvotes.includes(user.id);
-      const hasDownvoted = comment.downvotes.includes(user.id);
+        const hasUpvoted = comment.upvotes.includes(user.id);
 
-      let upvotes = [...comment.upvotes];
-      let downvotes = [...comment.downvotes];
+        const upvotes = hasUpvoted
+          ? comment.upvotes.filter(id => id !== user.id)
+          : [...comment.upvotes, user.id];
 
-      if (voteType === "upvote") {
-        if (hasUpvoted) {
-          upvotes = upvotes.filter(id => id !== user.id);
-        } else {
-          upvotes.push(user.id);
-          if (hasDownvoted) {
-            downvotes = downvotes.filter(id => id !== user.id);
-          }
-        }
-      }
+        return { ...comment, upvotes };
+      });
 
-      if (voteType === "downvote") {
-        if (hasDownvoted) {
-          downvotes = downvotes.filter(id => id !== user.id);
-        } else {
-          downvotes.push(user.id);
-          if (hasUpvoted) {
-            upvotes = upvotes.filter(id => id !== user.id);
-          }
-        }
-      }
-
-      return { ...comment, upvotes, downvotes };
+      return { ...prev, comments: updatedComments };
     });
 
-    return { ...prev, comments: updatedComments };
-  });
-
-  try {
-    await voteComment(id, commentId, voteType);
-  } catch (error) {
-    console.error("Vote failed:", error);
-    fetchDiscussion();
-  }
-};
-
-=======
-    await voteComment(id, commentId, voteType);
-    await fetchDiscussion();
+    try {
+      await voteComment(id, commentId); // no voteType
+    } catch (error) {
+      console.error("Vote failed:", error);
+      fetchDiscussion();
+    }
   };
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
+
 
   const handleDeleteDiscussion = async () => {
     if (!confirm("Delete this discussion? This cannot be undone.")) return;
@@ -242,43 +201,190 @@ const [replyContent, setReplyContent] = useState("");
     return colors[cat] || "bg-slate-100 text-slate-700";
   };
 
-  const hasUserVotedDiscussion = (voteType) => {
+  const hasUserUpvotedDiscussion = () => {
     if (!user || !discussion) return false;
-    const votes = voteType === 'upvote' ? discussion.upvotes : discussion.downvotes;
-    return votes?.some(v => v === user.id || v._id === user.id);
+    return discussion.upvotes?.some(
+      v => v === user.id || v?._id === user.id
+    );
   };
 
-  const hasUserVotedComment = (comment, voteType) => {
+  const hasUserUpvotedComment = (comment) => {
     if (!user || !comment) return false;
-    const votes = voteType === 'upvote' ? comment.upvotes : comment.downvotes;
-    return votes?.some(v => v === user.id || v._id === user.id);
+    return comment.upvotes?.some(
+      v => v === user.id || v?._id === user.id
+    );
   };
 
-  const handleReply = async (commentId) => {
-  if (!replyContent.trim()) return;
 
-  try {
-    setSubmitting(true);
-    await addComment(id, replyContent.trim(), commentId); // 👈 parent id
-    setReplyContent("");
-    setReplyingTo(null);
-    await fetchDiscussion();
-  } catch (error) {
-    console.error("Reply failed:", error);
-  } finally {
-    setSubmitting(false);
-  }
-};
+  const mainComments = discussion?.comments?.filter(c => !c.parentCommentId) || [];
+  const getReplies = (commentId) => {
+    return discussion?.comments?.filter(c => c.parentCommentId?.toString() === commentId.toString()) || [];
+  };
 
+  // ✅ Render comment with nested replies
+  const renderComment = (comment, depth = 0) => {
+    const replies = getReplies(comment._id);
+    const isAuthor = comment.userId?._id === user?.id;
+    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+
+    return (
+      <div key={comment._id} className={depth > 0 ? "ml-12 mt-4" : ""}>
+        <div className="flex gap-4 p-4 bg-slate-50 rounded-lg">
+
+          {/* Vote Section */}
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={() => handleVoteComment(comment._id)}
+              className={`p-1 rounded transition-colors ${hasUserUpvotedComment(comment)
+                  ? 'text-blue-600'
+                  : 'text-slate-400 hover:text-blue-600'
+                }`}
+            >
+              <ThumbsUp className="w-4 h-4" />
+            </button>
+
+            <span className="text-sm font-bold text-slate-900">
+              {comment.upvotes?.length || 0}
+            </span>
+          </div>
+
+
+          {/* Comment Content */}
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-900">
+                  {comment.userId?.name}
+                </span>
+                <span className="text-sm text-slate-500">
+                  {getTimeSince(comment.createdAt)}
+                </span>
+                {comment.isEdited && (
+                  <span className="text-xs text-slate-400">(edited)</span>
+                )}
+              </div>
+
+              {(isAuthor || isAdmin) && (
+                <div className="flex gap-2">
+                  {isAuthor && (
+                    <button
+                      onClick={() => {
+                        setEditingComment(comment._id);
+                        setEditContent(comment.content);
+                      }}
+                      className="p-1 hover:bg-slate-200 rounded text-slate-600"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteComment(comment._id)}
+                    className="p-1 hover:bg-red-100 rounded text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {editingComment === comment._id ? (
+              <div>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEditComment(comment._id)}
+                    className="px-4 py-1 bg-blue-600 text-white rounded text-sm font-semibold hover:bg-blue-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingComment(null);
+                      setEditContent("");
+                    }}
+                    className="px-4 py-1 border border-slate-300 rounded text-sm font-semibold hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-slate-700 whitespace-pre-line mb-2">{comment.content}</p>
+
+                {/* Reply Button */}
+                <button
+                  onClick={() => {
+                    setReplyingTo(comment._id);
+                    setReplyContent("");
+                  }}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  <Reply className="w-4 h-4" />
+                  Reply
+                </button>
+              </>
+            )}
+
+            {/* Reply Form */}
+            {replyingTo === comment._id && (
+              <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200">
+                <textarea
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  rows={2}
+                  placeholder={`Reply to ${comment.userId?.name}...`}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleReply(comment._id)}
+                    disabled={!replyContent.trim() || submitting}
+                    className="px-4 py-1 bg-blue-600 text-white rounded text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Send className="w-3 h-3" />
+                    {submitting ? "Posting..." : "Reply"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setReplyContent("");
+                    }}
+                    className="px-4 py-1 border border-slate-300 rounded text-sm font-semibold hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Render nested replies */}
+        {replies.length > 0 && (
+          <div className="mt-2">
+            {replies.map(reply => renderComment(reply, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const isAuthor = discussion?.userId?._id === user?.id;
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
-if (loading) {
-  return <DiscussionSkeleton />;
-}
-
-  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!discussion) {
     return (
@@ -295,15 +401,6 @@ if (loading) {
       </div>
     );
   }
-
-  const mainComments = discussion.comments?.filter(
-  c => !c.parentCommentId
-);
-
-const replies = discussion.comments?.filter(
-  c => c.parentCommentId
-);
-
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
@@ -324,29 +421,20 @@ const replies = discussion.comments?.filter(
               {/* Vote Section */}
               <div className="flex flex-col items-center gap-2">
                 <button
-                  onClick={() => handleVoteDiscussion('upvote')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    hasUserVotedDiscussion('upvote')
+                  onClick={handleVoteDiscussion}
+                  className={`p-2 rounded-lg transition-colors ${hasUserUpvotedDiscussion()
                       ? 'bg-blue-100 text-blue-600'
                       : 'hover:bg-slate-100 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <ThumbsUp className="w-6 h-6" />
                 </button>
+
                 <span className="text-2xl font-bold text-slate-900">
-                  {discussion.upvotes?.length - discussion.downvotes?.length}
+                  {discussion.upvotes?.length || 0}
                 </span>
-                <button
-                  onClick={() => handleVoteDiscussion('downvote')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    hasUserVotedDiscussion('downvote')
-                      ? 'bg-red-100 text-red-600'
-                      : 'hover:bg-slate-100 text-slate-400'
-                  }`}
-                >
-                  <ThumbsDown className="w-6 h-6" />
-                </button>
               </div>
+
 
               {/* Content */}
               <div className="flex-1">
@@ -365,11 +453,10 @@ const replies = discussion.comments?.filter(
                       {isAuthor && (
                         <button
                           onClick={handleMarkResolved}
-                          className={`p-2 rounded-lg transition-colors ${
-                            discussion.isResolved
+                          className={`p-2 rounded-lg transition-colors ${discussion.isResolved
                               ? 'bg-green-100 text-green-700'
                               : 'hover:bg-slate-100 text-slate-400'
-                          }`}
+                            }`}
                           title={discussion.isResolved ? "Mark as unresolved" : "Mark as resolved"}
                         >
                           <Check className="w-5 h-5" />
@@ -378,11 +465,10 @@ const replies = discussion.comments?.filter(
                       {isAdmin && (
                         <button
                           onClick={handlePinDiscussion}
-                          className={`p-2 rounded-lg transition-colors ${
-                            discussion.isPinned
+                          className={`p-2 rounded-lg transition-colors ${discussion.isPinned
                               ? 'bg-yellow-100 text-yellow-700'
                               : 'hover:bg-slate-100 text-slate-400'
-                          }`}
+                            }`}
                           title={discussion.isPinned ? "Unpin discussion" : "Pin discussion"}
                         >
                           <Pin className="w-5 h-5" />
@@ -463,145 +549,9 @@ const replies = discussion.comments?.filter(
               </div>
             </form>
 
-            {/* Comments List */}
+            {/* Comments List with Nested Replies */}
             <div className="space-y-6">
-              {mainComments?.map((comment) => (
-                <div key={comment._id} className="flex gap-4 p-4 bg-slate-50 rounded-lg">
-                  {/* Vote Section */}
-                  <div className="flex flex-col items-center gap-1">
-                    <button
-                      onClick={() => handleVoteComment(comment._id, 'upvote')}
-                      className={`p-1 rounded transition-colors ${
-                        hasUserVotedComment(comment, 'upvote')
-                          ? 'text-blue-600'
-                          : 'text-slate-400 hover:text-blue-600'
-                      }`}
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                    </button>
-                    <span className="text-sm font-bold text-slate-900">
-                      {comment.upvotes?.length - comment.downvotes?.length}
-                    </span>
-                    <button
-                      onClick={() => handleVoteComment(comment._id, 'downvote')}
-                      className={`p-1 rounded transition-colors ${
-                        hasUserVotedComment(comment, 'downvote')
-                          ? 'text-red-600'
-                          : 'text-slate-400 hover:text-red-600'
-                      }`}
-                    >
-                      <ThumbsDown className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Comment Content */}
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-900">
-                          {comment.userId?.name}
-                        </span>
-                        <span className="text-sm text-slate-500">
-                          {getTimeSince(comment.createdAt)}
-                        </span>
-                        {comment.isEdited && (
-                          <span className="text-xs text-slate-400">(edited)</span>
-                        )}
-                      </div>
-
-                      {(comment.userId?._id === user?.id || isAdmin) && (
-                        <div className="flex gap-2">
-                          {comment.userId?._id === user?.id && (
-                            <button
-                              onClick={() => {
-                                setEditingComment(comment._id);
-                                setEditContent(comment.content);
-                              }}
-                              className="p-1 hover:bg-slate-200 rounded text-slate-600"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteComment(comment._id)}
-                            className="p-1 hover:bg-red-100 rounded text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {editingComment === comment._id ? (
-                      <div>
-                        <textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditComment(comment._id)}
-                            className="px-4 py-1 bg-blue-600 text-white rounded text-sm font-semibold hover:bg-blue-700"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingComment(null);
-                              setEditContent("");
-                            }}
-                            className="px-4 py-1 border border-slate-300 rounded text-sm font-semibold hover:bg-slate-50"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-slate-700 whitespace-pre-line">{comment.content}
-                      <button
-  onClick={() => setReplyingTo(comment._id)}
-  className="mt-2 text-sm text-blue-600 hover:underline"
->
-  Reply
-</button>
-
-{/* Reply Form */}
-{replyingTo === comment._id && (
-  <div className="mt-3 ml-6">
-    <textarea
-      value={replyContent}
-      onChange={(e) => setReplyContent(e.target.value)}
-      rows={2}
-      placeholder="Write a reply..."
-      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-    />
-    <div className="flex gap-2 mt-2">
-      <button
-        onClick={() => handleReply(comment._id)}
-        className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
-      >
-        Reply
-      </button>
-      <button
-        onClick={() => {
-          setReplyingTo(null);
-          setReplyContent("");
-        }}
-        className="px-3 py-1 border rounded text-sm"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
-
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+              {mainComments.map(comment => renderComment(comment))}
             </div>
           </div>
         </div>

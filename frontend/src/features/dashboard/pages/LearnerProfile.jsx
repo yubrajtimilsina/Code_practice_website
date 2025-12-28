@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getLearnerDashboardApi } from '../api/dashboardApi';
 import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Flame, Activity, Target } from 'lucide-react';
-<<<<<<< HEAD
+
 import { Link } from 'react-router-dom';
-=======
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
 
 export default function LearnerProfile() {
   const [profile, setProfile] = useState(null);
@@ -143,7 +141,7 @@ export default function LearnerProfile() {
             <Calendar className="w-10 h-10 text-purple-400" />
           </div>
         </div>
-<<<<<<< HEAD
+
 
          <Link
   to="/learner/profile/edit"
@@ -151,8 +149,6 @@ export default function LearnerProfile() {
 >
   Edit Profile
 </Link>
-=======
->>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
       </div>
     </div>
   );
