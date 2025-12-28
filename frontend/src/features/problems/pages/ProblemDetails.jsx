@@ -16,57 +16,43 @@ export default function ProblemDetails() {
   useEffect(() => {
     const loadProblem = async () => {
       setLoading(true);
-      try {
-        const { data } = await getProblem(id);
-        console.log("Loaded problem:", data);
-        setProblem(data);
-        setIsSolved(false);
-      } catch (err) {
-        console.error("Failed to load problem:", err);
-      } finally {
-        setLoading(false);
-      }
+      const { data } = await getProblem(id);
+      setProblem(data);
+      setIsSolved(false);
+      setLoading(false);
     };
 
     loadProblem();
   }, [id]);
 
   const handleRunCode = async (codeData) => {
-    try {
-      const response = await runCodeApi({
-        code: codeData.code,
-        language: codeData.language,
-        problemId: problem._id,
-      });
-      return response.data.submission;
-    } catch (err) {
-      throw new Error(err.response?.data?.error || "Failed to run code");
-    }
+    const response = await runCodeApi({
+      code: codeData.code,
+      language: codeData.language,
+      problemId: problem._id,
+    });
+    return response.data.submission;
   };
 
   const handleSubmitCode = async (codeData) => {
-    try {
-      await saveDraftApi(problem._id, {
-        code: codeData.code,
-        language: codeData.language,
-      });
+    await saveDraftApi(problem._id, {
+      code: codeData.code,
+      language: codeData.language,
+    });
 
-      const response = await submitSolutionApi({
-        code: codeData.code,
-        language: codeData.language,
-        problemId: problem._id,
-      });
-      
-      setSubmission(response.data.submission);
-      
-      if (response.data.submission.isAccepted) {
-        setIsSolved(true);
-      }
-      
-      return response.data.submission;
-    } catch (err) {
-      throw new Error(err.response?.data?.error || "Failed to submit code");
+    const response = await submitSolutionApi({
+      code: codeData.code,
+      language: codeData.language,
+      problemId: problem._id,
+    });
+    
+    setSubmission(response.data.submission);
+    
+    if (response.data.submission.isAccepted) {
+      setIsSolved(true);
     }
+    
+    return response.data.submission;
   };
 
   if (loading) {
@@ -93,9 +79,6 @@ export default function ProblemDetails() {
 
   if (showEditor) {
     // FIXED: Log what we're passing to CodeEditor
-    console.log("Passing to CodeEditor:");
-    console.log("Examples:", problem.examples);
-    console.log("Constraints:", problem.constraints);
     
     return (
       <CodeEditor

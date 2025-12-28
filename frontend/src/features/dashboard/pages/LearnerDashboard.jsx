@@ -15,18 +15,11 @@ export default function LearnerDashboard() {
   }, []);
 
   const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      const res = await getLearnerDashboardApi();
-      console.log(" Dashboard data:", res.data);
-      setData(res.data);
-      setError(null);
-    } catch (err) {
-      console.error(" Dashboard error:", err);
-      setError(err.response?.data?.error || "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const res = await getLearnerDashboardApi();
+    setData(res.data);
+    setError(null);
+    setLoading(false);
   };
 
   const CARD_BASE = "bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all";

@@ -21,32 +21,27 @@ export default function Leaderboard() {
     const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
     const fetchLeaderboard = async () => {
-        try {
-            setLoading(true);
-            const params = {
-                page,
-                limit,
-                sortBy
-            };
+        setLoading(true);
+        const params = {
+            page,
+            limit,
+            sortBy
+        };
 
-            // Add search if present
-            if (searchQuery.trim()) {
-                params.search = searchQuery.trim();
-            }
-
-            const [leaderboardRes, rankRes] = await Promise.all([
-                getLeaderboardApi(params),
-                !isAdmin ? getMyRankApi().catch(() => null) : Promise.resolve(null)
-            ]);
-
-            setLeaderboard(leaderboardRes.data.leaderboard);
-            setPagination(leaderboardRes.data.pagination);
-            if (rankRes && !isAdmin) setMyRank(rankRes.data);
-        } catch (error) {
-            console.error("Failed to fetch leaderboard:", error);
-        } finally {
-            setLoading(false);
+        // Add search if present
+        if (searchQuery.trim()) {
+            params.search = searchQuery.trim();
         }
+
+        const [leaderboardRes, rankRes] = await Promise.all([
+            getLeaderboardApi(params),
+            !isAdmin ? getMyRankApi().catch(() => null) : Promise.resolve(null)
+        ]);
+
+        setLeaderboard(leaderboardRes.data.leaderboard);
+        setPagination(leaderboardRes.data.pagination);
+        if (rankRes && !isAdmin) setMyRank(rankRes.data);
+        setLoading(false);
     };
 
     useEffect(() => {
@@ -56,11 +51,8 @@ export default function Leaderboard() {
     // Search with debounce
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (page === 1) {
-                fetchLeaderboard();
-            } else {
-                setPage(1); // Reset to first page on search
-            }
+            setPage(1); // Always reset to first page on search
+            fetchLeaderboard();
         }, 500);
 
         return () => clearTimeout(timeoutId);

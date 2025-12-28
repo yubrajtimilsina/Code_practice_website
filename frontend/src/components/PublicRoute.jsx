@@ -1,8 +1,10 @@
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { navigateToDashboard } from "../utils/navigation";
 
 const PublicRoute = ({ children }) => {
   const { user, token, loading } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -14,13 +16,8 @@ const PublicRoute = ({ children }) => {
 
 
   if (user && token) {
-    if (user.role === "super-admin") {
-      return <Navigate to="/dashboard/super-admin" replace />;
-    } else if (user.role === "admin") {
-      return <Navigate to="/dashboard/admin" replace />;
-    } else {
-      return <Navigate to="/dashboard/learner" replace />;
-    }
+    navigateToDashboard(user, navigate);
+    return null;
   }
 
   return children;

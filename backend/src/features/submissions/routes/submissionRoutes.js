@@ -3,8 +3,8 @@ import { body } from "express-validator";
 import { submitSolution, runCode, saveDraft, getDraftCode, getSubmission, getHistory,getAccepted, getProblemStats, removeSubmission, getUserStatistics, getLatestAccepted } from "../controller/submissionController.js";
 
 import { role } from "../../../middlewares/roleMiddleware.js";
+import {  handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
-
 const router = Router();
 
 router.use(authMiddleware);
@@ -15,9 +15,9 @@ const submissionValidation = [
   body("problemId").notEmpty().withMessage("Problem ID is required"),
 ];
 
-router.post("/submit", submissionValidation, submitSolution );
+router.post("/submit", submissionValidation, handleValidationErrors, submitSolution );
 
-router.post("/run", submissionValidation,runCode );
+router.post("/run", submissionValidation, handleValidationErrors, runCode );
 
 router.put(
   "/draft/:problemId",

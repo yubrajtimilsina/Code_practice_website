@@ -32,20 +32,15 @@ export default function CreateDiscussion() {
       return;
     }
 
-    try {
-      setLoading(true);
-      const payload = {
-        ...form,
-        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean)
-      };
+    setLoading(true);
+    const payload = {
+      ...form,
+      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean)
+    };
 
-      const response = await createDiscussion(payload);
-      navigate(`/discussion/${response.data.discussion._id}`);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to create discussion");
-    } finally {
-      setLoading(false);
-    }
+    const response = await createDiscussion(payload);
+    navigate(`/discussion/${response.data.discussion._id}`);
+    setLoading(false);
   };
 
   return (

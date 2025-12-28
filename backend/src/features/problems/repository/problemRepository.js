@@ -24,8 +24,8 @@ export const findProblemBySlug = async (slug) => {
 export const getProblems = async (filter = {}, options = {}) => {
     const { page =1, limit = 20, sort = { createdAt: -1 } } = options;
     const skip = (page - 1) * limit;
-    const query = Problem.find(filter).sort(sort).skip(skip).limit(limit).lean();
-    const items = await query;
+    const query = Problem.find(filter).sort(sort).skip(skip).limit(limit);
+    const items = await query.lean();
     const total = await Problem.countDocuments(filter);
     return {
         items,

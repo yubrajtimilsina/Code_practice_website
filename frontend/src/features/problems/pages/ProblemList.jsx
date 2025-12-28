@@ -26,39 +26,30 @@ export default function ProblemList({ adminView = false }) {
   const fetchProblems = async () => {
     setLoading(true);
     setError(null);
-    try {
-      const params = { 
-        page: currentPage, 
-        limit: itemsPerPage 
-      };
-      
-      // Add difficulty filter
-      if (difficultyFilter !== "all") {
-        params.difficulty = difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1);
-      }
-
-      // Add search query
-      if (searchQuery.trim()) {
-        params.q = searchQuery.trim();
-      }
-
-      if (selectedTags.length > 0) {
-        params.tags = selectedTags.join(",");
-      }
-
-      const { data } = await listProblems(params);
-      
-      setProblems(data.items || []);
-      setTotalProblems(data.total || 0);
-    } catch (err) {
-      console.error("Error fetching problems:", err);
-      setError(
-        err.response?.data?.message || 
-        "Failed to load problems. Please try again."
-      );
-    } finally {
-      setLoading(false);
+    const params = { 
+      page: currentPage, 
+      limit: itemsPerPage 
+    };
+    
+    // Add difficulty filter
+    if (difficultyFilter !== "all") {
+      params.difficulty = difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1);
     }
+
+    // Add search query
+    if (searchQuery.trim()) {
+      params.q = searchQuery.trim();
+    }
+
+    if (selectedTags.length > 0) {
+      params.tags = selectedTags.join(",");
+    }
+
+    const { data } = await listProblems(params);
+    
+    setProblems(data.items || []);
+    setTotalProblems(data.total || 0);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -68,11 +59,8 @@ export default function ProblemList({ adminView = false }) {
   // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchProblems();
-      } else {
-        setCurrentPage(1);
-      }
+      setCurrentPage(1); // Always reset to first page on search
+      fetchProblems();
     }, 500);
 
     return () => clearTimeout(timeoutId);

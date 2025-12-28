@@ -65,6 +65,23 @@ export default function AdminDashboard() {
     await api.put(`/admin/users/${userId}/toggle-status`);
     fetchDashboardData();
     setRefreshing(false);
+<<<<<<< HEAD
+=======
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("⚠️ This will permanently delete the user. Continue?")) return;
+
+    try {
+      setRefreshing(true);
+      await api.delete(`/admin/users/${userId}`);
+      fetchDashboardData();
+    } catch (err) {
+      alert("Failed to delete user");
+    } finally {
+      setRefreshing(false);
+    }
+>>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
   };
 
 const handleDeleteUser = async (userId) => {
