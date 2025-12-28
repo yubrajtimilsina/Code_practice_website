@@ -1,5 +1,9 @@
 import { getAdminDashboard as getAdminDashboardUseCase } from "../../dashboard/use-cases/getAdminDashboard.js";
 import User from "../../auth/models/UserModels.js";
+import Submission from "../../submissions/models/submissionModel.js";
+import DailyChallenge from "../../dailyChallenge/models/DailyChallengeModel.js";
+import Discussion from "../../discussion/models/DiscussionModel.js";
+
 
 export const getAdminDashboard = async (req, res) => {
   try {
@@ -64,6 +68,47 @@ export const toggleUserStatus = async (req, res) => {
       user: { ...user.toObject(), password: undefined }
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.user._id;
+    
+    // Prevent self-deletion
+    if (id === currentUserId.toString()) {
+      return res.status(400).json({ error: "You cannot delete your own account" });
+    }
+    
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Prevent deletion of super-admin by regular admin
+    if (user.role === 'super-admin' && req.user.role !== 'super-admin') {
+      return res.status(403).json({ error: "Only super-admin can delete other super-admins" });
+    }
+    
+    // Delete user's submissions
+    await Submission.deleteMany({ userId: id });
+    
+    // Delete the user
+    await User.findByIdAndDelete(id);
+    
+    res.json({ 
+      message: "User and all associated data deleted successfully",
+      deletedUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
     res.status(500).json({ error: error.message });
   }
 };

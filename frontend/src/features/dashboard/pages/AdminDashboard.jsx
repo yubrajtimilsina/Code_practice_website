@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAdminDashboardApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
+import { DashboardSkeleton} from "../loading/DasbboardSkeleton.jsx";
 import {
   Users,
   Code2,
@@ -64,6 +65,8 @@ export default function AdminDashboard() {
     await api.put(`/admin/users/${userId}/toggle-status`);
     fetchDashboardData();
     setRefreshing(false);
+<<<<<<< HEAD
+=======
   };
 
   const handleDeleteUser = async (userId) => {
@@ -78,18 +81,37 @@ export default function AdminDashboard() {
     } finally {
       setRefreshing(false);
     }
+>>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-700 text-lg font-medium">Loading Admin Dashboard...</p>
-        </div>
-      </div>
-    );
+const handleDeleteUser = async (userId) => {
+  if (!confirm(" WARNING: This will permanently delete the user and ALL their data (submissions, progress, etc.). This action CANNOT be undone. Are you absolutely sure?")) {
+    return;
   }
+
+  try {
+    setRefreshing(true);
+    
+    // ✅ FIXED: Call the correct admin endpoint
+    await api.delete(`/admin/users/${userId}`);
+    
+    alert('User deleted successfully');
+    
+    // Refresh data
+    fetchDashboardData();
+  } catch (err) {
+    console.error('Delete user error:', err);
+    const errorMsg = err.response?.data?.error || 'Failed to delete user';
+    alert(`Error: ${errorMsg}`);
+  } finally {
+    setRefreshing(false);
+  }
+};
+
+  if (loading) {
+  return <DashboardSkeleton />;
+}
+
 
   if (error && !data) {
     return (

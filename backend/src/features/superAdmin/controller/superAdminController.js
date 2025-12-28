@@ -2,7 +2,7 @@ import User from "../../auth/models/UserModels.js";
 import Problem from "../../problems/models/ProblemModel.js";
 import Submission from "../../submissions/models/submissionModel.js";
 import DailyChallenge from "../../dailyChallenge/models/DailyChallengeModel.js";
-
+import Discussion from "../../discussion/models/DiscussionModel.js";
 
 export const getSuperAdminDashboard = async (req, res) => {
   const totalUsers = await User.countDocuments();
@@ -229,4 +229,86 @@ export const getAllUsersForSuperAdmin = async (req, res) => {
       pages: Math.ceil(total / parseInt(limit))
     }
   });
+};
+
+export const deleteUserBySuperAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.user._id;
+    
+    // Prevent self-deletion
+    if (id === currentUserId.toString()) {
+      return res.status(400).json({ error: "You cannot delete your own account" });
+    }
+    
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Delete all user's associated data
+    console.log(`[SUPER ADMIN] Deleting user ${user.email} and all associated data...`);
+    
+    // 1. Delete user's submissions
+    const deletedSubmissions = await Submission.deleteMany({ userId: id });
+    console.log(`Deleted ${deletedSubmissions.deletedCount} submissions`);
+    
+    // 2. Remove user from daily challenge completions and leaderboards
+    await DailyChallenge.updateMany(
+      { 'completedBy.userId': id },
+      { 
+        $pull: { 
+          completedBy: { userId: id },
+          leaderboard: { userId: id }
+        }
+      }
+    );
+    console.log(`Removed user from daily challenges`);
+    
+    // 3. Delete user's discussions
+    const deletedDiscussions = await Discussion.deleteMany({ userId: id });
+    console.log(`Deleted ${deletedDiscussions.deletedCount} discussions`);
+    
+    // 4. Delete user's comments from discussions
+    await Discussion.updateMany(
+      { 'comments.userId': id },
+      { $pull: { comments: { userId: id } } }
+    );
+    console.log(`Removed user's comments from discussions`);
+    
+    // 5. Remove user from votes in discussions
+    await Discussion.updateMany(
+      { $or: [{ upvotes: id }, { downvotes: id }] },
+      { 
+        $pull: { 
+          upvotes: id,
+          downvotes: id
+        }
+      }
+    );
+    console.log(`Removed user's votes from discussions`);
+    
+    // 6. Finally, delete the user
+    await User.findByIdAndDelete(id);
+    
+    console.log(`[SUPER ADMIN] Successfully deleted user ${user.email}`);
+    
+    res.json({ 
+      message: "User and all associated data deleted successfully",
+      deletedUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      deletedData: {
+        submissions: deletedSubmissions.deletedCount,
+        discussions: deletedDiscussions.deletedCount
+      }
+    });
+  } catch (error) {
+    console.error('[SUPER ADMIN] Delete user error:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete user' });
+  }
 };

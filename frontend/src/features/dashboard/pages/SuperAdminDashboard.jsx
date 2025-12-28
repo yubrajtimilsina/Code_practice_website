@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../../../utils/api.js";
+import { DashboardSkeleton } from "../loading/DasbboardSkeleton.jsx";
 import {
   Shield,
   Users,
@@ -81,6 +82,8 @@ export default function SuperAdminDashboard() {
     await api.put(`/super-admin/${userId}/revoke-admin`);
     fetchAllData();
     setRefreshing(false);
+<<<<<<< HEAD
+=======
   };
 
   const handleDeleteUser = async (userId) => {
@@ -95,19 +98,37 @@ export default function SuperAdminDashboard() {
     } finally {
       setRefreshing(false);
     }
+>>>>>>> 9d4a732ac6e7f3680303cee49e131bebc70e8908
   };
 
-  // Loading State
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-700 text-lg font-medium">Loading Super Admin Dashboard...</p>
-        </div>
-      </div>
-    );
+  const handleDeleteUser = async (userId) => {
+  if (!confirm("⚠️ WARNING: This will permanently delete the user and ALL their data (submissions, discussions, progress, etc.). This action CANNOT be undone. Are you absolutely sure?")) {
+    return;
   }
+
+  try {
+    setRefreshing(true);
+    
+    // ✅ FIXED: Call the correct super-admin endpoint
+    await api.delete(`/super-admin/users/${userId}`);
+    
+    alert('User deleted successfully');
+    
+    // Refresh data
+    fetchAllData();
+  } catch (err) {
+    console.error('Delete user error:', err);
+    const errorMsg = err.response?.data?.error || 'Failed to delete user';
+    alert(`Error: ${errorMsg}`);
+  } finally {
+    setRefreshing(false);
+  }
+};
+
+  if (loading) {
+  return <SuperAdminDashboardSkeleton />;
+}
+
 
   const stats = data?.stats || {};
   const roleDistribution = data?.roleDistribution || {};
