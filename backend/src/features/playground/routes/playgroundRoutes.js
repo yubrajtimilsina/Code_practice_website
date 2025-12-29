@@ -3,7 +3,7 @@ import { body } from "express-validator";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 import { handleValidationErrors} from "../../../middlewares/errorMiddleware.js";
 import { executePlaygroundCode, getPlaygroundStats } from "../controller/playgroundController.js";
-
+import { submissionLimiter } from "../../../middlewares/rateLimitMiddleware.js";
 const router = Router();
 
 const playgroundValidation = [
@@ -15,6 +15,7 @@ const playgroundValidation = [
 
 router.post(
   "/execute",
+  submissionLimiter,
   playgroundValidation,
   handleValidationErrors,
   executePlaygroundCode

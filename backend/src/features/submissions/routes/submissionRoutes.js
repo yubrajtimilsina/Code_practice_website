@@ -5,6 +5,8 @@ import { submitSolution, runCode, saveDraft, getDraftCode, getSubmission, getHis
 import { role } from "../../../middlewares/roleMiddleware.js";
 import {  handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
+import { submissionLimiter } from "../../../middlewares/rateLimitMiddleware.js";
+
 const router = Router();
 
 router.use(authMiddleware);
@@ -15,9 +17,9 @@ const submissionValidation = [
   body("problemId").notEmpty().withMessage("Problem ID is required"),
 ];
 
-router.post("/submit", submissionValidation, handleValidationErrors, submitSolution );
+router.post("/submit",submissionLimiter, submissionValidation, handleValidationErrors, submitSolution );
 
-router.post("/run", submissionValidation, handleValidationErrors, runCode );
+router.post("/run",submissionLimiter, submissionValidation, handleValidationErrors, runCode );
 
 router.put(
   "/draft/:problemId",
