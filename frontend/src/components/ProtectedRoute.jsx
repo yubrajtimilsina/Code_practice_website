@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 const Spinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -10,32 +10,41 @@ const Spinner = () => (
   </div>
 );
 
-
 const ProtectedRoute = ({ children, requiredRoles = [] }) => {
   const { user, token, loading } = useSelector((state) => state.auth);
+  const location = useLocation();
 
-  
   if (loading) {
     return <Spinner />;
   }
 
   if (!user || !token) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
-    const redirectPath =
-      user.role === "admin"
-        ? "/dashboard/admin"
-        : user.role === "learner"
-        ? "/dashboard/learner"
-        : "/login"; 
-
-    return <Navigate to={redirectPath} replace />;
+  if (requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.includes(user.role);
+    
+    if (!hasRequiredRole) {
+      const redirectPath = getDashboardPath(user.role);
+      return <Navigate to={redirectPath} replace />;
+    }
   }
 
   return children;
+};
+
+const getDashboardPath = (role) => {
+  switch (role) {
+    case "super-admin":
+      return "/dashboard/super-admin";
+    case "admin":
+      return "/dashboard/admin";
+    case "learner":
+      return "/dashboard/learner";
+    default:
+      return "/login";
+  }
 };
 
 export default ProtectedRoute;

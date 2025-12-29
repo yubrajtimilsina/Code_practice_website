@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { logout } from "../features/auth/slice/authSlice.js";
-import { LogOut, User, Shield, LayoutDashboard, Code2, Settings, MessageSquare, Trophy, TrendingUp } from "lucide-react";
+import { LogOut, User, Shield, LayoutDashboard, Code2, Settings, MessageSquare, Trophy, TrendingUp, Terminal } from "lucide-react";
 
 export default function Navbar() {
   const { user } = useSelector((state) => state.auth);
@@ -64,6 +64,15 @@ export default function Navbar() {
                 Problems
               </Link>
 
+              {/* ✅ NEW - Playground Link */}
+              <Link
+                to="/playground"
+                className={getNavLinkClasses("bg-purple-500 hover:bg-purple-600")}
+              >
+                <Terminal className="w-4 h-4" />
+                Playground
+              </Link>
+
               <Link
                 to="/discussion"
                 className={getNavLinkClasses("bg-indigo-500 hover:bg-indigo-600")}
@@ -85,6 +94,14 @@ export default function Navbar() {
                 Manage
               </Link>
 
+              {/* ✅ Admins can also access playground */}
+              <Link
+                to="/playground"
+                className={getNavLinkClasses("bg-orange-500 hover:bg-orange-600")}
+              >
+                <Terminal className="w-4 h-4" />
+                Playground
+              </Link>
             </>
           )}
 
@@ -111,4 +128,3 @@ export default function Navbar() {
     </nav>
   );
 }
-

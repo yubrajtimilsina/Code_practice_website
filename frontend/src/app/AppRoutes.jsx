@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Home from "../pages/Home";
 import Register from "../features/auth/pages/Register.jsx";
 import Login from "../features/auth/pages/Login.jsx";
@@ -9,6 +10,8 @@ import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
 import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminDashboard.jsx";
 import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
+import EditProfile from "../features/user/pages/EditProfile.jsx";
+
 import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
 import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
 import ProblemList from "../features/problems/pages/ProblemList.jsx";
@@ -18,6 +21,7 @@ import SubmissionDetails from "../features/problems/pages/SubmissionDetails.jsx"
 
 import Leaderboard from "../features/leaderboard/pages/leaderboard.jsx";
 import Progress from "../features/leaderboard/pages/Progress.jsx";
+
 import DailyChallenge from "../features/dailyChallenge/pages/DailyChallenge.jsx";
 import ChallengeHistory from "../features/dailyChallenge/pages/ChallengeHistory.jsx";
 import ChallengeLeaderboard from "../features/dailyChallenge/pages/ChallengeLeaderboard.jsx";
@@ -25,13 +29,32 @@ import ChallengeLeaderboard from "../features/dailyChallenge/pages/ChallengeLead
 import DiscussionList from "../features/discussion/pages/DiscussionList.jsx";
 import CreateDiscussion from "../features/discussion/pages/CreateDiscussion.jsx";
 import DiscussionDetails from "../features/discussion/pages/DiscussionDetails.jsx";
+import Playground from "../features/playground/pages/Playground.jsx";
+
+// Smart Dashboard Redirector Component
+const DashboardRedirect = () => {
+  const { user } = useSelector((state) => state.auth);
+  
+  if (!user) return <Navigate to="/login" replace />;
+  
+  switch (user.role) {
+    case "super-admin":
+      return <Navigate to="/dashboard/super-admin" replace />;
+    case "admin":
+      return <Navigate to="/dashboard/admin" replace />;
+    case "learner":
+      return <Navigate to="/dashboard/learner" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
 
 export default function AppRoutes() {
   return (
     <Routes>
-
+      {/* ========== PUBLIC ROUTES ========== */}
       <Route path="/" element={<Home />} />
-
+      
       <Route
         path="/register"
         element={
@@ -40,6 +63,7 @@ export default function AppRoutes() {
           </PublicRoute>
         }
       />
+      
       <Route
         path="/login"
         element={
@@ -49,7 +73,19 @@ export default function AppRoutes() {
         }
       />
 
+       <Route
+        path="/playground"
+        element={
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+            <Playground />
+          </ProtectedRoute>
+        }
+      />
 
+      {/* ========== SMART DASHBOARD REDIRECT ========== */}
+      <Route path="/dashboard" element={<DashboardRedirect />} />
+
+      {/* ========== LEARNER ROUTES ========== */}
       <Route
         path="/dashboard/learner"
         element={
@@ -58,27 +94,6 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-
-      <Route
-        path="/dashboard/admin"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/dashboard/super-admin"
-        element={
-          <ProtectedRoute requiredRoles={["super-admin"]}>
-            <SuperAdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-
 
       <Route
         path="/learner/profile"
@@ -90,37 +105,76 @@ export default function AppRoutes() {
       />
 
       <Route
-        path="/problems"
-        element={<ProblemList />}
+        path="/learner/profile/edit"
+        element={
+          <ProtectedRoute requiredRoles={["learner"]}>
+            <EditProfile />
+          </ProtectedRoute>
+        }
       />
+
+      {/* ========== ADMIN ROUTES ========== */}
       <Route
-        path="/problems/:id"
-        element={<ProblemDetails />}
+        path="/dashboard/admin"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/admin/problems"
         element={
-          <ProtectedRoute requiredRoles={["admin"]}>
+          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
             <ProblemList adminView={true} />
           </ProtectedRoute>
         }
       />
 
-
       <Route
         path="/admin/problems/new"
         element={
-          <ProtectedRoute requiredRoles={["admin"]}>
+          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
             <AdminProblemForm />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/admin/problems/:id/edit"
         element={
-          <ProtectedRoute requiredRoles={["admin"]}>
+          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
             <AdminProblemForm />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ========== SUPER ADMIN ROUTES ========== */}
+      <Route
+        path="/dashboard/super-admin"
+        element={
+          <ProtectedRoute requiredRoles={["super-admin"]}>
+            <SuperAdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ========== SHARED ROUTES (LEARNER & ADMIN) ========== */}
+      <Route
+        path="/problems"
+        element={
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+            <ProblemList />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/problems/:id"
+        element={
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+            <ProblemDetails />
           </ProtectedRoute>
         }
       />
@@ -128,7 +182,7 @@ export default function AppRoutes() {
       <Route
         path="/editor/:problemId"
         element={
-          <ProtectedRoute requiredRoles={["learner"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <CodeEditor />
           </ProtectedRoute>
         }
@@ -137,15 +191,16 @@ export default function AppRoutes() {
       <Route
         path="/submissions"
         element={
-          <ProtectedRoute requiredRoles={["learner"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <SubmissionHistory />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/submissions/:submissionId"
         element={
-          <ProtectedRoute requiredRoles={["learner"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <SubmissionDetails />
           </ProtectedRoute>
         }
@@ -154,7 +209,7 @@ export default function AppRoutes() {
       <Route
         path="/leaderboard"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <Leaderboard />
           </ProtectedRoute>
         }
@@ -168,6 +223,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/daily-challenge"
         element={
@@ -176,6 +232,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/daily-challenge/history"
         element={
@@ -184,6 +241,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/daily-challenge/leaderboard/:challengeId"
         element={
@@ -196,30 +254,32 @@ export default function AppRoutes() {
       <Route
         path="/discussion"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <DiscussionList />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/discussion/new"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <CreateDiscussion />
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/discussion/:id"
         element={
-          <ProtectedRoute requiredRoles={["learner", "admin"]}>
+          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <DiscussionDetails />
           </ProtectedRoute>
         }
       />
 
-
-      <Route path="/" element={<Navigate to="/" replace />} />
+      {/* ========== FALLBACK - 404 ========== */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
