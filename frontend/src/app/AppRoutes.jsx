@@ -1,3 +1,4 @@
+// frontend/src/app/AppRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Home from "../pages/Home";
@@ -5,6 +6,7 @@ import Register from "../features/auth/pages/Register.jsx";
 import Login from "../features/auth/pages/Login.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import PublicRoute from "../components/PublicRoute.jsx";
+import DashboardLayout from "../layouts/DashboardLayout.jsx";
 
 import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
@@ -52,7 +54,7 @@ const DashboardRedirect = () => {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* ========== PUBLIC ROUTES ========== */}
+      {/* ========== PUBLIC ROUTES (No Sidebar) ========== */}
       <Route path="/" element={<Home />} />
       
       <Route
@@ -73,103 +75,203 @@ export default function AppRoutes() {
         }
       />
 
-       <Route
-        path="/playground"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <Playground />
-          </ProtectedRoute>
-        }
-      />
-
       {/* ========== SMART DASHBOARD REDIRECT ========== */}
       <Route path="/dashboard" element={<DashboardRedirect />} />
 
-      {/* ========== LEARNER ROUTES ========== */}
+      {/* ========== PROTECTED ROUTES WITH SIDEBAR LAYOUT ========== */}
       <Route
-        path="/dashboard/learner"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <LearnerDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/learner/profile"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <LearnerProfile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/learner/profile/edit"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <EditProfile />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ========== ADMIN ROUTES ========== */}
-      <Route
-        path="/dashboard/admin"
-        element={
-          <ProtectedRoute requiredRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/problems"
-        element={
-          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
-            <ProblemList adminView={true} />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/problems/new"
-        element={
-          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
-            <AdminProblemForm />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/problems/:id/edit"
-        element={
-          <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
-            <AdminProblemForm />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ========== SUPER ADMIN ROUTES ========== */}
-      <Route
-        path="/dashboard/super-admin"
-        element={
-          <ProtectedRoute requiredRoles={["super-admin"]}>
-            <SuperAdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ========== SHARED ROUTES (LEARNER & ADMIN) ========== */}
-      <Route
-        path="/problems"
         element={
           <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <ProblemList />
+            <DashboardLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        {/* Learner Dashboard Routes */}
+        <Route
+          path="/dashboard/learner"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <LearnerDashboard />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/learner/profile"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <LearnerProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/learner/profile/edit"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Dashboard Routes */}
+        <Route
+          path="/dashboard/admin"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/problems"
+          element={
+            <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
+              <ProblemList adminView={true} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/problems/new"
+          element={
+            <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
+              <AdminProblemForm />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/problems/:id/edit"
+          element={
+            <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
+              <AdminProblemForm />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Super Admin Dashboard Routes */}
+        <Route
+          path="/dashboard/super-admin"
+          element={
+            <ProtectedRoute requiredRoles={["super-admin"]}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Shared Routes (All roles with sidebar) */}
+        <Route
+          path="/problems"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <ProblemList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/playground"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <Playground />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/submissions"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <SubmissionHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/submissions/:submissionId"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <SubmissionDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <Leaderboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <Progress />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/daily-challenge"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <DailyChallenge />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/daily-challenge/history"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <ChallengeHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/daily-challenge/leaderboard/:challengeId"
+          element={
+            <ProtectedRoute requiredRoles={["learner"]}>
+              <ChallengeLeaderboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/discussion"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <DiscussionList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/discussion/new"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <CreateDiscussion />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/discussion/:id"
+          element={
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
+              <DiscussionDetails />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* ========== ROUTES WITHOUT SIDEBAR (Full Screen) ========== */}
       <Route
         path="/problems/:id"
         element={
@@ -184,96 +286,6 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
             <CodeEditor />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <SubmissionHistory />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions/:submissionId"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <SubmissionDetails />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/leaderboard"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <Leaderboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/progress"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <Progress />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/daily-challenge"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <DailyChallenge />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/daily-challenge/history"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <ChallengeHistory />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/daily-challenge/leaderboard/:challengeId"
-        element={
-          <ProtectedRoute requiredRoles={["learner"]}>
-            <ChallengeLeaderboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/discussion"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <DiscussionList />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/discussion/new"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <CreateDiscussion />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/discussion/:id"
-        element={
-          <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
-            <DiscussionDetails />
           </ProtectedRoute>
         }
       />
