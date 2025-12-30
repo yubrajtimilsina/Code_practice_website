@@ -1,4 +1,5 @@
 import User from "../../auth/models/UserModels.js";
+import bcrypt from "bcryptjs";
 
 export const getProfile = async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });

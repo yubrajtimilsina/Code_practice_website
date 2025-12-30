@@ -1,31 +1,90 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, registerApi, meApi } from "../api/authApi";
 
+//  CRITICAL FIX: Secure token storage with validation
 const setAuthData = (user, token) => {
-  localStorage.setItem("user", JSON.stringify(user));
-  localStorage.setItem("token", token);
+  try {
+    if (!user || !token) {
+      console.error(" Cannot store auth data: missing user or token");
+      return;
+    }
+
+    //  Validate token format (basic JWT check)
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      console.error(" Invalid token format");
+      return;
+    }
+
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("token", token);
+    
+    console.log(" Auth data stored successfully");
+  } catch (error) {
+    console.error(" Failed to store auth data:", error);
+  }
 };
 
 const clearAuthData = () => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("token");
+  try {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    console.log(" Auth data cleared");
+  } catch (error) {
+    console.error(" Failed to clear auth data:", error);
+  }
 };
 
 const getUserFromLocalStorage = () => {
   try {
-    const user = JSON.parse(localStorage.getItem("user"));
-    return user || null;
+    const userStr = localStorage.getItem("user");
+    
+    if (!userStr || userStr === "null" || userStr === "undefined") {
+      return null;
+    }
+
+    const user = JSON.parse(userStr);
+    
+    //  Validate user object
+    if (!user || !user.id || !user.email) {
+      console.warn(" Invalid user data in localStorage, clearing...");
+      clearAuthData();
+      return null;
+    }
+
+    return user;
   } catch (error) {
-    console.error("Error parsing user from localStorage:", error);
+    console.error(" Error parsing user from localStorage:", error);
+    clearAuthData();
     return null;
   }
 };
 
 const getTokenFromLocalStorage = () => {
-  const token = localStorage.getItem("token");
-  return token && token !== "null" && token.trim() !== "" ? token : null;
+  try {
+    const token = localStorage.getItem("token");
+    
+    if (!token || token === "null" || token === "undefined") {
+      return null;
+    }
+
+    //  Basic JWT format validation
+    const parts = token.trim().split('.');
+    if (parts.length !== 3) {
+      console.warn(" Invalid token format in localStorage, clearing...");
+      clearAuthData();
+      return null;
+    }
+
+    return token.trim();
+  } catch (error) {
+    console.error(" Error reading token from localStorage:", error);
+    clearAuthData();
+    return null;
+  }
 };
 
+//  Initialize state from localStorage
 const user = getUserFromLocalStorage();
 const token = getTokenFromLocalStorage();
 
@@ -36,47 +95,81 @@ const initialState = {
   token: token,
 };
 
+//  Register thunk with better error handling
 export const register = createAsyncThunk(
   "auth/register",
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await registerApi(payload);
-      if (data.user?.token) {
-        setAuthData(data.user, data.user.token);
+      
+      if (!data || !data.user || !data.user.token) {
+        throw new Error("Invalid response from server");
       }
+
+      setAuthData(data.user, data.user.token);
       return data.user;
+      
     } catch (error) {
-      const message = error.response?.data?.error || "Registration failed";
+      const message = error.response?.data?.error || 
+                     error.response?.data?.errors?.[0] || 
+                     error.message || 
+                     "Registration failed";
       return rejectWithValue(message);
     }
   }
 );
 
+//  Login thunk with better error handling
 export const login = createAsyncThunk(
   "auth/login",
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await loginApi(payload);
-      if (data.user?.token) {
-        setAuthData(data.user, data.user.token);
+      
+      if (!data || !data.user || !data.user.token) {
+        throw new Error("Invalid response from server");
       }
+
+      setAuthData(data.user, data.user.token);
       return data.user;
+      
     } catch (error) {
-      const message = error.response?.data?.error || "Login failed";
+      const message = error.response?.data?.error || 
+                     error.response?.data?.errors?.[0] || 
+                     error.message || 
+                     "Login failed";
       return rejectWithValue(message);
     }
   }
 );
 
+//  Get Me thunk with better error handling
 export const getMe = createAsyncThunk(
   "auth/me",
   async (_, { rejectWithValue }) => {
     try {
+      // Check if token exists before making request
+      const token = getTokenFromLocalStorage();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
       const { data } = await meApi();
+      
+      if (!data || !data.id) {
+        throw new Error("Invalid user data received");
+      }
+
       return data;
+      
     } catch (error) {
       clearAuthData();
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch user data");
+      
+      const message = error.response?.data?.error || 
+                     error.message || 
+                     "Failed to fetch user data";
+      
+      return rejectWithValue(message);
     }
   }
 );
@@ -88,8 +181,12 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
+      state.error = null;
       clearAuthData();
     },
+    clearError: (state) => {
+      state.error = null;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -100,7 +197,6 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        
         state.user = action.payload;
         state.token = action.payload.token;
         state.error = null;
@@ -121,6 +217,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
         state.token = action.payload.token;
+        state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -129,7 +226,7 @@ const authSlice = createSlice({
         state.token = null;
       })
 
-      
+      // Get Me
       .addCase(getMe.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -137,18 +234,17 @@ const authSlice = createSlice({
       .addCase(getMe.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-        state.token = getTokenFromLocalStorage(); // Ensure token is always synced from localStorage
+        state.token = getTokenFromLocalStorage();
+        state.error = null;
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.user = null;
         state.token = null;
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 export default authSlice.reducer;
