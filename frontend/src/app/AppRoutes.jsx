@@ -1,4 +1,3 @@
-// frontend/src/app/AppRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Home from "../pages/Home";
@@ -13,6 +12,8 @@ import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
 import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminDashboard.jsx";
 import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
 import EditProfile from "../features/user/pages/EditProfile.jsx";
+import AdminProfile from "../features/dashboard/pages/AdminProfile.jsx";
+
 
 import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
 import ProblemDetails from "../features/problems/pages/ProblemDetails.jsx";
@@ -150,6 +151,15 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/admin/profile"
+  element={
+    <ProtectedRoute requiredRoles={["admin"]}>
+      <AdminProfile />
+    </ProtectedRoute>
+  }
+/>
+
 
         {/* Super Admin Dashboard Routes */}
         <Route

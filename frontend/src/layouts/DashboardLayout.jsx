@@ -161,6 +161,21 @@ export default function DashboardLayout() {
               {isSidebarOpen && <span>Profile</span>}
             </Link>
           )}
+
+          {user?.role === "admin" && (
+  <Link
+    to="/admin/profile"
+    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+      isActive("/admin/profile")
+        ? "bg-red-50 text-red-600 font-medium"
+        : "text-slate-700 hover:bg-slate-50"
+    }`}
+  >
+    <User className="w-5 h-5 flex-shrink-0" />
+    {isSidebarOpen && <span>Profile</span>}
+  </Link>
+)}
+
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all"
