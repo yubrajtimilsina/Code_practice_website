@@ -1,116 +1,72 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState, useCallback } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAdminDashboardApi } from "../api/dashboardApi.js";
 import api from "../../../utils/api.js";
-import { DashboardSkeleton} from "../loading/DasbboardSkeleton.jsx";
+import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
 import {
   Users,
   Code2,
-  BarChart3,
-  TrendingUp,
-  AlertCircle,
   RefreshCw,
   UserCheck,
   FileText,
   TestTube,
+  BarChart3,
+  TrendingUp,
+  AlertCircle,
   Info,
 } from "lucide-react";
 import Pagination from "../../../components/Pagination.jsx";
+import { ErrorState, LoadingState } from "../../../components/StateComponents.jsx";
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [userPage, setUserPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
 
-  const fetchDashboardData = async () => {
-    setRefreshing(true);
-    setError(null);
-
-    const dashRes = await getAdminDashboardApi();
-    setData(dashRes.data);
-
+  const fetchDashboardData = useCallback(async () => {
     try {
-      const usersRes = await api.get("/admin/users", {
-        params: { page: userPage, limit: usersPerPage },
-      });
-      setUsers(usersRes.data.users || []);
-      setTotalUsers(usersRes.data.pagination?.total || 0);
+      setLoading(true);
+      const dashRes = await getAdminDashboardApi();
+      setData(dashRes.data);
+
+      try {
+        const usersRes = await api.get("/admin/users", {
+          params: { page: userPage, limit: usersPerPage },
+        });
+        setUsers(usersRes.data.users || []);
+        setTotalUsers(usersRes.data.pagination?.total || 0);
+      } catch {
+        setUsers([]);
+        setTotalUsers(0);
+      }
     } catch (err) {
-      setUsers([]);
-      setTotalUsers(0);
+      setError(err.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setRefreshing(false);
-  };
+  }, [userPage, usersPerPage]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [userPage]);
-
-  const handleRefresh = () => {
-    fetchDashboardData();
-  };
-
-  const handleBlockUser = async (userId) => {
-    if (!confirm("Are you sure you want to toggle this user's status?")) return;
-    setRefreshing(true);
-    await api.put(`/admin/users/${userId}/toggle-status`);
-    fetchDashboardData();
-    setRefreshing(false);
-
-  };
-
-const handleDeleteUser = async (userId) => {
-  if (!confirm(" WARNING: This will permanently delete the user and ALL their data (submissions, progress, etc.). This action CANNOT be undone. Are you absolutely sure?")) {
-    return;
-  }
-
-  try {
-    setRefreshing(true);
-    
-    // ✅ FIXED: Call the correct admin endpoint
-    await api.delete(`/admin/users/${userId}`);
-    
-    alert('User deleted successfully');
-    
-    // Refresh data
-    fetchDashboardData();
-  } catch (err) {
-    console.error('Delete user error:', err);
-    const errorMsg = err.response?.data?.error || 'Failed to delete user';
-    alert(`Error: ${errorMsg}`);
-  } finally {
-    setRefreshing(false);
-  }
-};
+  }, [fetchDashboardData]);
 
   if (loading) {
-  return <DashboardSkeleton />;
-}
-
+    return <DashboardSkeleton />;
+  }
 
   if (error && !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
+      <div className="min-h-screen bg-slate-50 p-6 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-300 rounded-lg p-6 flex items-center gap-4">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-            <div>
-              <p className="text-red-700 font-semibold">Error Loading Dashboard</p>
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-            <button onClick={handleRefresh} className="ml-auto px-4 py-2 bg-red-200 hover:bg-red-300 text-red-700 rounded">
-              Retry
-            </button>
-          </div>
+          <ErrorState message={error} onRetry={fetchDashboardData} />
         </div>
       </div>
     );
@@ -127,12 +83,35 @@ const handleDeleteUser = async (userId) => {
   }
 
   const stats = data?.dashboard?.stats || {};
-  const usersByRole = data?.dashboard?.usersByRole || {};
   const problemsByDifficulty = data?.dashboard?.problemsByDifficulty || {};
   const submissionsByVerdict = data?.dashboard?.submissionsByVerdict || [];
   const popularProblems = data?.dashboard?.popularProblems || [];
-  const userGrowth = data?.dashboard?.userGrowth || [];
   const languageStats = data?.dashboard?.languageStats || [];
+
+  const handleBlockUser = async (id) => {
+    try {
+      setRefreshing(true);
+      await api.post(`/admin/users/${id}/toggle-block`);
+      await fetchDashboardData();
+    } catch {
+      // ignore for now
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      setRefreshing(true);
+      await api.delete(`/admin/users/${id}`);
+      await fetchDashboardData();
+    } catch (e) {
+      // ignore
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
@@ -151,13 +130,13 @@ const handleDeleteUser = async (userId) => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={handleRefresh}
-              disabled={refreshing}
+              onClick={fetchDashboardData}
+              disabled={loading}
               className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50"
               title="Refresh data"
             >
-              <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`} />
-              {!refreshing && "Refresh"}
+              <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+              {!loading && "Refresh"}
             </button>
           </div>
         </div>

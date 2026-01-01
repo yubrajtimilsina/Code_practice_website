@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { Shield, Mail, Calendar, Users, Code2, BarChart3, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../../utils/api';
+import { ProfileSkeleton } from '../../../core/Skeleton'; 
 
 export default function AdminProfile() {
   const { user } = useSelector((state) => state.auth);
@@ -26,12 +27,8 @@ export default function AdminProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  return <ProfileSkeleton />;
+}
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">

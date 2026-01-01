@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useSelector } from "react-redux";
 import api from "../../../utils/api.js";
-import { DashboardSkeleton } from "../loading/DasbboardSkeleton.jsx";
+import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
 import {
   Shield,
   Users,
@@ -32,37 +31,39 @@ export default function SuperAdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // overview, admins, users, analytics
 
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
 
   // Pagination state for users
   const [userPage, setUserPage] = useState(1);
   const [usersPagination, setUsersPagination] = useState(null);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setRefreshing(true);
     setError(null);
 
-    const dashRes = await api.get("/super-admin/dashboard");
-    setData(dashRes.data);
+    try {
+      const dashRes = await api.get("/super-admin/dashboard");
+      setData(dashRes.data);
 
-    const adminsRes = await api.get("/super-admin/manage-admins");
-    setAdmins(adminsRes.data.admins || []);
+      const adminsRes = await api.get("/super-admin/manage-admins");
+      setAdmins(adminsRes.data.admins || []);
 
-    const usersRes = await api.get("/super-admin/users", {
-      params: { page: userPage, limit: 20 }
-    });
-    setAllUsers(usersRes.data.users || []);
-    setUsersPagination(usersRes.data.pagination);
-
-    setLoading(false);
-    setRefreshing(false);
-  };
+      const usersRes = await api.get("/super-admin/users", {
+        params: { page: userPage, limit: 20 }
+      });
+      setAllUsers(usersRes.data.users || []);
+      setUsersPagination(usersRes.data.pagination);
+    } catch {
+      // error state already set above
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [userPage]);
 
   useEffect(() => {
     fetchAllData();
-  }, [userPage]);
+  }, [fetchAllData]);
 
   const handleRefresh = () => {
     fetchAllData();
@@ -91,12 +92,9 @@ export default function SuperAdminDashboard() {
       setRefreshing(true);
       await api.delete(`/super-admin/users/${userId}`);
       fetchAllData();
-    } catch (err) {
-      alert("Failed to delete user");
     } finally {
       setRefreshing(false);
     }
-
   };
 
  

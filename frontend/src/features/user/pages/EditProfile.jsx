@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import api from "../../../utils/api";
 import { getMe } from "../../auth/slice/authSlice";
 import { User, Mail, Lock, Save, ArrowLeft, AlertCircle } from "lucide-react";
+import { FormSkeleton } from "../../../core/Skeleton.jsx";
 
 export default function EditProfile() {
   const { user } = useSelector((state) => state.auth);
@@ -83,6 +84,16 @@ export default function EditProfile() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+  return (
+    <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+      <div className="max-w-2xl mx-auto">
+        <FormSkeleton fields={6} />
+      </div>
+    </div>
+  );
+}
   
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">

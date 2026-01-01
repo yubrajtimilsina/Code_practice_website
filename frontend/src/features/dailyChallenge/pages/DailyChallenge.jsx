@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getTodayChallenge } from "../api/dailyChallengeApi";
 import {
     Trophy,
     Calendar,
@@ -12,26 +11,34 @@ import {
     Zap,
     Play
 } from "lucide-react";
+import { CardGridSkeleton } from "../../../core/Skeleton";
+import { LoadingState, ErrorState, EmptyDataState } from "../../../components/StateComponents.jsx";
 
 export default function DailyChallenge() {
+    const navigate = useNavigate();
     const [challenge, setChallenge] = useState(null);
     const [userProgress, setUserProgress] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
-        fetchTodayChallenge();
+        const fetchChallenge = async () => {
+            try {
+                setLoading(true);
+                // Import getTodayChallenge dynamically to avoid circular dependency
+                const { getTodayChallenge } = await import("../api/dailyChallengeApi");
+                const response = await getTodayChallenge();
+                setChallenge(response.data.challenge);
+                setUserProgress(response.data.userProgress);
+            } catch (err) {
+                setError(err.message || "Failed to load today's challenge");
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchChallenge();
     }, []);
-
-    const fetchTodayChallenge = async () => {
-        setLoading(true);
-        const response = await getTodayChallenge();
-        setChallenge(response.data.challenge);
-        setUserProgress(response.data.userProgress);
-        setError(null);
-        setLoading(false);
-    };
 
     const handleStartChallenge = () => {
         if (challenge?.problem?._id) {
@@ -41,60 +48,19 @@ export default function DailyChallenge() {
 
     const getTimeRemaining = () => {
         if (!challenge) return "";
-
         const now = new Date();
         const expires = new Date(challenge.expiresAt);
         const diff = expires - now;
-
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
         return `${hours}h ${minutes}m`;
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-100 p-6">
-                <div className="max-w-6xl mx-auto space-y-6">
-
-                    {/* Header Skeleton */}
-                    <div className="text-center space-y-3">
-                        <div className="h-6 w-36 bg-slate-200 rounded-full mx-auto animate-pulse" />
-                        <div className="h-10 w-96 bg-slate-300 rounded mx-auto animate-pulse" />
-                        <div className="h-4 w-72 bg-slate-200 rounded mx-auto animate-pulse" />
-                    </div>
-
-                    {/* Main Card Skeleton */}
-                    <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-6">
-                        <div className="space-y-3">
-                            <div className="h-5 w-48 bg-slate-200 rounded animate-pulse" />
-                            <div className="h-8 w-3/4 bg-slate-300 rounded animate-pulse" />
-                        </div>
-
-                        <div className="flex gap-3">
-                            <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" />
-                            <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
-                            <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-6 pt-6">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="text-center space-y-2">
-                                    <div className="h-8 w-20 bg-slate-300 rounded mx-auto animate-pulse" />
-                                    <div className="h-4 w-24 bg-slate-200 rounded mx-auto animate-pulse" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Description Skeleton */}
-                    <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
-                        <div className="h-6 w-56 bg-slate-300 rounded animate-pulse" />
-                        <div className="h-4 w-full bg-slate-200 rounded animate-pulse" />
-                        <div className="h-4 w-5/6 bg-slate-200 rounded animate-pulse" />
-                        <div className="h-4 w-4/6 bg-slate-200 rounded animate-pulse" />
-                    </div>
-
+            <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+                <div className="max-w-6xl mx-auto">
+                    <LoadingState message="Loading today's challenge..." />
                 </div>
             </div>
         );
@@ -102,17 +68,12 @@ export default function DailyChallenge() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-100 p-6">
+            <div className="min-h-screen bg-slate-100 p-6 md:p-8">
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-red-100 border border-red-300 rounded-lg p-6 text-center">
-                        <p className="text-red-700 font-semibold">{error}</p>
-                        <button
-                            onClick={fetchTodayChallenge}
-                            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                        >
-                            Try Again
-                        </button>
-                    </div>
+                    <ErrorState 
+                        message={error} 
+                        onRetry={() => window.location.reload()} 
+                    />
                 </div>
             </div>
         );
@@ -120,12 +81,12 @@ export default function DailyChallenge() {
 
     if (!challenge) {
         return (
-            <div className="min-h-screen bg-slate-100 p-6">
+            <div className="min-h-screen bg-slate-100 p-6 md:p-8">
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-white border border-slate-200 rounded-lg p-12 text-center">
-                        <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                        <p className="text-slate-600 text-lg">No daily challenge available today</p>
-                    </div>
+                    <EmptyDataState 
+                        title="No daily challenge available today"
+                        description="Check back tomorrow for a new challenge"
+                    />
                 </div>
             </div>
         );

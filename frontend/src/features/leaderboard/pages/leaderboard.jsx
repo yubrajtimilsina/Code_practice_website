@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getLeaderboardApi, getMyRankApi } from "../api/leaderboardApi.js";
 import { Trophy, Medal, Award, TrendingUp, Zap, Target, RefreshCw, Shield, Info, Filter, Search, ChevronDown } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -20,7 +20,7 @@ export default function Leaderboard() {
     const { user } = useSelector((state) => state.auth);
     const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
-    const fetchLeaderboard = async () => {
+    const fetchLeaderboard = useCallback(async () => {
         setLoading(true);
         const params = {
             page,
@@ -42,21 +42,11 @@ export default function Leaderboard() {
         setPagination(leaderboardRes.data.pagination);
         if (rankRes && !isAdmin) setMyRank(rankRes.data);
         setLoading(false);
-    };
+    }, [page, limit, sortBy, searchQuery, isAdmin]);
 
     useEffect(() => {
         fetchLeaderboard();
-    }, [page, sortBy, limit]);
-
-    // Search with debounce
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            setPage(1); // Always reset to first page on search
-            fetchLeaderboard();
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchQuery]);
+    }, [fetchLeaderboard]);
 
     const handlePageChange = (newPage) => {
         setPage(newPage);

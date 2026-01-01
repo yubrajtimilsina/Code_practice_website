@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDiscussions } from "../api/discussionApi.js";
-import { DiscussionSkeleton } from "../loading/DiscussionSkeleton.jsx";
+import { DiscussionSkeleton } from "../../../core/Skeleton.jsx";
 
 import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
 
@@ -11,8 +11,6 @@ import {
   Eye, 
   Plus, 
   Search, 
-  Filter,
-  TrendingUp,
   Pin
 } from "lucide-react";
 
@@ -22,45 +20,38 @@ export default function DiscussionList() {
     const navigate = useNavigate();
 
     const [discussions, setDiscussions] = useState([]);
-     const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState(null);
-  const [category, setCategory] = useState("all");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("-lastActivityAt");
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState(null);
+    const [category, setCategory] = useState("all");
+    const [search, setSearch] = useState("");
+    const [sortBy, setSortBy] = useState("-lastActivityAt");
 
-   const categories = [
-    { value: "all", label: "All Discussions" },
-    { value: "general", label: "General" },
-    { value: "problem-help", label: "Problem Help" },
-    { value: "algorithm", label: "Algorithms" },
-    { value: "interview", label: "Interview Prep" },
-    { value: "bug-report", label: "Bug Reports" },
-    { value: "feature-request", label: "Feature Requests" }
-  ];
+    const categories = [
+      { value: "all", label: "All Discussions" },
+      { value: "general", label: "General" },
+      { value: "problem-help", label: "Problem Help" },
+      { value: "algorithm", label: "Algorithms" },
+      { value: "interview", label: "Interview Prep" },
+      { value: "bug-report", label: "Bug Reports" },
+      { value: "feature-request", label: "Feature Requests" }
+    ];
 
-  useEffect(() => {
-    fetchDiscussions();
-  }, [page, category, sortBy]);
+    const fetchDiscussions = useCallback(async() => {
+      setLoading(true);
+      const params = { page, limit: 20, sortBy };
+      if (category !== "all") params.category = category;
+      if (search.trim()) params.search = search.trim();
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+      const response = await getDiscussions(params);
+      setDiscussions(response.data.discussions);
+      setPagination(response.data.pagination);
+      setLoading(false);
+    }, [page, category, sortBy, search]);
+
+    useEffect(() => {
       fetchDiscussions();
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [search]);
-
-  const fetchDiscussions = async() =>{
-    setLoading(true);
-    const params = { page, limit:20, sortBy};
-    if (category !=="all") params.category = category;
-    if (search.trim()) params.search = search.trim();
-
-    const response = await getDiscussions(params);
-    setDiscussions(response.data.discussions);
-    setPagination(response.data.pagination);
-    setLoading(false);
-  };
+    }, [fetchDiscussions]);
 
 
   if (loading) {

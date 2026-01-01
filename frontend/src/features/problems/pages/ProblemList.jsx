@@ -1,103 +1,76 @@
 import { useEffect, useState } from "react";
-import { listProblems } from "../api/problemApi";
 import ProblemCard from "../components/ProblemCard";
-import { AlertCircle, RefreshCw, Search, Filter, ChevronDown } from "lucide-react";
+import { RefreshCw, Filter, ChevronDown, Search, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
+import { CardGridSkeleton, PageHeaderSkeleton } from "../../../core/Skeleton.jsx";
+import { ErrorState, LoadingState, EmptyDataState } from "../../../components/StateComponents.jsx";
+import { useProblems } from "../hooks/useProblems";
 
 export default function ProblemList({ adminView = false }) {
-  const [problems, setProblems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [totalProblems, setTotalProblems] = useState(0);
-  
-  // Filter state
   const [difficultyFilter, setDifficultyFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTags, setSelectedTags] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
   const allTags = ["arrays", "strings", "dynamic-programming", "graphs", "trees", "sorting", "searching", "math", "greedy", "backtracking"];
 
-  const fetchProblems = async () => {
-    setLoading(true);
-    setError(null);
-    const params = { 
-      page: currentPage, 
-      limit: itemsPerPage 
-    };
-    
-    // Add difficulty filter
-    if (difficultyFilter !== "all") {
-      params.difficulty = difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1);
-    }
-
-    // Add search query
-    if (searchQuery.trim()) {
-      params.q = searchQuery.trim();
-    }
-
-    if (selectedTags.length > 0) {
-      params.tags = selectedTags.join(",");
-    }
-
-    const { data } = await listProblems(params);
-    
-    setProblems(data.items || []);
-    setTotalProblems(data.total || 0);
-    setLoading(false);
-  };
+  // Use clean architecture hook
+  const {
+    problems,
+    loading,
+    error,
+    filters,
+    totalProblems,
+    fetchProblems,
+    search,
+    filterByTags,
+    setPage,
+    setLimit,
+  } = useProblems({
+    page: 1,
+    limit: 20,
+  });
 
   useEffect(() => {
     fetchProblems();
-  }, [currentPage, difficultyFilter, itemsPerPage, selectedTags]);
+  }, [filters]);
 
-  // Debounced search
+  // Simplified debounce for search
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setCurrentPage(1); // Always reset to first page on search
+    const timer = setTimeout(() => {
+      setPage(1);
       fetchProblems();
     }, 500);
+    return () => clearTimeout(timer);
+  }, [filters.q]);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  const handlePageChange = (newPage) => setPage(newPage);
+  const handleItemsPerPageChange = (newLimit) => setLimit(newLimit);
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const toggleTag = (tag) => {
+    const currentTags = (filters.tags || "").split(",").filter(Boolean);
+    if (currentTags.includes(tag)) {
+      filterByTags(currentTags.filter(t => t !== tag));
+    } else {
+      filterByTags([...currentTags, tag]);
+    }
   };
 
   const handleDifficultyChange = (difficulty) => {
     setDifficultyFilter(difficulty);
-    setCurrentPage(1);
-  };
-
-  const handleItemsPerPageChange = (newLimit) => {
-    setItemsPerPage(newLimit);
-    setCurrentPage(1);
-  };
-
-  const toggleTag = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-    setCurrentPage(1);
+    if (difficulty !== "all") {
+      search("");
+      setPage(1);
+    }
   };
 
   const clearFilters = () => {
     setDifficultyFilter("all");
-    setSearchQuery("");
-    setSelectedTags([]);
-    setCurrentPage(1);
+    search("");
+    filterByTags([]);
+    setPage(1);
   };
 
-  const totalPages = Math.ceil(totalProblems / itemsPerPage);
+  const totalPages = Math.ceil(totalProblems / filters.limit);
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
@@ -160,8 +133,8 @@ export default function ProblemList({ adminView = false }) {
                 <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={filters.q || ""}
+                  onChange={(e) => search(e.target.value)}
                   placeholder="Search by title or description..."
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -196,7 +169,7 @@ export default function ProblemList({ adminView = false }) {
                 Items Per Page
               </label>
               <select
-                value={itemsPerPage}
+                value={filters.limit}
                 onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
                 className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -208,7 +181,7 @@ export default function ProblemList({ adminView = false }) {
             </div>
 
             {/* Clear Filters */}
-            {(difficultyFilter !== "all" || searchQuery || selectedTags.length > 0) && (
+            {(difficultyFilter !== "all" || filters.q || (filters.tags && filters.tags.length > 0)) && (
               <button
                 onClick={clearFilters}
                 className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
@@ -244,18 +217,18 @@ export default function ProblemList({ adminView = false }) {
       </div>
 
       {/* Active Filters Display */}
-      {(searchQuery || selectedTags.length > 0) && (
+      {(filters.q || (filters.tags && filters.tags.length > 0)) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-800 mb-2">
             <strong>Active Filters:</strong>
           </p>
           <div className="flex flex-wrap gap-2">
-            {searchQuery && (
+            {filters.q && (
               <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded-full text-sm">
-                Search: "{searchQuery}"
+                Search: "{filters.q}"
               </span>
             )}
-            {selectedTags.map(tag => (
+            {filters.tags && filters.tags.split(",").filter(Boolean).map(tag => (
               <span key={tag} className="px-3 py-1 bg-blue-200 text-blue-800 rounded-full text-sm">
                 Tag: {tag}
               </span>
@@ -281,21 +254,12 @@ export default function ProblemList({ adminView = false }) {
         </div>
       )}
 
-      {/* Loading State */}
       {loading && problems.length === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="p-6 bg-white rounded-2xl shadow border border-slate-200 animate-pulse"
-            >
-              <div className="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-slate-200 rounded w-full mb-2"></div>
-              <div className="h-4 bg-slate-200 rounded w-2/3"></div>
-            </div>
-          ))}
-        </div>
-      )}
+  <div className="space-y-6">
+    <PageHeaderSkeleton />
+    <CardGridSkeleton count={6} />
+  </div>
+)}
 
       {/* Problem List */}
       {!loading && problems.length > 0 && (
@@ -308,10 +272,10 @@ export default function ProblemList({ adminView = false }) {
 
           {/* Pagination */}
           <Pagination
-            currentPage={currentPage}
+            currentPage={filters.page}
             totalPages={totalPages}
             totalItems={totalProblems}
-            itemsPerPage={itemsPerPage}
+            itemsPerPage={filters.limit}
             onPageChange={handlePageChange}
           />
         </>
@@ -321,18 +285,18 @@ export default function ProblemList({ adminView = false }) {
       {!loading && problems.length === 0 && !error && (
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-12 text-center text-slate-500">
           <p className="text-lg font-medium mb-2">
-            {searchQuery || selectedTags.length > 0 
+            {filters.q || (filters.tags && filters.tags.length > 0)
               ? "No problems match your filters"
               : "No problems found"}
           </p>
           <p className="text-sm mt-2 mb-6">
-            {searchQuery || selectedTags.length > 0
+            {filters.q || (filters.tags && filters.tags.length > 0)
               ? "Try adjusting your search or filters"
               : adminView
               ? "Create your first problem to get started!"
               : "Check back later for new challenges!"}
           </p>
-          {(searchQuery || selectedTags.length > 0) && (
+          {(filters.q || (filters.tags && filters.tags.length > 0)) && (
             <button
               onClick={clearFilters}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
@@ -354,7 +318,7 @@ export default function ProblemList({ adminView = false }) {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <p className="text-slate-600 text-sm mb-2">Current Page</p>
             <p className="text-3xl font-bold text-blue-600">
-              {currentPage} / {totalPages}
+              {filters.page} / {totalPages}
             </p>
           </div>
 
