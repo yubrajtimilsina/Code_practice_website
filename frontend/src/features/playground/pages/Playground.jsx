@@ -3,18 +3,20 @@ import { Play, Download, Upload, Trash2, Copy, Info } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { executeCode } from "../api/playgroundApi";
 import { CODE_TEMPLATES } from "../../../utils/codeTemplates";
+import { ErrorState } from "../../../components/StateComponents.jsx";
 
 export default function Playground() {
   const editorRef = useRef(null);
   
+  // Code execution state
   const [code, setCode] = useState(CODE_TEMPLATES.javascript);
   const [language, setLanguage] = useState("javascript");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
   const [executionTime, setExecutionTime] = useState("");
   const [memoryUsed, setMemoryUsed] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleLanguageChange = (newLang) => {
     if (code !== CODE_TEMPLATES[language]) {
@@ -25,17 +27,14 @@ export default function Playground() {
     setLanguage(newLang);
     setCode(CODE_TEMPLATES[newLang]);
     setOutput("");
-    setError("");
   };
 
   const handleRunCode = async () => {
-    setIsRunning(true);
-    setOutput("");
-    setError("");
-    setExecutionTime("");
-    setMemoryUsed("");
-
     try {
+      setOutput("");
+      setError(null);
+      setLoading(true);
+
       const response = await executeCode({
         code,
         language,
@@ -52,10 +51,9 @@ export default function Playground() {
         setMemoryUsed(result.memoryUsed);
       }
     } catch (err) {
-      console.error("Execution error:", err);
-      setError(err.response?.data?.error || err.message || "Failed to execute code");
+      setError(err.message || "Failed to execute code");
     } finally {
-      setIsRunning(false);
+      setLoading(false);
     }
   };
 
@@ -64,7 +62,6 @@ export default function Playground() {
       setCode(CODE_TEMPLATES[language]);
       setInput("");
       setOutput("");
-      setError("");
     }
   };
 
@@ -193,17 +190,17 @@ export default function Playground() {
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-between">
               <button
                 onClick={handleReset}
-                disabled={isRunning}
+                disabled={loading}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 Reset Code
               </button>
               <button
                 onClick={handleRunCode}
-                disabled={isRunning}
+                disabled={loading}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {isRunning ? (
+                {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                     Running...
@@ -251,7 +248,7 @@ export default function Playground() {
               </div>
               
               <div className="p-4 min-h-[200px]">
-                {isRunning ? (
+                {loading ? (
                   <div className="flex items-center gap-3 text-blue-600">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
                     <span>Executing your code...</span>

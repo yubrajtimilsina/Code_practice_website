@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { getLearnerDashboardApi } from "../api/dashboardApi";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target, Activity, CheckCircle, XCircle, Calendar, Flame } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { DashboardSkeleton } from "../loading/DasbboardSkeleton";
+import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
+import { ErrorState } from "../../../components/StateComponents.jsx";
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);
@@ -10,41 +11,35 @@ export default function LearnerDashboard() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const res = await getLearnerDashboardApi();
+      setData(res.data);
+    } catch (err) {
+      setError(err.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboard();
   }, []);
-
-  const fetchDashboard = async () => {
-    setLoading(true);
-    const res = await getLearnerDashboardApi();
-    setData(res.data);
-    setError(null);
-    setLoading(false);
-  };
 
   const CARD_BASE = "bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all";
   const CARD_HOVER = "hover:-translate-y-1 cursor-pointer";
   const TEXT_SUB = "text-slate-600";
 
-
   if (loading) {
-  return <DashboardSkeleton />;
-}
+    return <DashboardSkeleton />;
+  }
 
-  
   if (error) {
     return (
       <div className="min-h-screen bg-slate-50 p-6 md:p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-300 rounded-xl p-6 text-center">
-            <p className="text-red-700 font-semibold mb-4">{error}</p>
-            <button
-              onClick={fetchDashboard}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorState message={error} onRetry={fetchDashboard} />
         </div>
       </div>
     );
@@ -56,9 +51,7 @@ export default function LearnerDashboard() {
         <p className="text-red-500 text-xl font-semibold">Unable to load dashboard</p>
       </div>
     );
-  }
-
-  const { stats, learningPath, thisWeek, problemsByDifficulty, recentActivity, activityCalendar } = data.dashboard;
+  }  const { stats, learningPath, thisWeek, problemsByDifficulty, recentActivity, activityCalendar } = data.dashboard;
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">

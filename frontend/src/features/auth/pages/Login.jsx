@@ -1,20 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { login } from "../slice/authSlice.js";
-import { navigateToDashboard } from "../../../utils/navigation.js";
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { loading, error, user } = useSelector(state => state.auth);
+  const { loading, error } = useSelector(state => state.auth);
   const [form, setForm] = useState({ email: "", password: "" });
   const [focused, setFocused] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-
- 
-
 
   const onChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   

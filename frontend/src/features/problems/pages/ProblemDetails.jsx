@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import CodeEditor from "../components/CodeEditor";
+import { AlertCircle, CheckCircle, Clock, Code2 } from "lucide-react";
+import { ProblemDetailsSkeleton } from "../../../core/Skeleton";
 import { getProblem } from "../api/problemApi";
 import { runCodeApi, submitSolutionApi, saveDraftApi } from "../api/submissionApi";
-import CodeEditor from "../components/CodeEditor";
-import { AlertCircle, CheckCircle, Loader, Code2, Clock } from "lucide-react";
 
 export default function ProblemDetails() {
   const { id } = useParams();
@@ -11,15 +12,18 @@ export default function ProblemDetails() {
   const [loading, setLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
   const [submission, setSubmission] = useState(null);
-  const [isSolved, setIsSolved] = useState(false);
 
   useEffect(() => {
     const loadProblem = async () => {
-      setLoading(true);
-      const { data } = await getProblem(id);
-      setProblem(data);
-      setIsSolved(false);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const { data } = await getProblem(id);
+        setProblem(data);
+      } catch (err) {
+        console.error("Failed to load problem:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadProblem();
@@ -47,24 +51,12 @@ export default function ProblemDetails() {
     });
     
     setSubmission(response.data.submission);
-    
-    if (response.data.submission.isAccepted) {
-      setIsSolved(true);
-    }
-    
     return response.data.submission;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-blue-700 font-medium">Loading problem...</p>
-        </div>
-      </div>
-    );
-  }
+ if (loading) {
+  return <ProblemDetailsSkeleton />;
+}
 
   if (!problem) {
     return (
@@ -111,7 +103,7 @@ export default function ProblemDetails() {
               <p className="text-slate-600">Problem ID: {problem._id}</p>
             </div>
             <div className="flex items-center gap-2">
-              {isSolved && (
+              {submission?.isAccepted && (
                 <div className="px-4 py-2 bg-green-100 text-green-700 rounded-lg font-semibold flex items-center gap-2">
                   <CheckCircle className="w-5 h-5" />
                   Solved

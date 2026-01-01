@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLearnerDashboardApi } from '../api/dashboardApi';
 import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Flame, Activity, Target } from 'lucide-react';
-
+import { ProfileSkeleton } from '../../../core/Skeleton';
 import { Link } from 'react-router-dom';
 
 export default function LearnerProfile() {
@@ -32,13 +32,8 @@ export default function LearnerProfile() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="ml-4 text-blue-700">Loading profile...</p>
-      </div>
-    );
-  }
+  return <ProfileSkeleton />;
+}
 
   if (error) {
     return (

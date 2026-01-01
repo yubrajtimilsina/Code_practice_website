@@ -5,11 +5,11 @@ import {
   Calendar, 
   Trophy, 
   Target, 
-  TrendingUp, 
   CheckCircle,
   Flame,
   Award
 } from "lucide-react";
+import { LoadingState, ErrorState, EmptyDataState } from "../../../components/StateComponents.jsx";
 
 export default function ChallengeHistory() {
   const [history, setHistory] = useState([]);
@@ -17,71 +17,46 @@ export default function ChallengeHistory() {
     totalCompleted: 0,
     currentStreak: 0,
     longestStreak: 0,
-    byDifficulty: {
-      Easy: 0,
-      Medium: 0,
-      Hard: 0
-    }
+    byDifficulty: { Easy: 0, Medium: 0, Hard: 0 }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await getMyHistory(30);
+      const historyData = response.data.history || [];
+      const statsData = response.data.stats || {
+        totalCompleted: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        byDifficulty: { Easy: 0, Medium: 0, Hard: 0 }
+      };
+      setHistory(historyData);
+      setStats(statsData);
+    } catch (err) {
+      setError(err.message || "Failed to load history");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchHistory();
   }, []);
 
-  const fetchHistory = async () => {
-    setLoading(true);
-    setError(null);
-    const response = await getMyHistory(30);
-    
-    const historyData = response.data.history || [];
-    const statsData = response.data.stats || {
-      totalCompleted: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      byDifficulty: {
-        Easy: 0,
-        Medium: 0,
-        Hard: 0
-      }
-    };
-    
-    setHistory(historyData);
-    setStats(statsData);
-    setLoading(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-100 p-6 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-300 rounded-lg p-6 text-center">
-            <p className="text-red-700 font-semibold mb-4">{error}</p>
-            <button
-              onClick={fetchHistory}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
+
+        {loading ? (
+          <LoadingState message="Loading challenge history..." />
+        ) : error ? (
+          <ErrorState message={error} onRetry={fetchHistory} />
+        ) : (
+          <>
         
         {/* Header */}
         <div className="mb-8">
@@ -250,6 +225,8 @@ export default function ChallengeHistory() {
             </div>
           )}
         </div>
+          </>
+        )}
 
       </div>
     </div>

@@ -11,6 +11,9 @@ import {
   ArrowLeft,
   Copy
 } from "lucide-react";
+import { getVerdictIcon, getVerdictColor } from "../../../utils/verdictHelpers.js";
+import { copyToClipboard } from "../../../utils/discussionHelpers.js";
+import { SubmissionDetailsSkeleton } from "../../../core/Skeleton.jsx";
 
 export default function SubmissionDetails() {
   const { submissionId } = useParams();
@@ -31,36 +34,13 @@ export default function SubmissionDetails() {
     setLoading(false);
   };
 
-  const getVerdictIcon = (verdict) => {
-    if (verdict === "Accepted") return <CheckCircle className="w-6 h-6 text-green-600" />;
-    if (verdict === "Pending") return <Clock className="w-6 h-6 text-yellow-600" />;
-    if (verdict === "Compilation Error" || verdict === "Runtime Error")
-      return <AlertTriangle className="w-6 h-6 text-red-600" />;
-    return <XCircle className="w-6 h-6 text-red-600" />;
-  };
+  
 
-  const getVerdictColor = (verdict) => {
-    if (verdict === "Accepted") return "bg-green-100 text-green-700 border-green-300";
-    if (verdict === "Pending") return "bg-yellow-100 text-yellow-700 border-yellow-300";
-    return "bg-red-100 text-red-700 border-red-300";
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert("Code copied to clipboard!");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-700 font-medium">Loading submission...</p>
-        </div>
-      </div>
-    );
-  }
-
+  
+if (loading) {
+  return <SubmissionDetailsSkeleton />;
+}
+ 
   if (error) {
     return (
       <div className="min-h-screen bg-slate-100 p-6 md:p-8">

@@ -1,5 +1,5 @@
 
-import { useEffect, } from 'react';
+import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import AppRoutes from "./app/AppRoutes";
 import './index.css';
@@ -12,10 +12,8 @@ const App = () => {
     dispatch(getMe());
   }, [dispatch]);
 
- 
   return (
     <div>
-
       <AppRoutes />
     </div>
   );

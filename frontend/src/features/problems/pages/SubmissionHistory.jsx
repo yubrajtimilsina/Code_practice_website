@@ -1,44 +1,43 @@
 import { useEffect, useState } from "react";
-import { getSubmissionHistoryApi } from "../api/submissionApi";
 import { Link } from "react-router-dom";
 import { CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Filter } from "lucide-react";
+import { getVerdictIcon, getVerdictColor } from "../../../utils/verdictHelpers.js";
 import Pagination from "../../../components/Pagination";
+import { TableSkeleton, PageHeaderSkeleton } from "../../../core/Skeleton";
+import { ErrorState, LoadingState, EmptyDataState } from "../../../components/StateComponents.jsx";
+import { getSubmissionHistoryApi } from "../api/submissionApi";
+
+ 
 
 export default function SubmissionHistory() {
     const [submissions, setSubmissions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    
-    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalSubmissions, setTotalSubmissions] = useState(0);
     const [itemsPerPage] = useState(20);
-    
-    // Filter state
     const [verdictFilter, setVerdictFilter] = useState("all");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetchSubmissions(currentPage, verdictFilter);
-    }, [currentPage, verdictFilter]);
-
-    const fetchSubmissions = async (page, verdict) => {
-        setLoading(true);
-        setError(null);
-        const params = { 
-            page, 
-            limit: itemsPerPage 
+        const fetchSubmissions = async () => {
+            try {
+                setLoading(true);
+                const params = { page: currentPage, limit: itemsPerPage };
+                if (verdictFilter !== "all") {
+                    params.verdict = verdictFilter;
+                }
+                const response = await getSubmissionHistoryApi(params);
+                setSubmissions(response.data.submissions || []);
+                setTotalSubmissions(response.data.total || response.data.submissions?.length || 0);
+            } catch (err) {
+                setError(err.message || "Failed to load submissions");
+            } finally {
+                setLoading(false);
+            }
         };
-        
-        // Add verdict filter if not "all"
-        if (verdict !== "all") {
-            params.verdict = verdict;
-        }
-        
-        const response = await getSubmissionHistoryApi(params);
-        setSubmissions(response.data.submissions || []);
-        setTotalSubmissions(response.data.total || response.data.submissions?.length || 0);
-        setLoading(false);
-    };
+
+        fetchSubmissions();
+    }, [currentPage, verdictFilter, itemsPerPage]);
 
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
@@ -47,31 +46,22 @@ export default function SubmissionHistory() {
 
     const handleVerdictFilterChange = (verdict) => {
         setVerdictFilter(verdict);
-        setCurrentPage(1); // Reset to first page when filter changes
+        setCurrentPage(1);
     };
 
-    const getVerdictIcon = (verdict) => {
-        if (verdict === "Accepted") return <CheckCircle className="w-5 h-5 text-green-600" />;
-        if (verdict === "Pending") return <Clock className="w-5 h-5 text-yellow-600" />;
-        if (verdict === "Compilation Error" || verdict === "Runtime Error")
-            return <AlertTriangle className="w-5 h-5 text-red-600" />;
-        return <XCircle className="w-5 h-5 text-red-600" />;
-    };
-
-    const getVerdictColor = (verdict) => {
-        if (verdict === "Accepted") return "bg-green-100 text-green-700";
-        if (verdict === "Pending") return "bg-yellow-100 text-yellow-700";
-        return "bg-red-100 text-red-700";
+    const handleRefresh = async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        window.location.reload();
     };
 
     const totalPages = Math.ceil(totalSubmissions / itemsPerPage);
 
     if (loading && submissions.length === 0) {
         return (
-            <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-blue-700 font-medium">Loading submissions...</p>
+            <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+                <div className="max-w-7xl mx-auto">
+                    <PageHeaderSkeleton />
+                    <TableSkeleton rows={10} columns={7} />
                 </div>
             </div>
         );
@@ -80,23 +70,8 @@ export default function SubmissionHistory() {
     if (error) {
         return (
             <div className="min-h-screen bg-slate-100 p-6 md:p-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="bg-red-100 border border-red-300 rounded-lg p-6 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <AlertTriangle className="w-6 h-6 text-red-600" />
-                            <div>
-                                <p className="text-red-700 font-semibold">Error Loading Submissions</p>
-                                <p className="text-red-600 text-sm">{error}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => fetchSubmissions(currentPage, verdictFilter)}
-                            className="px-4 py-2 bg-red-200 hover:bg-red-300 text-red-700 rounded flex items-center gap-2"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            Retry
-                        </button>
-                    </div>
+                <div className="max-w-4xl mx-auto">
+                    <ErrorState message={error} onRetry={fetchSubmissions} />
                 </div>
             </div>
         );
@@ -112,7 +87,7 @@ export default function SubmissionHistory() {
                         <p className="text-slate-600">Track all your code submissions and results</p>
                     </div>
                     <button
-                        onClick={() => fetchSubmissions(currentPage, verdictFilter)}
+                        onClick={handleRefresh}
                         disabled={loading}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors disabled:opacity-50"
                     >

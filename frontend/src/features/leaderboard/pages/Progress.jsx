@@ -1,8 +1,9 @@
-// frontend/src/features/leaderboard/pages/Progress.jsx
 import { useEffect, useState } from "react";
 import { getMyProgressApi } from "../api/leaderboardApi.js";
 import { TrendingUp, Target, Code2, Zap, Calendar, Award, BarChart3, Activity, CheckCircle, XCircle, Clock, ChevronDown, Filter } from "lucide-react";
+import { getVerdictIcon, getVerdictColor } from "../../../utils/verdictHelpers.js";
 import Pagination from "../../../components/Pagination";
+import { ProfileSkeleton } from "../../../core/Skeleton.jsx";
 
 export default function Progress() {
     const [progress, setProgress] = useState(null);
@@ -62,12 +63,8 @@ export default function Progress() {
     const TEXT_SUB = "text-slate-600";
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
+  return <ProfileSkeleton />;
+}
 
     if (!progress) {
         return <div className="min-h-screen bg-slate-100 p-6">Error loading progress</div>;
@@ -264,32 +261,16 @@ export default function Progress() {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Submission Statistics</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {verdictPercentages.map(({ verdict, count, percentage }) => {
-                            const getVerdictColor = (v) => {
-                                if (v === 'Accepted') return 'bg-green-100 text-green-700 border-green-200';
-                                if (v === 'Wrong Answer') return 'bg-red-100 text-red-700 border-red-200';
-                                if (v === 'Time Limit Exceeded') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                                return 'bg-slate-100 text-slate-700 border-slate-200';
-                            };
-
-                            const getIcon = (v) => {
-                                if (v === 'Accepted') return <CheckCircle className="w-5 h-5" />;
-                                if (v === 'Wrong Answer') return <XCircle className="w-5 h-5" />;
-                                if (v === 'Time Limit Exceeded') return <Clock className="w-5 h-5" />;
-                                return <Activity className="w-5 h-5" />;
-                            };
-
-                            return (
-                                <div key={verdict} className={`p-4 rounded-xl border-2 ${getVerdictColor(verdict)}`}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        {getIcon(verdict)}
-                                        <span className="font-semibold text-sm">{verdict}</span>
-                                    </div>
-                                    <p className="text-2xl font-bold">{count}</p>
-                                    <p className="text-xs mt-1">{percentage}%</p>
+                        {verdictPercentages.map(({ verdict, count, percentage }) => (
+                            <div key={verdict} className={`p-4 rounded-xl border-2 ${getVerdictColor(verdict)}`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    {getVerdictIcon(verdict)}
+                                    <span className="font-semibold text-sm">{verdict}</span>
                                 </div>
-                            );
-                        })}
+                                <p className="text-2xl font-bold">{count}</p>
+                                <p className="text-xs mt-1">{percentage}%</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
