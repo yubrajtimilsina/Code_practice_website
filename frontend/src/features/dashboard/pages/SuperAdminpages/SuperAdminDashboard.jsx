@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
-import api from "../../../utils/api.js";
-import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
+import api from "../../../../utils/api.js";
+import { DashboardSkeleton } from "../../../../core/Skeleton.jsx";
 import {
   Shield,
   Users,
@@ -21,6 +21,9 @@ import {
   Award,
   Flame
 } from "lucide-react";
+import AlertModal from "../../../../components/AlertModal.jsx";
+import { useAlert } from "../../../../hooks/useAlert.js";
+
 
 export default function SuperAdminDashboard() {
   const [data, setData] = useState(null);
@@ -36,7 +39,8 @@ export default function SuperAdminDashboard() {
   // Pagination state for users
   const [userPage, setUserPage] = useState(1);
   const [usersPagination, setUsersPagination] = useState(null);
-
+  const { alert, showConfirm, hideAlert } = useAlert();
+  
   const fetchAllData = useCallback(async () => {
     setRefreshing(true);
     setError(null);
@@ -70,7 +74,7 @@ export default function SuperAdminDashboard() {
   };
 
   const handleSetAdmin = async (userId) => {
-    if (!confirm("Are you sure you want to make this user an admin?")) return;
+    if (!showConfirm("Are you sure you want to make this user an admin?")) return;
     setRefreshing(true);
     await api.put(`/super-admin/${userId}/set-admin`);
     fetchAllData();
@@ -78,7 +82,7 @@ export default function SuperAdminDashboard() {
   };
 
   const handleRevokeAdmin = async (userId) => {
-    if (!confirm("Are you sure you want to revoke admin status for this user?")) return;
+    if (!showConfirm("Are you sure you want to revoke admin status for this user?")) return;
     setRefreshing(true);
     await api.put(`/super-admin/${userId}/revoke-admin`);
     fetchAllData();
@@ -86,7 +90,7 @@ export default function SuperAdminDashboard() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!confirm("⚠️ This will permanently delete the user. Continue?")) return;
+    if (!showConfirm("⚠️ This will permanently delete the user. Continue?")) return;
 
     try {
       setRefreshing(true);
@@ -109,6 +113,8 @@ export default function SuperAdminDashboard() {
   const systemHealth = data?.systemHealth || {};
 
   return (
+    <>
+    < AlertModal {...alert} onClose={hideAlert} />
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -731,5 +737,6 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }

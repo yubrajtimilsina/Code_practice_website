@@ -1,8 +1,4 @@
 
-// Removed unused handleDebounceSearch - use inline debounce in components instead
-// Removed unused handlePaginationChange - use setPage directly instead
-// Removed unused handleFilterChange - use filter methods from hooks instead
-
 export const buildQueryParams = (filters) => {
   const params = {};
   Object.entries(filters).forEach(([key, value]) => {

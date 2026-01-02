@@ -7,12 +7,12 @@ import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import PublicRoute from "../components/PublicRoute.jsx";
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
 
-import LearnerDashboard from "../features/dashboard/pages/LearnerDashboard.jsx";
-import AdminDashboard from "../features/dashboard/pages/AdminDashboard.jsx";
-import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminDashboard.jsx";
-import LearnerProfile from "../features/dashboard/pages/LearnerProfile.jsx";
+import LearnerDashboard from "../features/dashboard/pages/Learnerpages/LearnerDashboard.jsx";
+import AdminDashboard from "../features/dashboard/pages/Adminpages/AdminDashboard.jsx";
+import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminpages/SuperAdminDashboard.jsx";
+import LearnerProfile from "../features/dashboard/pages/Learnerpages/LearnerProfile.jsx";
 import EditProfile from "../features/user/pages/EditProfile.jsx";
-import AdminProfile from "../features/dashboard/pages/AdminProfile.jsx";
+import AdminProfile from "../features/dashboard/pages/Adminpages/AdminProfile.jsx";
 
 
 import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
@@ -33,6 +33,7 @@ import DiscussionList from "../features/discussion/pages/DiscussionList.jsx";
 import CreateDiscussion from "../features/discussion/pages/CreateDiscussion.jsx";
 import DiscussionDetails from "../features/discussion/pages/DiscussionDetails.jsx";
 import Playground from "../features/playground/pages/Playground.jsx";
+import UserManagement from "../features/dashboard/pages/Adminpages/UserManagement.jsx";
 
 // Smart Dashboard Redirector Component
 const DashboardRedirect = () => {
@@ -143,6 +144,9 @@ export default function AppRoutes() {
           }
         />
 
+        
+        
+
         <Route
           path="/admin/problems/:id/edit"
           element={
@@ -151,6 +155,16 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />  
+
         <Route
   path="/admin/profile"
   element={

@@ -1,8 +1,4 @@
-/**
- * Discussion Feature - Clean Architecture Exports
- */
 
-// Pages
 export { default as DiscussionList } from "./pages/DiscussionList";
 export { default as DiscussionDetails } from "./pages/DiscussionDetails";
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getLearnerDashboardApi } from '../api/dashboardApi';
+import { getLearnerDashboardApi } from '../../api/dashboardApi';
 import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Flame, Activity, Target } from 'lucide-react';
-import { ProfileSkeleton } from '../../../core/Skeleton';
+import { ProfileSkeleton } from '../../../../core/Skeleton';
 import { Link } from 'react-router-dom';
 
 export default function LearnerProfile() {

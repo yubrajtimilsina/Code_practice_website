@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { CODE_TEMPLATES } from "../../../utils/codeTemplates";
 import Editor from "@monaco-editor/react";
 import HintsPanel from "./HintsPanel";
+import AlertModal from "../../../components/AlertModal";
+import { useAlert } from "../../../hooks/useAlert";
+
 
 export default function CodeEditor({
   problemId,
@@ -38,6 +41,8 @@ export default function CodeEditor({
 
   const [outputHeight, setOutputHeight] = useState(200);
   const [editorMinHeight, setEditorMinHeight] = useState(200);
+
+  const { alert, showSuccess, showConfirm, hideAlert } = useAlert();
 
   // FIXED: Log received data
 
@@ -90,11 +95,17 @@ export default function CodeEditor({
   }, [code, language, problemId]);
 
   const handleLanguageChange = (newLanguage) => {
-    if (confirm("Changing language will reset your code. Continue?")) {
+  showConfirm(
+    "Changing language will reset your code. Continue?",
+    () => {
       setLanguage(newLanguage);
       setCode(CODE_TEMPLATES[newLanguage]);
+      setOutput("");
+      setError("");
+      setVerdict(null);
     }
-  };
+  );
+};
 
   const handleRunCode = async () => {
     setIsRunning(true);
@@ -171,16 +182,22 @@ export default function CodeEditor({
     }
   };
 
-  const handleReset = () => {
-    setCode(CODE_TEMPLATES[language]);
-    setOutput("");
-    setError("");
-    setVerdict(null);
-  };
+const handleReset = () => {
+  showConfirm(
+    "This will reset your code to the default template. Continue?",
+    () => {
+      setCode(CODE_TEMPLATES[language]);
+      setOutput("");
+      setError("");
+      setVerdict(null);
+    }
+  );
+};
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
-    alert("Code copied to clipboard!");
+    showSuccess("Code copied to clipboard!");
   };
 
   const getVerdictIcon = () => {
@@ -191,12 +208,14 @@ export default function CodeEditor({
   };
 
   return (
+    <>
+    <AlertModal {...alert} onClose={hideAlert} />
     <div className="h-screen flex flex-col bg-white">
       {/* Header */}
       <div className="bg-white border-b border-gray-300 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate(`/problems/${problemId}`)}
+            onClick={() => navigate(`/problems/`)}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
@@ -459,5 +478,6 @@ export default function CodeEditor({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -70,6 +70,8 @@ export default function ProblemList({ adminView = false }) {
     setPage(1);
   };
 
+  const selectedTags = (filters.tags || "").split(",").filter(Boolean);
+
   const totalPages = Math.ceil(totalProblems / filters.limit);
 
   return (
@@ -146,7 +148,7 @@ export default function ProblemList({ adminView = false }) {
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Filter by Tags
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">  
                 {allTags.map(tag => (
                   <button
                     key={tag}

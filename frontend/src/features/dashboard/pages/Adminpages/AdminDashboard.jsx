@@ -1,30 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getAdminDashboardApi } from "../api/dashboardApi.js";
-import api from "../../../utils/api.js";
-import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
-import {
-  Users,
-  Code2,
-  RefreshCw,
-  UserCheck,
-  FileText,
-  TestTube,
-  BarChart3,
-  TrendingUp,
-  AlertCircle,
-  Info,
-} from "lucide-react";
-import Pagination from "../../../components/Pagination.jsx";
-import { ErrorState, LoadingState } from "../../../components/StateComponents.jsx";
+import { getAdminDashboardApi } from "../../api/dashboardApi.js";
+import { DashboardSkeleton } from "../../../../core/Skeleton.jsx";
+import { Users, BarChart3, Code2, RefreshCw, FileText, UserCheck, TrendingUp, AlertCircle, Info, TestTube } from "lucide-react";
+import { ErrorState } from "../../../../components/StateComponents.jsx";
+import UserManagement from "./UserManagement.jsx";
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [userPage, setUserPage] = useState(1);
-  const [usersPerPage] = useState(10);
-  const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,50 +20,21 @@ export default function AdminDashboard() {
       setLoading(true);
       const dashRes = await getAdminDashboardApi();
       setData(dashRes.data);
-
-      try {
-        const usersRes = await api.get("/admin/users", {
-          params: { page: userPage, limit: usersPerPage },
-        });
-        setUsers(usersRes.data.users || []);
-        setTotalUsers(usersRes.data.pagination?.total || 0);
-      } catch {
-        setUsers([]);
-        setTotalUsers(0);
-      }
     } catch (err) {
       setError(err.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
-  }, [userPage, usersPerPage]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
+  if (loading) return <DashboardSkeleton />;
 
   if (error && !data) {
-    return (
-      <div className="min-h-screen bg-slate-50 p-6 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <ErrorState message={error} onRetry={fetchDashboardData} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-blue-600 text-lg">No dashboard data available</p>
-        </div>
-      </div>
-    );
+    return <ErrorState message={error} onRetry={fetchDashboardData} />;
   }
 
   const stats = data?.dashboard?.stats || {};
@@ -88,35 +43,10 @@ export default function AdminDashboard() {
   const popularProblems = data?.dashboard?.popularProblems || [];
   const languageStats = data?.dashboard?.languageStats || [];
 
-  const handleBlockUser = async (id) => {
-    try {
-      setRefreshing(true);
-      await api.post(`/admin/users/${id}/toggle-block`);
-      await fetchDashboardData();
-    } catch {
-      // ignore for now
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleDeleteUser = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    try {
-      setRefreshing(true);
-      await api.delete(`/admin/users/${id}`);
-      await fetchDashboardData();
-    } catch (e) {
-      // ignore
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header & Refresh */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -128,25 +58,16 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchDashboardData}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50"
-              title="Refresh data"
-            >
-              <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-              {!loading && "Refresh"}
-            </button>
-          </div>
+          <button
+            onClick={fetchDashboardData}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50"
+            title="Refresh data"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+            {!loading && "Refresh"}
+          </button>
         </div>
-
-        {error && (
-          <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-            <p className="text-yellow-800 text-sm">{error}</p>
-          </div>
-        )}
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -350,99 +271,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
-        {/* User Management Table */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-600" />
-              User Management
-            </h2>
-            <span className="text-slate-500 text-sm">Total: {totalUsers}</span>
-          </div>
-
-          {users.length > 0 ? (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Name</th>
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Email</th>
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Role</th>
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Status</th>
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Joined</th>
-                      <th className="pb-4 text-slate-600 text-left font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((userItem, idx) => (
-                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-4 text-slate-900 font-medium">{userItem.name}</td>
-                        <td className="py-4 text-slate-600">{userItem.email}</td>
-                        <td className="py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.role === "admin"
-                                ? "bg-red-100 text-red-700"
-                                : userItem.role === "super-admin"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-blue-100 text-blue-700"
-                              }`}
-                          >
-                            {userItem.role}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${userItem.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                              }`}
-                          >
-                            {userItem.isActive ? "Active" : "Blocked"}
-                          </span>
-                        </td>
-                        <td className="py-4 text-slate-600 text-sm">{new Date(userItem.createdAt).toLocaleDateString()}</td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-2">
-                            {/* Block / Unblock */}
-                            <button
-                              onClick={() => handleBlockUser(userItem._id)}
-                              disabled={refreshing}
-                              className={`px-3 py-1 text-sm rounded-md font-medium ${userItem.isActive
-                                  ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                                  : "bg-green-100 text-green-700 hover:bg-green-200"
-                                }`}
-                            >
-                              {userItem.isActive ? "Block" : "Unblock"}
-                            </button>
-
-                            {/* Delete */}
-                            <button
-                              onClick={() => handleDeleteUser(userItem._id)}
-                              disabled={refreshing}
-                              className="px-3 py-1 text-sm rounded-md font-medium bg-red-100 text-red-700 hover:bg-red-200"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination
-                currentPage={userPage}
-                totalPages={Math.ceil(totalUsers / usersPerPage)}
-                totalItems={totalUsers}
-                itemsPerPage={usersPerPage}
-                onPageChange={setUserPage}
-              />
-            </>
-          ) : (
-            <div className="text-center py-12 text-slate-500">No users found</div>
-          )}
-        </div>
 
         {/* Admin Notice */}
         <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6">

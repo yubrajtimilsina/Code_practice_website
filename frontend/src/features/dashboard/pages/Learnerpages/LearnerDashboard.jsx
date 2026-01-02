@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { getLearnerDashboardApi } from "../api/dashboardApi";
+import { getLearnerDashboardApi } from "../../api/dashboardApi.js";
 import { Trophy, Code2, Zap, TrendingUp, Award, BookOpen, Target, Activity, CheckCircle, XCircle, Calendar, Flame } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { DashboardSkeleton } from "../../../core/Skeleton.jsx";
-import { ErrorState } from "../../../components/StateComponents.jsx";
+import { DashboardSkeleton } from "../../../../core/Skeleton.jsx";
+import { ErrorState } from "../../../../components/StateComponents.jsx";
 
 export default function LearnerDashboard() {
   const [data, setData] = useState(null);

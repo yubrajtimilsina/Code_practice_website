@@ -1,10 +1,10 @@
-import { authService } from '../../../services/apiService';
+import * as AuthApi from "../api/authApi";
 
 export class AuthService {
-
+ 
   static async register(credentials) {
     try {
-      const response = await authService.register(credentials);
+      const response = await AuthApi.register(credentials);
       return {
         success: true,
         data: response.data,
@@ -18,14 +18,10 @@ export class AuthService {
     }
   }
 
-  /**
-   * Login user
-   * @param {Object} credentials - Email and password
-   * @returns {Promise<Object>} Login result with token
-   */
+
   static async login(credentials) {
     try {
-      const response = await authService.login(credentials);
+      const response = await AuthApi.login(credentials);
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -43,15 +39,11 @@ export class AuthService {
     }
   }
 
-  /**
-   * Logout user
-   * @returns {Promise<Object>} Logout result
-   */
   static async logout() {
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      await authService.logout();
+      await AuthApi.logout();
       return {
         success: true,
         message: "Logout successful",
@@ -67,13 +59,9 @@ export class AuthService {
     }
   }
 
-  /**
-   * Verify token and get current user
-   * @returns {Promise<Object>} Current user data
-   */
   static async getCurrentUser() {
     try {
-      const response = await authService.verifyToken();
+      const response = await AuthApi.verifyToken();
       return {
         success: true,
         data: response.data,
@@ -89,14 +77,10 @@ export class AuthService {
     }
   }
 
-  /**
-   * Update user profile
-   * @param {Object} payload - Updated user data
-   * @returns {Promise<Object>} Updated user
-   */
+ 
   static async updateProfile(payload) {
     try {
-      const response = await authService.updateProfile(payload);
+      const response = await AuthApi.updateProfile(payload);
       localStorage.setItem("user", JSON.stringify(response.data));
       return {
         success: true,
@@ -111,15 +95,9 @@ export class AuthService {
     }
   }
 
-  /**
-   * Change password
-   * @param {string} currentPassword
-   * @param {string} newPassword
-   * @returns {Promise<Object>} Change password result
-   */
   static async changePassword(currentPassword, newPassword) {
     try {
-      await authService.changePassword(currentPassword, newPassword);
+      await AuthApi.changePassword(currentPassword, newPassword);
       return {
         success: true,
         message: "Password changed successfully",
@@ -132,14 +110,10 @@ export class AuthService {
     }
   }
 
-  /**
-   * Request password reset
-   * @param {string} email
-   * @returns {Promise<Object>} Reset request result
-   */
+
   static async requestPasswordReset(email) {
     try {
-      await authService.requestPasswordReset(email);
+      await AuthApi.requestPasswordReset(email);
       return {
         success: true,
         message: "Reset link sent to email",

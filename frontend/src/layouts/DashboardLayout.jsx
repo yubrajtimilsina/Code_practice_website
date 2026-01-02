@@ -46,6 +46,8 @@ export default function DashboardLayout() {
         { path: "/admin/problems", icon: Code2, label: "Manage Problems" },
         { path: "/discussion", icon: MessageSquare, label: "Discussions" },
         { path: "/playground", icon: Terminal, label: "Playground" },
+        { path: "/users", icon: Users, label: "Manage Users" },
+
       ];
     }
 
@@ -55,6 +57,7 @@ export default function DashboardLayout() {
         { path: "/admin/problems", icon: Settings, label: "Manage Problems" },
         { path: "/discussion", icon: MessageSquare, label: "Discussions" },
         { path: "/playground", icon: Terminal, label: "Playground" },
+        { path: "/users", icon: Users, label: "Manage Users" },
       ];
     }
 

@@ -1,8 +1,4 @@
-/**
- * Leaderboard Feature - Clean Architecture Exports
- */
 
-// Pages
 export { default as Leaderboard } from "./pages/leaderboard";
 
 // Hooks

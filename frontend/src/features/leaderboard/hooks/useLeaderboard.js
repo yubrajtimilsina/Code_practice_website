@@ -2,9 +2,7 @@ import { useCallback, useState } from "react";
 import LeaderboardService from "../services/LeaderboardService";
 import { useApiCall } from "../../../hooks/useApiCall";
 
-/**
- * Custom hook for leaderboard operations
- */
+
 export const useLeaderboard = (initialFilters = {}) => {
   const [users, setUsers] = useState([]);
   const [filters, setFilters] = useState({
