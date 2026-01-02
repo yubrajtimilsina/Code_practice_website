@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../slice/authSlice.js";
 import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
-import { navigateToDashboard } from "../../../utils/navigation.js";
+
 
 export default function Register() {
     const dispatch = useDispatch();

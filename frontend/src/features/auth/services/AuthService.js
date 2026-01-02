@@ -1,17 +1,10 @@
-import * as AuthApi from "../api/authApi";
+import { authService } from '../../../services/apiService';
 
-/**
- * AuthService - Business logic layer for authentication operations
- */
 export class AuthService {
-  /**
-   * Register new user
-   * @param {Object} credentials - Email and password
-   * @returns {Promise<Object>} Registration result
-   */
+
   static async register(credentials) {
     try {
-      const response = await AuthApi.register(credentials);
+      const response = await authService.register(credentials);
       return {
         success: true,
         data: response.data,
@@ -32,7 +25,7 @@ export class AuthService {
    */
   static async login(credentials) {
     try {
-      const response = await AuthApi.login(credentials);
+      const response = await authService.login(credentials);
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -58,7 +51,7 @@ export class AuthService {
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      await AuthApi.logout();
+      await authService.logout();
       return {
         success: true,
         message: "Logout successful",
@@ -80,7 +73,7 @@ export class AuthService {
    */
   static async getCurrentUser() {
     try {
-      const response = await AuthApi.verifyToken();
+      const response = await authService.verifyToken();
       return {
         success: true,
         data: response.data,
@@ -103,7 +96,7 @@ export class AuthService {
    */
   static async updateProfile(payload) {
     try {
-      const response = await AuthApi.updateProfile(payload);
+      const response = await authService.updateProfile(payload);
       localStorage.setItem("user", JSON.stringify(response.data));
       return {
         success: true,
@@ -126,7 +119,7 @@ export class AuthService {
    */
   static async changePassword(currentPassword, newPassword) {
     try {
-      await AuthApi.changePassword(currentPassword, newPassword);
+      await authService.changePassword(currentPassword, newPassword);
       return {
         success: true,
         message: "Password changed successfully",
@@ -146,7 +139,7 @@ export class AuthService {
    */
   static async requestPasswordReset(email) {
     try {
-      await AuthApi.requestPasswordReset(email);
+      await authService.requestPasswordReset(email);
       return {
         success: true,
         message: "Reset link sent to email",
