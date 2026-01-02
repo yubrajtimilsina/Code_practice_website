@@ -13,6 +13,7 @@ import SuperAdminDashboard from "../features/dashboard/pages/SuperAdminpages/Sup
 import LearnerProfile from "../features/dashboard/pages/Learnerpages/LearnerProfile.jsx";
 import EditProfile from "../features/user/pages/EditProfile.jsx";
 import AdminProfile from "../features/dashboard/pages/Adminpages/AdminProfile.jsx";
+import SuperAdminManageUsers from "../features/dashboard/pages/SuperAdminpages/SuperAdminManagesUsers.jsx";
 
 
 import AdminProblemForm from "../features/problems/pages/AdminProblemForm.jsx";
@@ -161,6 +162,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute requiredRoles={["admin"]}>
               <UserManagement />
+            </ProtectedRoute>
+          }
+        />  
+
+        <Route
+          path="/manage-users"
+          element={
+            <ProtectedRoute requiredRoles={["super-admin"]}>
+              <SuperAdminManageUsers />
             </ProtectedRoute>
           }
         />  
