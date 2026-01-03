@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DiscussionSkeleton } from "../../../core/Skeleton.jsx";
 import { ErrorState } from "../../../components/StateComponents.jsx";
+import AlertModal from "../../../components/AlertModal.jsx";
+import { useAlert } from "../../../hooks/useAlert.js";
 import {
   getDiscussionById,
   voteDiscussion,
@@ -34,13 +36,12 @@ export default function DiscussionDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector(state => state.auth);
+  const { alert, showSuccess, showError, showConfirm, hideAlert } = useAlert();
 
-  // Data fetching state
   const [discussion, setDiscussion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // UI state only (comment form interaction)
   const [commentContent, setCommentContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState("");
@@ -65,39 +66,31 @@ export default function DiscussionDetails() {
     fetchDiscussion();
   }, [fetchDiscussion]);
 
- const handleVoteDiscussion = async () => {
-  if (!user) {
-    alert("Please login to vote");
-    return;
-  }
+  const handleVoteDiscussion = async () => {
+    if (!user) {
+      showError("Please login to vote");
+      return;
+    }
 
-  let previousUpvotes;
+    let previousUpvotes;
 
-  setDiscussion(prev => {
-    if (!prev) return prev;
+    setDiscussion(prev => {
+      if (!prev) return prev;
+      previousUpvotes = prev.upvotes;
+      const hasUpvoted = prev.upvotes.some(v => v === user.id || v?._id === user.id);
+      const updatedUpvotes = hasUpvoted
+        ? prev.upvotes.filter(v => v !== user.id && v?._id !== user.id)
+        : [...prev.upvotes, user.id];
+      return { ...prev, upvotes: updatedUpvotes };
+    });
 
-    previousUpvotes = prev.upvotes;
-
-    const hasUpvoted = prev.upvotes.some(
-      v => v === user.id || v?._id === user.id
-    );
-
-    const updatedUpvotes = hasUpvoted
-      ? prev.upvotes.filter(v => v !== user.id && v?._id !== user.id)
-      : [...prev.upvotes, user.id];
-
-    return { ...prev, upvotes: updatedUpvotes };
-  });
-
-  try {
-    await voteDiscussion(id);
-  } catch (error) {
-    console.error("Vote failed:", error);
-
-    setDiscussion(prev => prev ? { ...prev, upvotes: previousUpvotes } : prev);
-  }
-};
-
+    try {
+      await voteDiscussion(id);
+    } catch (error) {
+      console.error("Vote failed:", error);
+      setDiscussion(prev => prev ? { ...prev, upvotes: previousUpvotes } : prev);
+    }
+  };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -108,15 +101,14 @@ export default function DiscussionDetails() {
       await addComment(id, commentContent.trim(), null);
       setCommentContent("");
       await fetchDiscussion();
+      showSuccess("Comment added successfully!");
     } catch (error) {
-      console.error("Add comment failed:", error);
-      alert("Failed to add comment");
+      showError("Failed to add comment");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ✅ Enhanced Reply Handler with Error Handling
   const handleReply = async (parentCommentId) => {
     if (!replyContent.trim()) return;
 
@@ -126,9 +118,9 @@ export default function DiscussionDetails() {
       setReplyContent("");
       setReplyingTo(null);
       await fetchDiscussion();
+      showSuccess("Reply added successfully!");
     } catch (error) {
-      console.error("Reply failed:", error);
-      alert("Failed to add reply");
+      showError("Failed to add reply");
     } finally {
       setSubmitting(false);
     }
@@ -142,82 +134,79 @@ export default function DiscussionDetails() {
       setEditingComment(null);
       setEditContent("");
       await fetchDiscussion();
+      showSuccess("Comment updated successfully!");
     } catch (error) {
-      console.error("Edit failed:", error);
-      alert("Failed to edit comment");
+      showError("Failed to edit comment");
     }
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!confirm("Delete this comment? This will also delete all replies.")) return;
-
-    try {
-      await deleteComment(id, commentId);
-      await fetchDiscussion();
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("Failed to delete comment");
-    }
+    showConfirm(
+      "Delete this comment? This will also delete all replies.",
+      async () => {
+        try {
+          await deleteComment(id, commentId);
+          await fetchDiscussion();
+          showSuccess("Comment deleted successfully!");
+        } catch (error) {
+          showError("Failed to delete comment");
+        }
+      }
+    );
   };
 
   const handleVoteComment = async (commentId) => {
-  if (!user) {
-    alert("Please login to vote");
-    return;
-  }
+    if (!user) {
+      showError("Please login to vote");
+      return;
+    }
 
-  let previousComments;
+    let previousComments;
 
-  setDiscussion(prev => {
-    if (!prev) return prev;
-
-    previousComments = prev.comments;
-
-    const updatedComments = prev.comments.map(comment => {
-      if (comment._id !== commentId) return comment;
-
-      const hasUpvoted = comment.upvotes.some(
-        v => v === user.id || v?._id === user.id
-      );
-
-      const updatedUpvotes = hasUpvoted
-        ? comment.upvotes.filter(v => v !== user.id && v?._id !== user.id)
-        : [...comment.upvotes, user.id];
-
-      return { ...comment, upvotes: updatedUpvotes };
+    setDiscussion(prev => {
+      if (!prev) return prev;
+      previousComments = prev.comments;
+      const updatedComments = prev.comments.map(comment => {
+        if (comment._id !== commentId) return comment;
+        const hasUpvoted = comment.upvotes.some(v => v === user.id || v?._id === user.id);
+        const updatedUpvotes = hasUpvoted
+          ? comment.upvotes.filter(v => v !== user.id && v?._id !== user.id)
+          : [...comment.upvotes, user.id];
+        return { ...comment, upvotes: updatedUpvotes };
+      });
+      return { ...prev, comments: updatedComments };
     });
 
-    return { ...prev, comments: updatedComments };
-  });
-
-  try {
-    await voteComment(id, commentId, 'upvote');
-  } catch (error) {
-    console.error("Vote failed:", error);
-
-    setDiscussion(prev =>
-      prev ? { ...prev, comments: previousComments } : prev
-    );
-  }
-};
-
-
-  const handleDeleteDiscussion = async () => {
-    if (!confirm("Delete this discussion? This cannot be undone.")) return;
     try {
-      await deleteDiscussion(id);
-      navigate("/discussion");
-    } catch {
-      alert("Failed to delete discussion");
+      await voteComment(id, commentId, 'upvote');
+    } catch (error) {
+      console.error("Vote failed:", error);
+      setDiscussion(prev => prev ? { ...prev, comments: previousComments } : prev);
     }
+  };
+
+  const handleDeleteDiscussion = () => {
+    showConfirm(
+      "Delete this discussion? This cannot be undone.",
+      async () => {
+        try {
+          await deleteDiscussion(id);
+          showSuccess("Discussion deleted successfully!");
+          navigate("/discussion");
+        } catch {
+          showError("Failed to delete discussion");
+        }
+      }
+    );
   };
 
   const handleMarkResolved = async () => {
     try {
       await updateDiscussion(id, { isResolved: !discussion.isResolved });
       await fetchDiscussion();
+      showSuccess(discussion.isResolved ? "Marked as unresolved" : "Marked as resolved");
     } catch {
-      alert("Failed to update discussion");
+      showError("Failed to update discussion");
     }
   };
 
@@ -225,12 +214,11 @@ export default function DiscussionDetails() {
     try {
       await pinDiscussion(id);
       await fetchDiscussion();
+      showSuccess(discussion.isPinned ? "Discussion unpinned" : "Discussion pinned");
     } catch {
-      alert("Failed to pin discussion");
+      showError("Failed to pin discussion");
     }
   };
-
-  
 
   const hasUserUpvotedDiscussion = () => {
     if (!user || !discussion) return false;
@@ -250,7 +238,6 @@ export default function DiscussionDetails() {
     ) || [];
   };
 
-  // ✅ Toggle Reply Collapse/Expand
   const toggleReplies = (commentId) => {
     setCollapsedReplies(prev => {
       const newSet = new Set(prev);
@@ -263,7 +250,6 @@ export default function DiscussionDetails() {
     });
   };
 
-  // ✅ Enhanced Comment Renderer with Better Visual Hierarchy
   const renderComment = (comment, depth = 0) => {
     const replies = getReplies(comment._id);
     const isAuthor = comment.userId?._id === user?.id;
@@ -271,14 +257,11 @@ export default function DiscussionDetails() {
     const isCollapsed = collapsedReplies.has(comment._id);
     const replyCount = replies.length;
 
-    
-
     return (
       <div key={comment._id} className={depth > 0 ? "ml-8 mt-3 border-l-2 border-blue-200 pl-4" : ""}>
         <div className={`flex gap-3 p-4 rounded-lg transition-all ${
           depth === 0 ? 'bg-slate-50' : 'bg-white border border-slate-200'
         }`}>
-
           {/* Vote Section */}
           <div className="flex flex-col items-center gap-1">
             <button
@@ -299,19 +282,11 @@ export default function DiscussionDetails() {
 
           {/* Comment Content */}
           <div className="flex-1">
-            {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-slate-900">
-                  {comment.userId?.name}
-                </span>
-                <span className="text-sm text-slate-500">
-                  {getTimeSince(comment.createdAt)}
-                </span>
-                {comment.isEdited && (
-                  <span className="text-xs text-slate-400 italic">(edited)</span>
-                )}
-                {/* ✅ Reply Count Badge */}
+                <span className="font-semibold text-slate-900">{comment.userId?.name}</span>
+                <span className="text-sm text-slate-500">{getTimeSince(comment.createdAt)}</span>
+                {comment.isEdited && <span className="text-xs text-slate-400 italic">(edited)</span>}
                 {replyCount > 0 && (
                   <button
                     onClick={() => toggleReplies(comment._id)}
@@ -319,16 +294,11 @@ export default function DiscussionDetails() {
                   >
                     <MessageSquare className="w-3 h-3" />
                     {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
-                    {isCollapsed ? (
-                      <ChevronDown className="w-3 h-3" />
-                    ) : (
-                      <ChevronUp className="w-3 h-3" />
-                    )}
+                    {isCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
                   </button>
                 )}
               </div>
 
-              {/* Actions */}
               {(isAuthor || isAdmin) && (
                 <div className="flex gap-2">
                   {isAuthor && (
@@ -354,7 +324,6 @@ export default function DiscussionDetails() {
               )}
             </div>
 
-            {/* Content or Edit Form */}
             {editingComment === comment._id ? (
               <div>
                 <textarea
@@ -386,8 +355,6 @@ export default function DiscussionDetails() {
             ) : (
               <>
                 <p className="text-slate-700 whitespace-pre-line mb-3">{comment.content}</p>
-
-                {/* Reply Button */}
                 <button
                   onClick={() => {
                     setReplyingTo(comment._id);
@@ -401,7 +368,6 @@ export default function DiscussionDetails() {
               </>
             )}
 
-            {/* ✅ Reply Form with Better Styling */}
             {replyingTo === comment._id && (
               <div className="mt-3 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
                 <div className="flex items-center gap-2 mb-2 text-sm text-blue-800">
@@ -441,7 +407,6 @@ export default function DiscussionDetails() {
           </div>
         </div>
 
-        {/* ✅ Render Nested Replies with Collapse/Expand */}
         {replies.length > 0 && !isCollapsed && (
           <div className="mt-2">
             {replies.map(reply => renderComment(reply, depth + 1))}
@@ -454,26 +419,13 @@ export default function DiscussionDetails() {
   const isAuthor = discussion?.userId?._id === user?.id;
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
 
-  if (loading) {
-     return <DiscussionSkeleton />;
-   }
+  if (loading) return <DiscussionSkeleton />;
 
   if (error) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 border border-red-300 rounded-lg p-6 flex items-center gap-3">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-            <div>
-              <p className="text-red-700 font-semibold">{error}</p>
-              <button
-                onClick={fetchDiscussion}
-                className="mt-2 text-sm text-red-600 underline hover:text-red-700"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
+          <ErrorState message={error} onRetry={fetchDiscussion} />
         </div>
       </div>
     );
@@ -496,173 +448,166 @@ export default function DiscussionDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <button
-          onClick={() => navigate("/discussion")}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to discussions
-        </button>
+    <>
+      <AlertModal {...alert} onClose={hideAlert} />
+      
+      <div className="min-h-screen bg-slate-100 p-6 md:p-8">
+        <div className="max-w-5xl mx-auto">
+          <button
+            onClick={() => navigate("/discussion")}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to discussions
+          </button>
 
-        {/* Discussion Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 mb-6">
-          {/* Header */}
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-start gap-4">
-              {/* Vote Section */}
-              <div className="flex flex-col items-center gap-2 min-w-[60px]">
-                <button
-                  onClick={handleVoteDiscussion}
-                  className={`p-2 rounded-lg transition-colors ${
-                    hasUserUpvotedDiscussion()
-                      ? 'bg-blue-100 text-blue-600'
-                      : 'hover:bg-slate-100 text-slate-400'
-                  }`}
-                  title="Upvote discussion"
-                >
-                  <ThumbsUp className="w-6 h-6" />
-                </button>
-                <span className="text-2xl font-bold text-slate-900">
-                  {discussion.upvotes?.length || 0}
-                </span>
-                <span className="text-xs text-slate-500">votes</span>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {discussion.isPinned && (
-                      <Pin className="w-5 h-5 text-yellow-600" />
-                    )}
-                    <h1 className="text-3xl font-bold text-slate-900">
-                      {discussion.title}
-                    </h1>
-                  </div>
-
-                  {(isAuthor || isAdmin) && (
-                    <div className="flex gap-2">
-                      {isAuthor && (
-                        <button
-                          onClick={handleMarkResolved}
-                          className={`p-2 rounded-lg transition-colors ${
-                            discussion.isResolved
-                              ? 'bg-green-100 text-green-700'
-                              : 'hover:bg-slate-100 text-slate-400'
-                          }`}
-                          title={discussion.isResolved ? "Mark as unresolved" : "Mark as resolved"}
-                        >
-                          <Check className="w-5 h-5" />
-                        </button>
-                      )}
-                      {isAdmin && (
-                        <button
-                          onClick={handlePinDiscussion}
-                          className={`p-2 rounded-lg transition-colors ${
-                            discussion.isPinned
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'hover:bg-slate-100 text-slate-400'
-                          }`}
-                          title={discussion.isPinned ? "Unpin" : "Pin"}
-                        >
-                          <Pin className="w-5 h-5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={handleDeleteDiscussion}
-                        className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
-                        title="Delete discussion"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(discussion.category)}`}>
-                    {discussion.category.replace('-', ' ')}
+          {/* Discussion Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 mb-6">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center gap-2 min-w-[60px]">
+                  <button
+                    onClick={handleVoteDiscussion}
+                    className={`p-2 rounded-lg transition-colors ${
+                      hasUserUpvotedDiscussion()
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'hover:bg-slate-100 text-slate-400'
+                    }`}
+                    title="Upvote discussion"
+                  >
+                    <ThumbsUp className="w-6 h-6" />
+                  </button>
+                  <span className="text-2xl font-bold text-slate-900">
+                    {discussion.upvotes?.length || 0}
                   </span>
-
-                  {discussion.isResolved && (
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-                      ✓ Resolved
-                    </span>
-                  )}
-
-                  {discussion.tags?.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-sm">
-                      {tag}
-                    </span>
-                  ))}
+                  <span className="text-xs text-slate-500">votes</span>
                 </div>
 
-                <div className="flex items-center gap-6 text-sm text-slate-500 mb-6 flex-wrap">
-                  <span>by <span className="font-medium text-slate-700">{discussion.userId?.name}</span></span>
-                  <span>{getTimeSince(discussion.createdAt)}</span>
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    <span>{discussion.views} views</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>{discussion.comments?.length || 0} comments</span>
-                  </div>
-                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {discussion.isPinned && <Pin className="w-5 h-5 text-yellow-600" />}
+                      <h1 className="text-3xl font-bold text-slate-900">{discussion.title}</h1>
+                    </div>
 
-                <div className="prose prose-slate max-w-none">
-                  <p className="text-slate-700 whitespace-pre-line leading-relaxed">
-                    {discussion.content}
-                  </p>
+                    {(isAuthor || isAdmin) && (
+                      <div className="flex gap-2">
+                        {isAuthor && (
+                          <button
+                            onClick={handleMarkResolved}
+                            className={`p-2 rounded-lg transition-colors ${
+                              discussion.isResolved
+                                ? 'bg-green-100 text-green-700'
+                                : 'hover:bg-slate-100 text-slate-400'
+                            }`}
+                            title={discussion.isResolved ? "Mark as unresolved" : "Mark as resolved"}
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button
+                            onClick={handlePinDiscussion}
+                            className={`p-2 rounded-lg transition-colors ${
+                              discussion.isPinned
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'hover:bg-slate-100 text-slate-400'
+                            }`}
+                            title={discussion.isPinned ? "Unpin" : "Pin"}
+                          >
+                            <Pin className="w-5 h-5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={handleDeleteDiscussion}
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                          title="Delete discussion"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(discussion.category)}`}>
+                      {discussion.category.replace('-', ' ')}
+                    </span>
+                    {discussion.isResolved && (
+                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                        ✓ Resolved
+                      </span>
+                    )}
+                    {discussion.tags?.map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-sm">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-6 text-sm text-slate-500 mb-6 flex-wrap">
+                    <span>by <span className="font-medium text-slate-700">{discussion.userId?.name}</span></span>
+                    <span>{getTimeSince(discussion.createdAt)}</span>
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{discussion.views} views</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{discussion.comments?.length || 0} comments</span>
+                    </div>
+                  </div>
+
+                  <div className="prose prose-slate max-w-none">
+                    <p className="text-slate-700 whitespace-pre-line leading-relaxed">
+                      {discussion.content}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Comments Section */}
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              {discussion.comments?.length || 0} Comments
-            </h3>
+            {/* Comments Section */}
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                {discussion.comments?.length || 0} Comments
+              </h3>
 
-            {/* Add Comment Form */}
-            <form onSubmit={handleAddComment} className="mb-8">
-              <textarea
-                value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                placeholder="Share your thoughts..."
-                rows={4}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-              />
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting || !commentContent.trim()}
-                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                  {submitting ? "Posting..." : "Post Comment"}
-                </button>
-              </div>
-            </form>
-
-            {/* Comments List */}
-            <div className="space-y-4">
-              {mainComments.length > 0 ? (
-                mainComments.map(comment => renderComment(comment))
-              ) : (
-                <div className="text-center py-12 text-slate-500">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No comments yet. Be the first to comment!</p>
+              <form onSubmit={handleAddComment} className="mb-8">
+                <textarea
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={submitting || !commentContent.trim()}
+                    className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                    {submitting ? "Posting..." : "Post Comment"}
+                  </button>
                 </div>
-              )}
+              </form>
+
+              <div className="space-y-4">
+                {mainComments.length > 0 ? (
+                  mainComments.map(comment => renderComment(comment))
+                ) : (
+                  <div className="text-center py-12 text-slate-500">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No comments yet. Be the first to comment!</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
