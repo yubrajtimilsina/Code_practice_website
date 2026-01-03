@@ -6,6 +6,19 @@ import Pagination from "../../../components/Pagination";
 import { TableSkeleton } from "../../../core/Skeleton";
 import { LoadingState, ErrorState } from "../../../components/StateComponents";
 import { FilterPanel } from "../../../components/FilterPanel";
+import { 
+  getRankBadge, 
+  getRankBadgeColor, 
+  getRankIcon, 
+  isTopRank,
+  getRankText 
+} from "../../../utils/rankHelpers.js";
+import { 
+  SORT_OPTIONS, 
+  ITEMS_PER_PAGE_OPTIONS,
+  buildQueryParams 
+} from "../../../utils/filterHelpers.js";
+import { formatNumber } from "../../../utils/userHelper.js";
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -24,8 +37,7 @@ export default function Leaderboard() {
   const fetchLeaderboard = useCallback(async () => {
     try {
       setLoading(true);
-      const params = { page, limit, sortBy };
-      if (searchQuery.trim()) params.search = searchQuery.trim();
+      const params = buildQueryParams({ page, limit, sortBy, search: searchQuery });
 
       const [leaderboardRes, rankRes] = await Promise.all([
         getLeaderboardApi(params),
@@ -51,22 +63,25 @@ export default function Leaderboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const getRankBadge = (rank) => {
-    if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;
-    if (rank === 2) return <Medal className="w-6 h-6 text-gray-400" />;
-    if (rank === 3) return <Award className="w-6 h-6 text-orange-600" />;
-    return <span className="text-slate-600 font-bold">#{rank}</span>;
-  };
-
-  const getRankBadgeColor = (rank) => {
-    if (rank === 1) return "bg-yellow-100 text-yellow-700 border-yellow-300";
-    if (rank === 2) return "bg-gray-100 text-gray-700 border-gray-300";
-    if (rank === 3) return "bg-orange-100 text-orange-700 border-orange-300";
-    if (rank <= 10) return "bg-blue-100 text-blue-700 border-blue-300";
-    return "bg-slate-100 text-slate-700 border-slate-300";
-  };
-
   const totalPages = Math.ceil(pagination?.total || 0 / limit);
+
+  // Render rank badge with icon
+  const renderRankBadge = (rank) => {
+    const Icon = getRankIcon(rank);
+    const badge = getRankBadge(rank);
+    
+    return (
+      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getRankBadgeColor(rank)}`}>
+        <Icon className="w-5 h-5" />
+        {isTopRank(rank) && (
+          <span className="text-xs font-semibold">{getRankText(rank)}</span>
+        )}
+        {!isTopRank(rank) && (
+          <span className="text-sm font-semibold">{badge.emoji}</span>
+        )}
+      </div>
+    );
+  };
 
   if (loading && leaderboard.length === 0) {
     return (
@@ -83,22 +98,13 @@ export default function Leaderboard() {
       name: 'sortBy',
       label: 'Sort By',
       value: sortBy,
-      options: [
-        { value: 'rankPoints', label: 'Rank Points' },
-        { value: 'solved', label: 'Problems Solved' },
-        { value: 'accuracy', label: 'Accuracy' },
-        { value: 'streak', label: 'Current Streak' }
-      ]
+      options: SORT_OPTIONS.leaderboard
     },
     {
       name: 'limit',
       label: 'Items Per Page',
       value: limit,
-      options: [
-        { value: '10', label: '10 per page' },
-        { value: '25', label: '25 per page' },
-        { value: '50', label: '50 per page' }
-      ]
+      options: ITEMS_PER_PAGE_OPTIONS
     }
   ];
 
@@ -113,7 +119,7 @@ export default function Leaderboard() {
               Global Leaderboard
             </h1>
             <p className="text-slate-600">
-              Compete with {pagination?.total || 0} programmers worldwide
+              Compete with {formatNumber(pagination?.total || 0)} programmers worldwide
             </p>
           </div>
 
@@ -156,16 +162,19 @@ export default function Leaderboard() {
                 <p className="text-blue-100 text-sm mb-1">Your Rank</p>
                 <div className="flex items-center gap-3">
                   <p className="text-4xl font-bold">#{myRank.rank}</p>
-                  {myRank.rank <= 3 && getRankBadge(myRank.rank)}
+                  {isTopRank(myRank.rank) && (() => {
+                    const Icon = getRankIcon(myRank.rank);
+                    return <Icon className="w-8 h-8" />;
+                  })()}
                 </div>
               </div>
               <div>
                 <p className="text-blue-100 text-sm mb-1">Rank Points</p>
-                <p className="text-3xl font-bold">{myRank.rankPoints}</p>
+                <p className="text-3xl font-bold">{formatNumber(myRank.rankPoints)}</p>
               </div>
               <div>
                 <p className="text-blue-100 text-sm mb-1">Problems Solved</p>
-                <p className="text-3xl font-bold">{myRank.solvedProblems}</p>
+                <p className="text-3xl font-bold">{formatNumber(myRank.solvedProblems)}</p>
               </div>
               <div>
                 <p className="text-blue-100 text-sm mb-1">Top Percentile</p>
@@ -194,12 +203,7 @@ export default function Leaderboard() {
           <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-slate-200">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-slate-700 font-medium">Quick Sort:</span>
-              {[
-                { value: 'rankPoints', label: 'Rank Points', icon: TrendingUp },
-                { value: 'solved', label: 'Problems Solved', icon: Target },
-                { value: 'accuracy', label: 'Accuracy', icon: Zap },
-                { value: 'streak', label: 'Streak', icon: Award }
-              ].map(option => (
+              {SORT_OPTIONS.leaderboard.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setSortBy(option.value)}
@@ -209,7 +213,10 @@ export default function Leaderboard() {
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  <option.icon className="w-4 h-4" />
+                  {option.value === 'rankPoints' && <TrendingUp className="w-4 h-4" />}
+                  {option.value === 'solved' && <Target className="w-4 h-4" />}
+                  {option.value === 'accuracy' && <Zap className="w-4 h-4" />}
+                  {option.value === 'streak' && <Award className="w-4 h-4" />}
                   {option.label}
                 </button>
               ))}
@@ -243,12 +250,7 @@ export default function Leaderboard() {
                       }`}
                     >
                       <td className="px-6 py-4">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getRankBadgeColor(userItem.rank)}`}>
-                          {getRankBadge(userItem.rank)}
-                          {userItem.rank <= 10 && (
-                            <span className="text-xs font-semibold">TOP {userItem.rank}</span>
-                          )}
-                        </div>
+                        {renderRankBadge(userItem.rank)}
                       </td>
 
                       <td className="px-6 py-4">
@@ -265,17 +267,25 @@ export default function Leaderboard() {
 
                       <td className="px-6 py-4">
                         <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                          {userItem.rankPoints}
+                          {formatNumber(userItem.rankPoints)}
                         </span>
                       </td>
 
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-900">{userItem.solvedProblemsCount}</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatNumber(userItem.solvedProblemsCount)}
+                          </span>
                           <div className="flex gap-1 text-xs">
-                            <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">{userItem.easyProblemsSolved}E</span>
-                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded">{userItem.mediumProblemsSolved}M</span>
-                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded">{userItem.hardProblemsSolved}H</span>
+                            <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
+                              {userItem.easyProblemsSolved}E
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded">
+                              {userItem.mediumProblemsSolved}M
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded">
+                              {userItem.hardProblemsSolved}H
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -293,7 +303,7 @@ export default function Leaderboard() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="text-red-700 font-bold">{userItem.currentStreak}</span>
+                        <span className="text-orange-700 font-bold">{userItem.currentStreak}</span>
                       </td>
                     </tr>
                   ))}
@@ -324,7 +334,7 @@ export default function Leaderboard() {
           <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
               <p className="text-slate-600 text-sm mb-2">Total Ranked Users</p>
-              <p className="text-3xl font-bold text-slate-900">{pagination.total}</p>
+              <p className="text-3xl font-bold text-slate-900">{formatNumber(pagination.total)}</p>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
@@ -343,7 +353,7 @@ export default function Leaderboard() {
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
               <p className="text-slate-600 text-sm mb-2">Sort Method</p>
               <p className="text-xl font-bold text-purple-600 capitalize">
-                {sortBy.replace(/([A-Z])/g, ' $1').trim()}
+                {SORT_OPTIONS.leaderboard.find(opt => opt.value === sortBy)?.label || sortBy}
               </p>
             </div>
           </div>

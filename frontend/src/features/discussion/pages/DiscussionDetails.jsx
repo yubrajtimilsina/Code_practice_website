@@ -5,6 +5,9 @@ import { DiscussionSkeleton } from "../../../core/Skeleton.jsx";
 import { ErrorState } from "../../../components/StateComponents.jsx";
 import AlertModal from "../../../components/AlertModal.jsx";
 import { useAlert } from "../../../hooks/useAlert.js";
+import { useVoting } from "../../../hooks/useVoting.js";
+import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
+import { canEdit, canDelete } from "../../../utils/userHelper.js";
 import {
   getDiscussionById,
   voteDiscussion,
@@ -30,7 +33,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
 
 export default function DiscussionDetails() {
   const { id } = useParams();
@@ -49,6 +51,17 @@ export default function DiscussionDetails() {
   const [replyContent, setReplyContent] = useState("");
   const [collapsedReplies, setCollapsedReplies] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+
+  const discussionVoting = useVoting({
+    voteApi: voteDiscussion,
+    onError: (error) => showError(error.message || "Failed to vote")
+  });
+
+  // Comment voting
+  const commentVoting = useVoting({
+    voteApi: (commentId) => voteComment(id, commentId),
+    onError: (error) => showError(error.message || "Failed to vote")
+  });
 
   const fetchDiscussion = useCallback(async () => {
     try {
@@ -72,23 +85,41 @@ export default function DiscussionDetails() {
       return;
     }
 
-    let previousUpvotes;
+    await discussionVoting.toggleVote(
+      id,
+      discussion.upvotes,
+      (newUpvotes) => setDiscussion(prev => ({ ...prev, upvotes: newUpvotes }))
+    );
+  };
+
+  const handleVoteComment = async (commentId) => {
+    if (!user) {
+      showError("Please login to vote");
+      return;
+    }
 
     setDiscussion(prev => {
       if (!prev) return prev;
-      previousUpvotes = prev.upvotes;
-      const hasUpvoted = prev.upvotes.some(v => v === user.id || v?._id === user.id);
-      const updatedUpvotes = hasUpvoted
-        ? prev.upvotes.filter(v => v !== user.id && v?._id !== user.id)
-        : [...prev.upvotes, user.id];
-      return { ...prev, upvotes: updatedUpvotes };
+      
+      const updatedComments = prev.comments.map(comment => {
+        if (comment._id !== commentId) return comment;
+        
+        const hasUpvoted = commentVoting.hasUserUpvoted(comment.upvotes);
+        const updatedUpvotes = hasUpvoted
+          ? comment.upvotes.filter(v => v !== user.id && v?._id !== user.id)
+          : [...comment.upvotes, user.id];
+        
+        return { ...comment, upvotes: updatedUpvotes };
+      });
+      
+      return { ...prev, comments: updatedComments };
     });
 
     try {
-      await voteDiscussion(id);
+      await voteComment(id, commentId, 'upvote');
     } catch (error) {
       console.error("Vote failed:", error);
-      setDiscussion(prev => prev ? { ...prev, upvotes: previousUpvotes } : prev);
+      await fetchDiscussion(); // Refresh on error
     }
   };
 
@@ -155,36 +186,7 @@ export default function DiscussionDetails() {
     );
   };
 
-  const handleVoteComment = async (commentId) => {
-    if (!user) {
-      showError("Please login to vote");
-      return;
-    }
-
-    let previousComments;
-
-    setDiscussion(prev => {
-      if (!prev) return prev;
-      previousComments = prev.comments;
-      const updatedComments = prev.comments.map(comment => {
-        if (comment._id !== commentId) return comment;
-        const hasUpvoted = comment.upvotes.some(v => v === user.id || v?._id === user.id);
-        const updatedUpvotes = hasUpvoted
-          ? comment.upvotes.filter(v => v !== user.id && v?._id !== user.id)
-          : [...comment.upvotes, user.id];
-        return { ...comment, upvotes: updatedUpvotes };
-      });
-      return { ...prev, comments: updatedComments };
-    });
-
-    try {
-      await voteComment(id, commentId, 'upvote');
-    } catch (error) {
-      console.error("Vote failed:", error);
-      setDiscussion(prev => prev ? { ...prev, comments: previousComments } : prev);
-    }
-  };
-
+ 
   const handleDeleteDiscussion = () => {
     showConfirm(
       "Delete this discussion? This cannot be undone.",
@@ -220,16 +222,6 @@ export default function DiscussionDetails() {
     }
   };
 
-  const hasUserUpvotedDiscussion = () => {
-    if (!user || !discussion) return false;
-    return discussion.upvotes?.some(v => v === user.id || v?._id === user.id);
-  };
-
-  const hasUserUpvotedComment = (comment) => {
-    if (!user || !comment) return false;
-    return comment.upvotes?.some(v => v === user.id || v?._id === user.id);
-  };
-
   const mainComments = discussion?.comments?.filter(c => !c.parentCommentId) || [];
   
   const getReplies = (commentId) => {
@@ -250,10 +242,15 @@ export default function DiscussionDetails() {
     });
   };
 
+
+  const isAuthor = discussion?.userId?._id === user?.id;
+  const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+
+
   const renderComment = (comment, depth = 0) => {
     const replies = getReplies(comment._id);
-    const isAuthor = comment.userId?._id === user?.id;
-    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+    const isCommentAuthor = canEdit(comment, user);
+    const canDeleteComment = canDelete(comment, user) || isAdmin;
     const isCollapsed = collapsedReplies.has(comment._id);
     const replyCount = replies.length;
 
@@ -266,8 +263,9 @@ export default function DiscussionDetails() {
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={() => handleVoteComment(comment._id)}
+              disabled={commentVoting.isVoting(comment._id)}
               className={`p-1 rounded transition-colors ${
-                hasUserUpvotedComment(comment)
+                commentVoting.hasUserUpvoted(comment.upvotes)
                   ? 'text-blue-600 bg-blue-100'
                   : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
               }`}
@@ -299,9 +297,9 @@ export default function DiscussionDetails() {
                 )}
               </div>
 
-              {(isAuthor || isAdmin) && (
+              {(isCommentAuthor || canDeleteComment) && (
                 <div className="flex gap-2">
-                  {isAuthor && (
+                  {isCommentAuthor && (
                     <button
                       onClick={() => {
                         setEditingComment(comment._id);
@@ -313,13 +311,15 @@ export default function DiscussionDetails() {
                       <Edit2 className="w-4 h-4" />
                     </button>
                   )}
-                  <button
-                    onClick={() => handleDeleteComment(comment._id)}
-                    className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canDeleteComment && (
+                    <button
+                      onClick={() => handleDeleteComment(comment._id)}
+                      className="p-1 hover:bg-red-100 rounded text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -416,8 +416,7 @@ export default function DiscussionDetails() {
     );
   };
 
-  const isAuthor = discussion?.userId?._id === user?.id;
-  const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+  // ============= LOADING & ERROR STATES =============
 
   if (loading) return <DiscussionSkeleton />;
 
@@ -447,6 +446,8 @@ export default function DiscussionDetails() {
     );
   }
 
+  // ============= RENDER =============
+
   return (
     <>
       <AlertModal {...alert} onClose={hideAlert} />
@@ -468,8 +469,9 @@ export default function DiscussionDetails() {
                 <div className="flex flex-col items-center gap-2 min-w-[60px]">
                   <button
                     onClick={handleVoteDiscussion}
+                    disabled={discussionVoting.voting}
                     className={`p-2 rounded-lg transition-colors ${
-                      hasUserUpvotedDiscussion()
+                      discussionVoting.hasUserUpvoted(discussion.upvotes)
                         ? 'bg-blue-100 text-blue-600'
                         : 'hover:bg-slate-100 text-slate-400'
                     }`}

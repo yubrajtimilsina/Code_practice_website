@@ -39,8 +39,6 @@ export const getDifficultyColor = (difficulty) => {
   return colors[difficulty] || colors.Easy;
 };
 
-// Verdict colors moved to utils/verdictHelpers.js - use that instead
-
 export const getRoleBadgeColor = (role) => {
   if (role === "super-admin") return "bg-yellow-100 text-yellow-700 border-yellow-300";
   if (role === "admin") return "bg-red-100 text-red-700 border-red-300";
