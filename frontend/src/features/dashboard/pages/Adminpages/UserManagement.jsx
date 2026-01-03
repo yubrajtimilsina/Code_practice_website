@@ -85,7 +85,7 @@ export default function UserManagement({
       async () => {
         try {
           setRefreshing(true);
-          await api.post(`/users/${id}/toggle-block`);
+          await api.put(`/admin/users/${id}/toggle-block`);
           showSuccess(`User ${action}ed successfully`);
           fetchUsers(currentPage);
         } catch (err) {

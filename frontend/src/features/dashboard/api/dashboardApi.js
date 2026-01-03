@@ -11,7 +11,7 @@ export const getLearnerProfileApi = () => {
   return api.get("/users");
 };
 
-export const blockUserApi = (id) => api.put(`/users/${id}/toggle-block`);
+export const blockUserApi = (id) => api.put(`/admin/users/${id}/toggle-block`);
 export const deleteUserApi = (id) => api.delete(`/users/${id}`);
 
 export const getAdminsApi = () => api.get("/super-admin/manage-admins");
