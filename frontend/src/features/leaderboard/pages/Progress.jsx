@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import { getMyProgressApi } from "../api/leaderboardApi.js";
-import { TrendingUp, Target, Code2, Zap, Calendar, Award, BarChart3, Activity, CheckCircle, XCircle, Clock, ChevronDown, Filter } from "lucide-react";
+import { TrendingUp, Target, Code2, Zap, Calendar, Award, BarChart3, Activity, CheckCircle, XCircle, Filter } from "lucide-react";
 import { getVerdictIcon, getVerdictColor } from "../../../utils/verdictHelpers.js";
 import Pagination from "../../../components/Pagination";
 import { ProfileSkeleton } from "../../../core/Skeleton.jsx";
+import { FilterPanel } from "../../../components/FilterPanel.jsx";
+import { StatCard } from "../../../core/UI.jsx";
 
 export default function Progress() {
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
     
-    // Pagination for recent activity
+    // Pagination
     const [activityPage, setActivityPage] = useState(1);
     const [activityPerPage] = useState(10);
-    const [showFilters, setShowFilters] = useState(false);
-    
-    // Filter for activity
-    const [activityFilter, setActivityFilter] = useState("all"); // all, accepted, failed
+    const [activityFilter, setActivityFilter] = useState("all");
 
     useEffect(() => {
         fetchProgress();
@@ -24,10 +23,9 @@ export default function Progress() {
     const fetchProgress = async () => {
         setLoading(true);
         const response = await getMyProgressApi();
-
         const d = response.data || {};
-
         const u = d.user || {};
+        
         const normalizedUser = {
             solvedProblems: u.solvedProblems ?? u.solvedProblemsCount ?? 0,
             accuracy: (u.accuracy !== undefined && u.accuracy !== null)
@@ -59,54 +57,41 @@ export default function Progress() {
         setLoading(false);
     };
 
-    const CARD_BASE = "bg-white border border-slate-200 shadow-sm";
-    const TEXT_SUB = "text-slate-600";
-
-    if (loading) {
-  return <ProfileSkeleton />;
-}
-
-    if (!progress) {
-        return <div className="min-h-screen bg-slate-100 p-6">Error loading progress</div>;
-    }
+    if (loading) return <ProfileSkeleton />;
+    if (!progress) return null;
 
     const { user, problemsByDifficulty, languageStats, verdictStats, recentActivity, activityCalendar } = progress;
     
     // Calculate verdict percentages
     const totalVerdict = Object.values(verdictStats).reduce((a, b) => a + b, 0);
-    const verdictPercentages = Object.entries(verdictStats).map(([verdict, count]) => ({
-        verdict,
-        count,
-        percentage: totalVerdict > 0 ? ((count / totalVerdict) * 100).toFixed(1) : 0
-    })).sort((a, b) => b.count - a.count);
+    const verdictPercentages = Object.entries(verdictStats)
+        .map(([verdict, count]) => ({
+            verdict,
+            count,
+            percentage: totalVerdict > 0 ? ((count / totalVerdict) * 100).toFixed(1) : 0
+        }))
+        .sort((a, b) => b.count - a.count);
 
-    // Filter recent submissions
+    // Filter submissions
     const filteredSubmissions = recentActivity.submissions.filter(sub => {
         if (activityFilter === "accepted") return sub.isAccepted;
         if (activityFilter === "failed") return !sub.isAccepted;
         return true;
     });
 
-    // Paginate submissions
+    // Paginate
     const totalActivityPages = Math.ceil(filteredSubmissions.length / activityPerPage);
     const startIdx = (activityPage - 1) * activityPerPage;
     const paginatedSubmissions = filteredSubmissions.slice(startIdx, startIdx + activityPerPage);
 
     const handleActivityPageChange = (newPage) => {
         setActivityPage(newPage);
-        // Scroll to activity section
         document.getElementById('recent-activity')?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const handleActivityFilterChange = (filter) => {
-        setActivityFilter(filter);
-        setActivityPage(1); // Reset to first page
     };
 
     return (
         <div className="min-h-screen bg-slate-100 p-6 md:p-8">
             <div className="max-w-7xl mx-auto">
-
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
@@ -118,126 +103,71 @@ export default function Progress() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-blue-100 rounded-lg">
-                                <Target className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <TrendingUp className="w-5 h-5 text-green-500" />
-                        </div>
-                        <p className="text-slate-600 text-sm mb-1">Problems Solved</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.solvedProblems}</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-green-100 rounded-lg">
-                                <Zap className="w-6 h-6 text-green-600" />
-                            </div>
-                        </div>
-                        <p className="text-slate-600 text-sm mb-1">Accuracy Rate</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.accuracy}%</p>
-                        <p className="text-xs text-slate-500 mt-1">{user.acceptedSubmissions}/{user.totalSubmissions} accepted</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-yellow-100 rounded-lg">
-                                <Award className="w-6 h-6 text-yellow-600" />
-                            </div>
-                        </div>
-                        <p className="text-slate-600 text-sm mb-1">Rank Points</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.rankPoints}</p>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 bg-orange-100 rounded-lg">
-                                <Activity className="w-6 h-6 text-orange-600" />
-                            </div>
-                        </div>
-                        <p className="text-slate-600 text-sm mb-1">Current Streak</p>
-                        <p className="text-4xl font-bold text-slate-900">{user.currentStreak}</p>
-                        <p className="text-xs text-slate-500 mt-1">Longest: {user.longestStreak} days</p>
-                    </div>
+                    <StatCard icon={Target} label="Problems Solved" value={user.solvedProblems} color="blue" />
+                    <StatCard 
+                        icon={Zap} 
+                        label="Accuracy Rate" 
+                        value={`${user.accuracy}%`}
+                        subtitle={`${user.acceptedSubmissions}/${user.totalSubmissions} accepted`}
+                        color="green" 
+                    />
+                    <StatCard icon={Award} label="Rank Points" value={user.rankPoints} color="yellow" />
+                    <StatCard 
+                        icon={Activity} 
+                        label="Current Streak" 
+                        value={user.currentStreak}
+                        subtitle={`Longest: ${user.longestStreak} days`}
+                        color="orange" 
+                    />
                 </div>
 
                 {/* Problems & Languages */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div className={`${CARD_BASE} rounded-2xl p-6`}>
-                        <div className="flex items-center gap-3 mb-4">
+                    {/* Problems by Difficulty */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                             <BarChart3 className="w-6 h-6 text-green-500" />
-                            <h3 className="text-xl font-semibold text-slate-900">
-                                Problems by Difficulty
-                            </h3>
+                            Problems by Difficulty
+                        </h3>
+                        <div className="space-y-4">
+                            {Object.entries(problemsByDifficulty).map(([difficulty, count]) => {
+                                const colors = {
+                                    easy: 'bg-green-500',
+                                    medium: 'bg-yellow-500',
+                                    hard: 'bg-red-500'
+                                };
+                                const totalSolved = Math.max(user.solvedProblems, 1);
+                                const percentage = (count / totalSolved) * 100;
+                                
+                                return (
+                                    <div key={difficulty}>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-slate-600 capitalize">{difficulty}</span>
+                                            <span className="text-slate-700 font-semibold">{count}</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                            <div
+                                                className={`${colors[difficulty]} h-full rounded-full transition-all`}
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-
-                        {(() => {
-                            const totalSolved = Math.max(user.solvedProblems, 1);
-                            return (
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className={TEXT_SUB}>Easy</span>
-                                            <span className="text-slate-700 font-semibold">
-                                                {problemsByDifficulty.easy}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                                            <div
-                                                className="bg-green-500 h-full rounded-full transition-all"
-                                                style={{ width: `${(problemsByDifficulty.easy / totalSolved) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className={TEXT_SUB}>Medium</span>
-                                            <span className="text-slate-700 font-semibold">
-                                                {problemsByDifficulty.medium}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                                            <div
-                                                className="bg-yellow-500 h-full rounded-full transition-all"
-                                                style={{ width: `${(problemsByDifficulty.medium / totalSolved) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className={TEXT_SUB}>Hard</span>
-                                            <span className="text-slate-700 font-semibold">
-                                                {problemsByDifficulty.hard}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                                            <div
-                                                className="bg-red-500 h-full rounded-full transition-all"
-                                                style={{ width: `${(problemsByDifficulty.hard / totalSolved) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
                     </div>
 
-                    <div className={`${CARD_BASE} rounded-2xl p-6`}>
-                        <div className="flex items-center gap-3 mb-4">
+                    {/* Language Usage */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                             <Code2 className="w-6 h-6 text-blue-500" />
-                            <h3 className="text-xl font-semibold text-slate-900">
-                                Language Usage
-                            </h3>
-                        </div>
-
+                            Language Usage
+                        </h3>
                         <div className="space-y-4">
                             {Object.entries(languageStats).slice(0, 5).map(([lang, count]) => (
                                 <div key={lang}>
                                     <div className="flex justify-between mb-1">
-                                        <span className={TEXT_SUB}>{lang.toUpperCase()}</span>
+                                        <span className="text-slate-600">{lang.toUpperCase()}</span>
                                         <span className="text-slate-700 font-semibold">{count}</span>
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
@@ -258,7 +188,7 @@ export default function Progress() {
                 </div>
 
                 {/* Submission Statistics */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Submission Statistics</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {verdictPercentages.map(({ verdict, count, percentage }) => (
@@ -274,47 +204,37 @@ export default function Progress() {
                     </div>
                 </div>
 
-                {/* Recent Activity with Pagination */}
-                <div id="recent-activity" className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8">
+                {/* Recent Activity */}
+                <div id="recent-activity" className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <Calendar className="w-6 h-6 text-blue-600" />
-                            <h3 className="text-xl font-bold text-slate-900">
-                                Recent Activity (Last 30 Days)
-                            </h3>
-                        </div>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors text-sm"
-                        >
-                            <Filter className="w-4 h-4" />
-                            Filter
-                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                        </button>
+                            Recent Activity (Last 30 Days)
+                        </h3>
                     </div>
-
                     <p className="text-slate-600 mb-4">
-                        You made <span className="font-bold text-blue-600">{recentActivity.last30Days}</span> submissions in the last 30 days
+                        You made <span className="font-bold text-blue-600">{recentActivity.last30Days}</span> submissions
                     </p>
 
                     {/* Filter Buttons */}
-                    {showFilters && (
-                        <div className="flex gap-2 mb-4">
-                            {["all", "accepted", "failed"].map(filter => (
-                                <button
-                                    key={filter}
-                                    onClick={() => handleActivityFilterChange(filter)}
-                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                                        activityFilter === filter
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                    }`}
-                                >
-                                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                    <div className="flex gap-2 mb-4">
+                        {["all", "accepted", "failed"].map(filter => (
+                            <button
+                                key={filter}
+                                onClick={() => {
+                                    setActivityFilter(filter);
+                                    setActivityPage(1);
+                                }}
+                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                                    activityFilter === filter
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                }`}
+                            >
+                                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                            </button>
+                        ))}
+                    </div>
 
                     {/* Submissions List */}
                     {paginatedSubmissions.length > 0 ? (
@@ -346,7 +266,6 @@ export default function Progress() {
                                 ))}
                             </div>
 
-                            {/* Pagination for Activity */}
                             {totalActivityPages > 1 && (
                                 <Pagination
                                     currentPage={activityPage}
@@ -358,30 +277,28 @@ export default function Progress() {
                             )}
                         </>
                     ) : (
-                        <p className="text-center text-slate-500 py-8">
-                            No submissions found for selected filter
-                        </p>
+                        <p className="text-center text-slate-500 py-8">No submissions found for selected filter</p>
                     )}
                 </div>
 
                 {/* Activity Calendar */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                     <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-blue-600" />
                         Activity Calendar (Last 90 Days)
                     </h3>
-
                     <div className="grid grid-cols-10 gap-1">
                         {Object.entries(activityCalendar).slice(-90).map(([date, count]) => (
                             <div
                                 key={date}
                                 title={`${date}: ${count} submissions`}
-                                className={`w-full aspect-square rounded ${count === 0 ? 'bg-slate-100' :
+                                className={`w-full aspect-square rounded ${
+                                    count === 0 ? 'bg-slate-100' :
                                     count <= 2 ? 'bg-green-200' :
-                                        count <= 5 ? 'bg-green-400' :
-                                            'bg-green-600'
+                                    count <= 5 ? 'bg-green-400' :
+                                    'bg-green-600'
                                 }`}
-                            ></div>
+                            />
                         ))}
                     </div>
                 </div>
