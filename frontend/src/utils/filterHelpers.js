@@ -29,3 +29,5 @@ export const LIMIT_OPTIONS = [
   { value: 25, label: "25 per page" },
   { value: 50, label: "50 per page" }
 ];
+
+export const ITEMS_PER_PAGE_OPTIONS = LIMIT_OPTIONS;

@@ -3,7 +3,7 @@ import {
   getRankBadge, 
   getRankIcon, 
   isTopRank 
-} from "../../../../utils/rankHelpers.js";
+} from "../../../../utils/rankHelpers.jsx";
 import { 
   formatNumber, 
   getUserInitials, 

@@ -57,7 +57,6 @@ export const RankBadgeIcon = ({ rank, size = 'md' }) => {
     3: 'text-orange-600',
   };
   
-  return (
-    <Icon className= {`${sizeClasses[size]} ${colorClasses[rank] || 'text-slate-400'}`} />
-  );
+  return (<Icon className={`${sizeClasses[size] || sizeClasses.md} ${colorClasses[rank] || 'text-slate-600'}`} />);
+
 };

@@ -12,7 +12,7 @@ import {
   getRankIcon, 
   isTopRank,
   getRankText 
-} from "../../../utils/rankHelpers.js";
+} from "../../../utils/rankHelpers.jsx";
 import { 
   SORT_OPTIONS, 
   ITEMS_PER_PAGE_OPTIONS,

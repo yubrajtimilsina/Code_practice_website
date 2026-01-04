@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Navigate, useNavigate } from "react-router-dom";
 import { navigateToDashboard } from "../utils/navigation";
@@ -5,6 +6,12 @@ import { navigateToDashboard } from "../utils/navigation";
 const PublicRoute = ({ children }) => {
   const { user, token, loading } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user && token) {
+      navigateToDashboard(user, navigate);
+    }
+  }, [loading, user, token, navigate]);
 
   if (loading) {
     return (
@@ -16,7 +23,6 @@ const PublicRoute = ({ children }) => {
 
 
   if (user && token) {
-    navigateToDashboard(user, navigate);
     return null;
   }
 
