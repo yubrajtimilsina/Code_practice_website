@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getLearnerDashboardApi } from '../../api/dashboardApi';
-import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Flame, Activity, Target } from 'lucide-react';
+import { User, Mail, Calendar, Hash, Award, Code2, TrendingUp, Zap, Settings, Flame, Activity, Target } from 'lucide-react';
 import { ProfileSkeleton } from '../../../../core/Skeleton';
 import { Link } from 'react-router-dom';
 
@@ -107,7 +107,7 @@ export default function LearnerProfile() {
             <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 flex items-center justify-between">
               <div>
                 <p className="text-yellow-700 text-sm font-medium mb-1">Rank Points</p>
-                <p className="text-3xl font-bold text-yellow-800">{profile.rankPoints}</p>
+                <p className="text-3xl font-bold text-yellow-800">{profile.rank}</p>
               </div>
               <TrendingUp className="w-10 h-10 text-yellow-400" />
             </div>
@@ -138,12 +138,13 @@ export default function LearnerProfile() {
         </div>
 
 
-         <Link
-  to="/learner/profile/edit"
-  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
->
-  Edit Profile
-</Link>
+        <Link
+                     to="/learner/profile/edit"
+                     className="px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
+                   >
+                     <Settings className="w-5 h-5" />
+                     Edit Profile
+                   </Link>
       </div>
     </div>
   );

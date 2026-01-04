@@ -6,6 +6,7 @@ import Pagination from "../../../components/Pagination";
 import { ProfileSkeleton } from "../../../core/Skeleton.jsx";
 import { FilterPanel } from "../../../components/FilterPanel.jsx";
 import { StatCard } from "../../../core/UI.jsx";
+import { GitHubStyleCalendar } from "./Activitycalender.jsx";
 
 export default function Progress() {
     const [progress, setProgress] = useState(null);
@@ -285,22 +286,9 @@ export default function Progress() {
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                     <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-blue-600" />
-                        Activity Calendar (Last 90 Days)
+                        Activity Calendar
                     </h3>
-                    <div className="grid grid-cols-10 gap-1">
-                        {Object.entries(activityCalendar).slice(-90).map(([date, count]) => (
-                            <div
-                                key={date}
-                                title={`${date}: ${count} submissions`}
-                                className={`w-full aspect-square rounded ${
-                                    count === 0 ? 'bg-slate-100' :
-                                    count <= 2 ? 'bg-green-200' :
-                                    count <= 5 ? 'bg-green-400' :
-                                    'bg-green-600'
-                                }`}
-                            />
-                        ))}
-                    </div>
+                    <GitHubStyleCalendar activityCalendar={activityCalendar} />
                 </div>
             </div>
         </div>

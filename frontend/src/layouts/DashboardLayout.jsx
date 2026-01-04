@@ -90,9 +90,8 @@ export default function DashboardLayout() {
     <div className="flex h-screen bg-slate-100 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col bg-white border-r border-slate-200 transition-all duration-300 ${
-          isSidebarOpen ? "w-64" : "w-20"
-        }`}
+        className={`hidden md:flex flex-col bg-white border-r border-slate-200 transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-20"
+          }`}
       >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -137,11 +136,10 @@ export default function DashboardLayout() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                isActive(item.path)
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive(item.path)
                   ? "bg-blue-50 text-blue-600 font-medium"
                   : "text-slate-700 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {isSidebarOpen && <span className="truncate">{item.label}</span>}
@@ -154,11 +152,10 @@ export default function DashboardLayout() {
           {user?.role === "learner" && (
             <Link
               to="/learner/profile"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                isActive("/learner/profile")
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/learner/profile")
                   ? "bg-blue-50 text-blue-600 font-medium"
                   : "text-slate-700 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <User className="w-5 h-5 flex-shrink-0" />
               {isSidebarOpen && <span>Profile</span>}
@@ -166,19 +163,30 @@ export default function DashboardLayout() {
           )}
 
           {user?.role === "admin" && (
-  <Link
-    to="/admin/profile"
-    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-      isActive("/admin/profile")
-        ? "bg-red-50 text-red-600 font-medium"
-        : "text-slate-700 hover:bg-slate-50"
-    }`}
-  >
-    <User className="w-5 h-5 flex-shrink-0" />
-    {isSidebarOpen && <span>Profile</span>}
-  </Link>
-)}
+            <Link
+              to="/admin/profile"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/admin/profile")
+                  ? "bg-red-50 text-red-600 font-medium"
+                  : "text-slate-700 hover:bg-slate-50"
+                }`}
+            >
+              <User className="w-5 h-5 flex-shrink-0" />
+              {isSidebarOpen && <span>Profile</span>}
+            </Link>
+          )}
 
+          {user?.role === "super-admin" && (
+            <Link
+              to="/super-admin/profile"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/super-admin/profile")
+                  ? "bg-yellow-50 text-yellow-600 font-medium"
+                  : "text-slate-700 hover:bg-slate-50"
+                }`}
+            >
+              <User className="w-5 h-5 flex-shrink-0" />
+              {isSidebarOpen && <span>Profile</span>}
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all"
@@ -199,9 +207,8 @@ export default function DashboardLayout() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 md:hidden ${
-          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 md:hidden ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Mobile Header */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -243,11 +250,10 @@ export default function DashboardLayout() {
               key={item.path}
               to={item.path}
               onClick={() => setIsMobileSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                isActive(item.path)
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive(item.path)
                   ? "bg-blue-50 text-blue-600 font-medium"
                   : "text-slate-700 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <item.icon className="w-5 h-5" />
               <span>{item.label}</span>
@@ -261,11 +267,10 @@ export default function DashboardLayout() {
             <Link
               to="/learner/profile"
               onClick={() => setIsMobileSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                isActive("/learner/profile")
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/learner/profile")
                   ? "bg-blue-50 text-blue-600 font-medium"
                   : "text-slate-700 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <User className="w-5 h-5" />
               <span>Profile</span>

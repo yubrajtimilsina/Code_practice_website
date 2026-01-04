@@ -347,30 +347,6 @@ export default function LearnerDashboard() {
           </div>
         )}
 
-        {/* Activity Calendar */}
-        {activityCalendar && Object.keys(activityCalendar).length > 0 && (
-          <div className={`${CARD_BASE} rounded-2xl p-6 mb-8`}>
-            <div className="flex items-center gap-3 mb-4">
-              <Calendar className="w-6 h-6 text-purple-600" />
-              <h3 className="text-xl font-semibold text-slate-900">Activity Calendar (Last 30 Days)</h3>
-            </div>
-
-            <div className="grid grid-cols-10 gap-1">
-              {Object.entries(activityCalendar).map(([date, count]) => (
-                <div
-                  key={date}
-                  title={`${date}: ${count} submissions`}
-                  className={`w-full aspect-square rounded ${
-                    count === 0 ? 'bg-slate-100' :
-                    count <= 2 ? 'bg-green-200' :
-                    count <= 5 ? 'bg-green-400' :
-                    'bg-green-600'
-                  }`}
-                ></div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
