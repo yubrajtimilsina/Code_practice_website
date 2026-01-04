@@ -16,8 +16,8 @@ export const getChallengeLeaderboard = (challengeId) => {
   return api.get(`/daily-challenge/leaderboard/${challengeId}`);
 };
 
-export const getMyHistory = (limit = 30) => {
-  return api.get("/daily-challenge/my-history", { params: { limit } });
+export const getMyHistory = (page = 1, limit = 10) => {
+  return api.get("/daily-challenge/my-history", { params: { page, limit } });
 };
 
 export const completeDailyChallenge = (payload) => {

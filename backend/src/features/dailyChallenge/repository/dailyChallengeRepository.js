@@ -18,10 +18,10 @@ export const createDailyChallenge = async (challengeData) => {
 export const findTodayChallenge = async () => {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
-  
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   return await populateChallengeDetails(DailyChallenge.findOne({
     date: { $gte: today, $lt: tomorrow },
     isActive: true
@@ -46,17 +46,17 @@ export const findAllChallenges = async (limit = 30) => {
 
 export const addChallengeCompletion = async (challengeId, userId, submissionId, executionTime, language) => {
   const challenge = await DailyChallenge.findById(challengeId);
-  
+
   if (!challenge) {
     throw new Error('Challenge not found');
   }
-  
+
   const alreadyCompleted = challenge.completedBy.find(
     c => c.userId.toString() === userId.toString()
   );
-  
+
   if (alreadyCompleted) {
-  
+
     alreadyCompleted.attempts += 1;
   } else {
     // Add new completion
@@ -66,9 +66,9 @@ export const addChallengeCompletion = async (challengeId, userId, submissionId, 
       submissionId,
       attempts: 1
     });
-    
+
     challenge.totalCompletions += 1;
-    
+
     challenge.leaderboard.push({
       userId,
       completedAt: new Date(),
@@ -76,17 +76,17 @@ export const addChallengeCompletion = async (challengeId, userId, submissionId, 
       language,
       rank: challenge.leaderboard.length + 1
     });
-    
+
     // Sort leaderboard by completion time
     challenge.leaderboard.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
-    
+
     challenge.leaderboard.forEach((entry, index) => {
       entry.rank = index + 1;
     });
   }
-  
+
   challenge.totalAttempts += 1;
-  
+
   return await challenge.save();
 };
 
@@ -102,11 +102,11 @@ export const getChallengeLeaderboard = async (challengeId) => {
   const challenge = await DailyChallenge.findById(challengeId)
     .populate('leaderboard.userId', 'name email')
     .exec();
-  
+
   if (!challenge) {
     return [];
   }
-  
+
   return challenge.leaderboard.map(entry => ({
     userId: {
       _id: entry.userId?._id,
@@ -120,11 +120,18 @@ export const getChallengeLeaderboard = async (challengeId) => {
   }));
 };
 
-export const getUserChallengeHistory = async (userId, limit = 30) => {
-  const query = DailyChallenge.find({
+export const getUserChallengeHistory = async (userId, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
+
+  const countQuery = DailyChallenge.countDocuments({
+    'completedBy.userId': userId
+  });
+
+  const dataQuery = DailyChallenge.find({
     'completedBy.userId': userId
   })
     .sort({ date: -1 })
+    .skip(skip)
     .limit(limit)
     .populate({
       path: 'problemId',
@@ -133,7 +140,7 @@ export const getUserChallengeHistory = async (userId, limit = 30) => {
     .populate('completedBy.userId', 'name email')
     .populate('leaderboard.userId', 'name email');
 
-  const results = await query.exec();
-  
-  return results;
+  const [total, challenges] = await Promise.all([countQuery.exec(), dataQuery.exec()]);
+
+  return { challenges, total };
 };
