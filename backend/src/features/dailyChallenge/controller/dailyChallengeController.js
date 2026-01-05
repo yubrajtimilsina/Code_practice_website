@@ -1,7 +1,8 @@
 import {
   getTodayChallenge as getTodayChallengeService,
   hasUserCompletedToday,
-  generateDailyChallenge
+  generateDailyChallenge,
+  processDailyChallengeCompletion
 } from '../services/dailyChallengeService.js';
 import {
   findAllChallenges,
@@ -9,9 +10,91 @@ import {
   getChallengeLeaderboard,
   getUserChallengeHistory,
   addChallengeCompletion,
-  incrementChallengeAttempt
+  incrementChallengeAttempt,
+  getUserCompletionDates
 } from '../repository/dailyChallengeRepository.js';
 import User from '../../auth/models/UserModels.js';
+
+const calculateStreaks = (dates) => {
+  if (!dates || dates.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 };
+  }
+
+  // Normalize dates to eliminate time component
+  const sortedDates = dates
+    .map(d => {
+      const date = new Date(d);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    })
+    .sort((a, b) => a - b); // Ascending order
+
+  // Remove duplicates
+  const uniqueDates = [];
+  if (sortedDates.length > 0) {
+    uniqueDates.push(sortedDates[0]);
+    for (let i = 1; i < sortedDates.length; i++) {
+      if (sortedDates[i].getTime() !== sortedDates[i - 1].getTime()) {
+        uniqueDates.push(sortedDates[i]);
+      }
+    }
+  }
+
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+
+  // Calculate streaks
+  for (let i = 0; i < uniqueDates.length; i++) {
+    if (i === 0) {
+      tempStreak = 1;
+    } else {
+      const diffTime = Math.abs(uniqueDates[i] - uniqueDates[i - 1]);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        tempStreak++;
+      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+  }
+  longestStreak = Math.max(longestStreak, tempStreak);
+
+  // Determine current streak
+  // Current streak is valid ONLY if the last completed date was Today or Yesterday.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const lastDate = uniqueDates[uniqueDates.length - 1];
+
+  if (lastDate.getTime() === today.getTime() || lastDate.getTime() === yesterday.getTime()) {
+    // If the sequence ending at lastDate is contiguous, that's our current streak.
+    // We already calculated streaks, but we need the streak ending at last index.
+
+    // Let's re-calculate backwards for current streak specifically to be safe
+    let activeStreak = 1;
+    for (let i = uniqueDates.length - 1; i > 0; i--) {
+      const diffTime = Math.abs(uniqueDates[i] - uniqueDates[i - 1]);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        activeStreak++;
+      } else {
+        break;
+      }
+    }
+    currentStreak = activeStreak;
+  } else {
+    currentStreak = 0;
+  }
+
+  return { currentStreak, longestStreak };
+};
 
 export const getTodayChallenge = async (req, res) => {
   try {
@@ -230,11 +313,14 @@ export const getMyHistory = async (req, res) => {
     // WAIT, "totalCompleted" is easy. Streaks are hard.
     // Let's just return what we have.
 
-    // Calculate stats based on VISIBLE history (or accurate total)
+    // Calculate stats based on full history
+    const completionDates = await getUserCompletionDates(userId);
+    const { currentStreak, longestStreak } = calculateStreaks(completionDates);
+
     const stats = {
       totalCompleted: total, // Use the total count from DB
-      currentStreak: 0,
-      longestStreak: 0,
+      currentStreak,
+      longestStreak,
       byDifficulty: {
         Easy: 0,
         Medium: 0,
@@ -248,9 +334,6 @@ export const getMyHistory = async (req, res) => {
         stats.byDifficulty[challenge.difficulty]++;
       }
     });
-
-    // Streaks - impossible to calculate correctly without full history.
-    // I will just leave it as 0 or calculate based on this page.
 
     // Construct pagination metadata
     const pagination = {
@@ -278,29 +361,50 @@ export const completeDailyChallenge = async (req, res) => {
     const userId = req.user._id;
 
     const challenge = await getTodayChallengeService();
-
     if (!challenge) {
-      return res.status(404).json({
-        error: 'No active daily challenge found'
-      });
+      return res.status(404).json({ error: 'No active daily challenge found' });
     }
 
-    // Add completion
-    const updatedChallenge = await addChallengeCompletion(
-      challenge._id,
+    // Use our centralized service logic
+    // completeDailyChallenge in controller is redundant if we automate it,
+    // but we keep it working for direct API calls just in case.
+    // Note: processDailyChallengeCompletion checks problem ID match.
+    // But here we are calling it explicitly for TODAYS challenge.
+    // So we pass the problemId from the challenge we found.
+
+    // Actually, processDailyChallengeCompletion requires problemId to check match.
+    // We can assume the call is for the correct problem.
+    const updatedChallenge = await processDailyChallengeCompletion(
       userId,
-      submissionId,
-      executionTime,
-      language
+      submissionId || null,
+      challenge.problemId._id,
+      executionTime || "0ms",
+      language || "Unknown"
     );
 
-    // Update user's daily challenge stats
-    const user = await User.findById(userId);
-    if (user) {
-      user.dailyChallengesCompleted = (user.dailyChallengesCompleted || 0) + 1;
-      user.lastDailyChallengeDate = new Date();
-      await user.save();
+    if (!updatedChallenge) {
+      // If it returned null, maybe problem ID didn't match (unlikely here) or error
+      // Since we explicitly want to complete TODAY's challenge, let's fall back to manual completetion if service fails or redundant check
+      // But wait, processDailyChallengeCompletion does exactly what we want.
+
+      // If we are here, maybe the problem IDs didn't match?
+      // In this specific endpoint, the user intends to complete *the* daily challenge.
+      // Effectively this endpoint is "Mark today's challenge as done".
+      // So we should force it?
+      // The service is designed to be safe.
+      // Let's rely on it. If it returns null, it might be because of mismatch.
+
+      // Re-implementing simplified version since service is "safe" and might return null on mismatch
+      // But here we want to direct "I completed it".
+      // Actually, this endpoint is barely used by frontend, but let's keep it functional.
+
+      // Wait, completeDailyChallenge from API passes params. 
+      // Let's just import the service function and use it.
+      // I need to import it first at the top.
+
+      return res.status(400).json({ error: "Failed to complete challenge or invalid problem match" });
     }
+
 
     res.json({
       message: 'Daily challenge completed!',

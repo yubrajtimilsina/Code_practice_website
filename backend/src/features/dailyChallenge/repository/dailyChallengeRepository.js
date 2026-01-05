@@ -144,3 +144,14 @@ export const getUserChallengeHistory = async (userId, page = 1, limit = 10) => {
 
   return { challenges, total };
 };
+
+export const getUserCompletionDates = async (userId) => {
+  const challenges = await DailyChallenge.find({
+    'completedBy.userId': userId
+  })
+    .select('date')
+    .sort({ date: 1 })
+    .lean();
+
+  return challenges.map(c => c.date);
+};

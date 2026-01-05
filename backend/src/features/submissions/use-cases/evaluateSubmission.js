@@ -3,6 +3,7 @@ import Submission from "../models/submissionModel.js";
 import Problem from "../../problems/models/ProblemModel.js";
 import User from "../../auth/models/UserModels.js";
 import { updateUserStatistics, updateProblemStatistics } from "../services/submissionService.js";
+import { processDailyChallengeCompletion } from "../../dailyChallenge/services/dailyChallengeService.js";
 
 export const evaluateSubmission = async (userId, problemId, code, language) => {
     const problem = await Problem.findById(problemId);
@@ -78,6 +79,16 @@ export const evaluateSubmission = async (userId, problemId, code, language) => {
 
         await updateUserStatistics(userId, problemId, result.isAccepted, submission._id);
         await updateProblemStatistics(problemId, result.isAccepted);
+
+        if (result.isAccepted) {
+            await processDailyChallengeCompletion(
+                userId,
+                submission._id,
+                problemId,
+                result.executionTime,
+                language
+            );
+        }
 
         return submission.toObject();
     } catch (judgeError) {
