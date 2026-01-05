@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { login } from "../slice/authSlice.js";
+import { login, googleLogin } from "../slice/authSlice.js";
+import { GoogleLogin } from '@react-oauth/google';
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
@@ -12,7 +13,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const onChange = e => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  
+
   const onSubmit = e => {
     e.preventDefault();
     dispatch(login(form));
@@ -100,11 +101,10 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading || !isFormValid}
-              className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-                loading || !isFormValid
-                  ? "bg-blue-400 text-white cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
-              }`}
+              className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${loading || !isFormValid
+                ? "bg-blue-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+                }`}
             >
               {loading ? (
                 <>
@@ -119,6 +119,27 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-slate-500">Or continue with</span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-center">
+              <GoogleLogin
+                onSuccess={credentialResponse => {
+                  dispatch(googleLogin(credentialResponse.credential));
+                }}
+                onError={() => {
+                  console.log('Login Failed');
+                }}
+              />
+            </div>
+          </div>
 
           {/* Footer */}
           <p className="text-center text-slate-600 text-sm mt-6">

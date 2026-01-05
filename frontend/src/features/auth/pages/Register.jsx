@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { register } from "../slice/authSlice.js";
+import { register, googleLogin } from "../slice/authSlice.js";
+import { GoogleLogin } from '@react-oauth/google';
 import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
 
 
@@ -115,46 +116,46 @@ export default function Register() {
                             </div>
                         </div>
 
-                       
-{/* ROLE SLIDING TOGGLE */}
-<div>
-  <label className="block text-sm font-medium text-slate-700 mb-2">
-    Select Role
-  </label>
 
-  <div className="relative w-full bg-slate-50 border border-slate-300 rounded-full p-1 flex items-center">
+                        {/* ROLE SLIDING TOGGLE */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                Select Role
+                            </label>
 
-    {/* Sliding Background */}
-    <div
-      className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-blue-600 transition-all duration-300 ease-in-out
+                            <div className="relative w-full bg-slate-50 border border-slate-300 rounded-full p-1 flex items-center">
+
+                                {/* Sliding Background */}
+                                <div
+                                    className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-blue-600 transition-all duration-300 ease-in-out
         ${formData.role === "admin" ? "translate-x-full" : "translate-x-0"}
       `}
-    />
+                                />
 
-    {/* Learner Button */}
-    <button
-      type="button"
-      onClick={() => setFormData({ ...formData, role: "learner" })}
-      className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
+                                {/* Learner Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: "learner" })}
+                                    className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
         ${formData.role === "learner" ? "text-white" : "text-slate-600"}
       `}
-    >
-      Learner
-    </button>
+                                >
+                                    Learner
+                                </button>
 
-    {/* Admin Button */}
-    <button
-      type="button"
-      onClick={() => setFormData({ ...formData, role: "admin" })}
-      className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
+                                {/* Admin Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, role: "admin" })}
+                                    className={`relative z-10 flex-1 py-2 text-center font-semibold transition-all
         ${formData.role === "admin" ? "text-white" : "text-slate-600"}
       `}
-    >
-      Admin
-    </button>
+                                >
+                                    Admin
+                                </button>
 
-  </div>
-</div>
+                            </div>
+                        </div>
 
 
 
@@ -170,22 +171,42 @@ export default function Register() {
                         <button
                             type="submit"
                             disabled={loading || !isFormValid}
-                            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                                loading || !isFormValid
-                                    ? "bg-blue-400 text-white cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
-                            }`}
+                            className={`w-full py-3 rounded-lg font-semibold transition-all ${loading || !isFormValid
+                                ? "bg-blue-400 text-white cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+                                }`}
                         >
                             {loading ? (
-                              <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Registering...
-                              </>
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Registering...
+                                </>
                             ) : (
-                              "Create Account"
+                                "Create Account"
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-6">
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-slate-300" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="bg-white px-2 text-slate-500">Or sign up with</span>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-center">
+                            <GoogleLogin
+                                onSuccess={credentialResponse => {
+                                    dispatch(googleLogin(credentialResponse.credential));
+                                }}
+                                onError={() => {
+                                    console.log('Login Failed');
+                                }}
+                            />
+                        </div>
+                    </div>
 
                     {/* FOOTER */}
                     <p className="text-center text-slate-600 text-sm mt-6">

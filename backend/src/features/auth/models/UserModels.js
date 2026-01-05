@@ -13,7 +13,20 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function () { return this.authProvider === 'local'; }
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+  avatar: {
+    type: String
   },
   role: {
     type: String,
@@ -24,7 +37,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  
+
 
   solvedProblemsCount: {
     type: Number,
@@ -38,7 +51,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  
+
   easyProblemsSolved: {
     type: Number,
     default: 0,
@@ -51,7 +64,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  
+
   rankPoints: {
     type: Number,
     default: 0,
@@ -60,7 +73,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
-  
+
   currentStreak: {
     type: Number,
     default: 0,
@@ -73,12 +86,12 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  
+
   preferredLanguages: [{
     type: String,
     enum: ['javascript', 'python', 'java', 'c++', 'c', 'typescript', 'go', 'ruby', 'csharp']
   }],
-  
+
   totalTimeSpentMinutes: {
     type: Number,
     default: 0,
@@ -87,7 +100,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  
+
   createdAt: {
     type: Date,
     default: Date.now,
@@ -95,27 +108,27 @@ const userSchema = new mongoose.Schema({
 });
 
 
-userSchema.virtual('accuracy').get(function() {
+userSchema.virtual('accuracy').get(function () {
   if (this.totalSubmissionsCount === 0) return 0;
   return ((this.acceptedSubmissionsCount / this.totalSubmissionsCount) * 100).toFixed(2);
 });
 
-userSchema.methods.calculateRankPoints = function() {
-  return (this.easyProblemsSolved * 10) + 
-         (this.mediumProblemsSolved * 25) + 
-         (this.hardProblemsSolved * 50);
+userSchema.methods.calculateRankPoints = function () {
+  return (this.easyProblemsSolved * 10) +
+    (this.mediumProblemsSolved * 25) +
+    (this.hardProblemsSolved * 50);
 };
 
-userSchema.methods.updateStreak = function() {
+userSchema.methods.updateStreak = function () {
   const now = new Date();
   const lastDate = this.lastSubmissionDate;
-  
+
   if (!lastDate) {
     this.currentStreak = 1;
     this.longestStreak = 1;
   } else {
     const daysDiff = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
-    
+
     if (daysDiff === 1) {
       this.currentStreak = (this.currentStreak || 0) + 1;
       this.longestStreak = Math.max(this.longestStreak || 0, this.currentStreak);
@@ -123,7 +136,7 @@ userSchema.methods.updateStreak = function() {
       this.currentStreak = 1;
     }
   }
-  
+
   this.lastSubmissionDate = now;
 };
 

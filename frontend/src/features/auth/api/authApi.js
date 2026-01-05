@@ -7,6 +7,10 @@ export const loginApi = (playload) => {
   return api.post("/auth/login", playload);
 }
 
+export const googleLoginApi = (credential) => {
+  return api.post("/auth/google", { credential });
+};
+
 export const protectedApi = () => {
   return api.get("/protected");
 }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginApi, registerApi, meApi } from "../api/authApi";
+import { loginApi, registerApi, meApi, googleLoginApi } from "../api/authApi";
 
 //  CRITICAL FIX: Secure token storage with validation
 const setAuthData = (user, token) => {
@@ -18,7 +18,7 @@ const setAuthData = (user, token) => {
 
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("token", token);
-    
+
     console.log(" Auth data stored successfully");
   } catch (error) {
     console.error(" Failed to store auth data:", error);
@@ -38,13 +38,13 @@ const clearAuthData = () => {
 const getUserFromLocalStorage = () => {
   try {
     const userStr = localStorage.getItem("user");
-    
+
     if (!userStr || userStr === "null" || userStr === "undefined") {
       return null;
     }
 
     const user = JSON.parse(userStr);
-    
+
     //  Validate user object
     if (!user || !user.id || !user.email) {
       console.warn(" Invalid user data in localStorage, clearing...");
@@ -63,7 +63,7 @@ const getUserFromLocalStorage = () => {
 const getTokenFromLocalStorage = () => {
   try {
     const token = localStorage.getItem("token");
-    
+
     if (!token || token === "null" || token === "undefined") {
       return null;
     }
@@ -101,19 +101,19 @@ export const register = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await registerApi(payload);
-      
+
       if (!data || !data.user || !data.user.token) {
         throw new Error("Invalid response from server");
       }
 
       setAuthData(data.user, data.user.token);
       return data.user;
-      
+
     } catch (error) {
-      const message = error.response?.data?.error || 
-                     error.response?.data?.errors?.[0] || 
-                     error.message || 
-                     "Registration failed";
+      const message = error.response?.data?.error ||
+        error.response?.data?.errors?.[0] ||
+        error.message ||
+        "Registration failed";
       return rejectWithValue(message);
     }
   }
@@ -125,19 +125,39 @@ export const login = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const { data } = await loginApi(payload);
-      
+
       if (!data || !data.user || !data.user.token) {
         throw new Error("Invalid response from server");
       }
 
       setAuthData(data.user, data.user.token);
       return data.user;
-      
+
     } catch (error) {
-      const message = error.response?.data?.error || 
-                     error.response?.data?.errors?.[0] || 
-                     error.message || 
-                     "Login failed";
+      const message = error.response?.data?.error ||
+        error.response?.data?.errors?.[0] ||
+        error.message ||
+        "Login failed";
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const googleLogin = createAsyncThunk(
+  "auth/googleLogin",
+  async (credential, { rejectWithValue }) => {
+    try {
+      const { data } = await googleLoginApi(credential);
+      if (!data || !data.user || !data.user.token) {
+        throw new Error("Invalid response from server");
+      }
+      setAuthData(data.user, data.user.token);
+      return data.user;
+    } catch (error) {
+      const message = error.response?.data?.error ||
+        error.response?.data?.errors?.[0] ||
+        error.message ||
+        "Google Login failed";
       return rejectWithValue(message);
     }
   }
@@ -155,20 +175,20 @@ export const getMe = createAsyncThunk(
       }
 
       const { data } = await meApi();
-      
+
       if (!data || !data.id) {
         throw new Error("Invalid user data received");
       }
 
       return data;
-      
+
     } catch (error) {
       clearAuthData();
-      
-      const message = error.response?.data?.error || 
-                     error.message || 
-                     "Failed to fetch user data";
-      
+
+      const message = error.response?.data?.error ||
+        error.message ||
+        "Failed to fetch user data";
+
       return rejectWithValue(message);
     }
   }
@@ -220,6 +240,24 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.user = null;
+        state.token = null;
+      })
+
+      // Google Login
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.token = action.payload.token;
+        state.error = null;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.user = null;

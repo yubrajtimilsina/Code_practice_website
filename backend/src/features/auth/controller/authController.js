@@ -1,20 +1,17 @@
-import {validationResult} from 'express-validator';
+
 import { registerUser } from '../use-cases/registerUser.js';
 import { loginUser } from '../use-cases/loginUser.js';
+import { loginGoogleUser } from '../use-cases/loginGoogleUser.js';
 
 
 export const register = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array().map(e => e.msg) });
-        }
 
         const { name, email, password, role } = req.body;
         const user = await registerUser({ name, email, password, role });
 
-        
-        res.status(201).json({ 
+
+        res.status(201).json({
             message: "Registration successful",
             user: {
                 id: user.id,
@@ -28,7 +25,7 @@ export const register = async (req, res) => {
     } catch (error) {
         const statusCode = error.statusCode || 400;
         const message = error.message || "Registration failed";
-        
+
         if (statusCode === 400 && message.toLowerCase().includes("validation")) {
             return res.status(400).json({ errors: [message] });
         }
@@ -39,16 +36,12 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array().map(e => e.msg) });
-        }
 
         const { email, password } = req.body;
         const user = await loginUser({ email, password });
 
-        
-        res.json({ 
+
+        res.json({
             message: "Login successful",
             user: {
                 id: user.id,
@@ -60,6 +53,21 @@ export const login = async (req, res) => {
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+};
+
+export const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        const user = await loginGoogleUser(credential);
+
+        res.json({
+            message: "Google login successful",
+            user
+        });
+    } catch (error) {
+        console.error("Google Login Controller Error:", error);
+        res.status(400).json({ error: "Google login failed" });
     }
 };
 
