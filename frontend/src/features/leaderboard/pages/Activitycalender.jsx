@@ -85,7 +85,7 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
 
   /* -------------------- UI -------------------- */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
+    <div className=" bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-slate-200 dark:border-slate-700">
           {/* Header */}

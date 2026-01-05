@@ -351,12 +351,12 @@ export default function LearnerDashboard() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <button
-            onClick={() => navigate("/problems")}
+            onClick={() => navigate("/submissions")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6 text-left`}
           >
             <Code2 className="w-8 h-8 text-blue-600 mb-3" />
             <h3 className="text-lg font-bold text-slate-900 mb-2">Solve Problems</h3>
-            <p className="text-sm text-slate-600">Browse 500+ coding challenges</p>
+            <p className="text-sm text-slate-600">Your solved problems</p>
           </button>
 
           <button

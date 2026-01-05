@@ -29,6 +29,9 @@ export default function AdminProblemForm() {
     { input: "", expectedOutput: "", isHidden: false }
   ]);
 
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -225,19 +228,45 @@ export default function AdminProblemForm() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tags (comma separated)
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={form.tags}
-                  onChange={onChange}
-                  placeholder="arrays,strings,dynamic-programming"
-                  className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+               <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Tags (optional)
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-slate-200 rounded-full text-sm flex items-center gap-1"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
               </div>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && tagInput.trim()) {
+                    e.preventDefault();
+                    if (!tags.includes(tagInput.trim())) {
+                      setTags([...tags, tagInput.trim()]);
+                    }
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Type a tag and press Enter"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
             </div>
           </div>
 
