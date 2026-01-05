@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Shield, Mail, Calendar, Users, Code2, BarChart3, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../../../utils/api';
-import { ProfileSkeleton } from '../../../../core/Skeleton'; 
+import { ProfileSkeleton } from '../../../../core/Skeleton';
 
 export default function AdminProfile() {
   const { user } = useSelector((state) => state.auth);
@@ -27,13 +27,13 @@ export default function AdminProfile() {
   };
 
   if (loading) {
-  return <ProfileSkeleton />;
-}
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* Header Card */}
         <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-8 mb-8 shadow-lg text-white">
           <div className="flex items-center space-x-6">
@@ -49,7 +49,7 @@ export default function AdminProfile() {
               <p className="text-red-100">{user?.email}</p>
             </div>
             <Link
-              to="/learner/profile/edit"
+              to="/profile/edit"
               className="px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
             >
               <Settings className="w-5 h-5" />
@@ -64,7 +64,7 @@ export default function AdminProfile() {
             <Shield className="w-7 h-7 text-red-600" />
             Account Information
           </h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-4 text-slate-700">
               <Mail className="w-6 h-6 text-red-500" />
@@ -79,10 +79,10 @@ export default function AdminProfile() {
               <div>
                 <p className="text-sm text-slate-500">Account Created</p>
                 <p className="font-medium text-lg">
-                  {new Date(user?.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(user?.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </p>
               </div>
@@ -106,7 +106,7 @@ export default function AdminProfile() {
               <BarChart3 className="w-7 h-7 text-red-600" />
               Platform Overview
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between mb-2">
@@ -150,7 +150,7 @@ export default function AdminProfile() {
         {/* Admin Capabilities */}
         <div className="bg-white border border-slate-200 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Capabilities</h2>
-          
+
           <div className="space-y-3">
             <div className="flex items-start gap-3 text-slate-700">
               <span className="text-green-600 font-bold text-lg">✓</span>

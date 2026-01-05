@@ -14,7 +14,7 @@ export default function LearnerProfile() {
       setLoading(true);
       const response = await getLearnerDashboardApi();
       const dashboardData = response.data.dashboard;
-      
+
       const learnerProfile = {
         ...dashboardData.user,
         solvedProblems: dashboardData.stats.solvedProblems,
@@ -32,8 +32,8 @@ export default function LearnerProfile() {
   }, []);
 
   if (loading) {
-  return <ProfileSkeleton />;
-}
+    return <ProfileSkeleton />;
+  }
 
   if (error) {
     return (
@@ -139,12 +139,12 @@ export default function LearnerProfile() {
 
 
         <Link
-                     to="/learner/profile/edit"
-                     className="px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
-                   >
-                     <Settings className="w-5 h-5" />
-                     Edit Profile
-                   </Link>
+          to="/profile/edit"
+          className="px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
+        >
+          <Settings className="w-5 h-5" />
+          Edit Profile
+        </Link>
       </div>
     </div>
   );

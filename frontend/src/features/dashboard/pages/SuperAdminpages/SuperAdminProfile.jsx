@@ -38,7 +38,7 @@ export default function SuperAdminProfile() {
   return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* Header Card with Gradient */}
         <div className="bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 rounded-2xl p-8 mb-8 shadow-xl text-white">
           <div className="flex items-center space-x-6">
@@ -57,7 +57,7 @@ export default function SuperAdminProfile() {
               <p className="text-yellow-100">{user?.email}</p>
             </div>
             <Link
-              to="/learner/profile/edit"
+              to="/profile/edit"
               className="px-6 py-3 bg-white text-yellow-600 rounded-lg font-semibold hover:bg-yellow-50 transition-colors flex items-center gap-2 shadow-md"
             >
               <Settings className="w-5 h-5" />
@@ -72,7 +72,7 @@ export default function SuperAdminProfile() {
             <Crown className="w-7 h-7 text-yellow-600" />
             Account Information
           </h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-4 text-slate-700">
               <Mail className="w-6 h-6 text-yellow-500" />
@@ -87,10 +87,10 @@ export default function SuperAdminProfile() {
               <div>
                 <p className="text-sm text-slate-500">Account Created</p>
                 <p className="font-medium text-lg">
-                  {new Date(user?.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(user?.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export default function SuperAdminProfile() {
               <Zap className="w-7 h-7 text-green-600" />
               System Health
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-green-50 p-6 rounded-lg border border-green-200">
                 <div className="flex items-center justify-between mb-2">
@@ -156,7 +156,7 @@ export default function SuperAdminProfile() {
               <BarChart3 className="w-7 h-7 text-yellow-600" />
               Platform Statistics
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
                 <Users className="w-8 h-8 text-blue-600 mb-3" />
@@ -202,7 +202,7 @@ export default function SuperAdminProfile() {
         {/* Super Admin Capabilities */}
         <div className="bg-white border border-slate-200 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Capabilities</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start gap-3 text-slate-700">
               <span className="text-green-600 font-bold text-xl">✓</span>

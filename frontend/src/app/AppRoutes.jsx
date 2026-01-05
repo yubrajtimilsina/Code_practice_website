@@ -40,9 +40,9 @@ import UserManagement from "../features/dashboard/pages/Adminpages/UserManagemen
 // Smart Dashboard Redirector Component
 const DashboardRedirect = () => {
   const { user } = useSelector((state) => state.auth);
-  
+
   if (!user) return <Navigate to="/login" replace />;
-  
+
   switch (user.role) {
     case "super-admin":
       return <Navigate to="/dashboard/super-admin" replace />;
@@ -60,7 +60,7 @@ export default function AppRoutes() {
     <Routes>
       {/* ========== PUBLIC ROUTES (No Sidebar) ========== */}
       <Route path="/" element={<Home />} />
-      
+
       <Route
         path="/register"
         element={
@@ -69,7 +69,7 @@ export default function AppRoutes() {
           </PublicRoute>
         }
       />
-      
+
       <Route
         path="/login"
         element={
@@ -110,9 +110,9 @@ export default function AppRoutes() {
         />
 
         <Route
-          path="/learner/profile/edit"
+          path="/profile/edit"
           element={
-            <ProtectedRoute requiredRoles={["learner"]}>
+            <ProtectedRoute requiredRoles={["learner", "admin", "super-admin"]}>
               <EditProfile />
             </ProtectedRoute>
           }
@@ -146,8 +146,8 @@ export default function AppRoutes() {
           }
         />
 
-        
-        
+
+
 
         <Route
           path="/admin/problems/:id/edit"
@@ -165,7 +165,7 @@ export default function AppRoutes() {
               <UserManagement />
             </ProtectedRoute>
           }
-        />  
+        />
 
         <Route
           path="/manage-users"
@@ -174,25 +174,25 @@ export default function AppRoutes() {
               <SuperAdminManageUsers />
             </ProtectedRoute>
           }
-        />  
+        />
 
         <Route
-  path="/admin/profile"
-  element={
-    <ProtectedRoute requiredRoles={["admin"]}>
-      <AdminProfile />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin/profile"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <AdminProfile />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/super-admin/profile"
-  element={
-    <ProtectedRoute requiredRoles={["super-admin"]}>
-      <SuperAdminProfile />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/super-admin/profile"
+          element={
+            <ProtectedRoute requiredRoles={["super-admin"]}>
+              <SuperAdminProfile />
+            </ProtectedRoute>
+          }
+        />
 
 
         {/* Super Admin Dashboard Routes */}
