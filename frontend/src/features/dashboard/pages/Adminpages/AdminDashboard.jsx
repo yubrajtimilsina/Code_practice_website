@@ -102,7 +102,10 @@ export default function AdminDashboard() {
             <p className="text-xs text-slate-500 mt-2">Listed problems</p>
           </div>
 
-          <div className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300">
+          <div
+            onClick={() => navigate("/admin/total-submissions")}
+            className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-500"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-yellow-400 text-white rounded-lg">
                 <FileText className="w-6 h-6" />
@@ -144,8 +147,8 @@ export default function AdminDashboard() {
                     className="bg-green-500 h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${stats.totalProblems > 0
-                          ? ((problemsByDifficulty.Easy || 0) / stats.totalProblems) * 100
-                          : 0
+                        ? ((problemsByDifficulty.Easy || 0) / stats.totalProblems) * 100
+                        : 0
                         }%`,
                     }}
                   ></div>
@@ -162,8 +165,8 @@ export default function AdminDashboard() {
                     className="bg-yellow-500 h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${stats.totalProblems > 0
-                          ? ((problemsByDifficulty.Medium || 0) / stats.totalProblems) * 100
-                          : 0
+                        ? ((problemsByDifficulty.Medium || 0) / stats.totalProblems) * 100
+                        : 0
                         }%`,
                     }}
                   ></div>
@@ -180,8 +183,8 @@ export default function AdminDashboard() {
                     className="bg-red-500 h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${stats.totalProblems > 0
-                          ? ((problemsByDifficulty.Hard || 0) / stats.totalProblems) * 100
-                          : 0
+                        ? ((problemsByDifficulty.Hard || 0) / stats.totalProblems) * 100
+                        : 0
                         }%`,
                     }}
                   ></div>
@@ -206,8 +209,8 @@ export default function AdminDashboard() {
                         className="bg-blue-500 h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${stats.totalSubmissions > 0
-                              ? (verdict.count / stats.totalSubmissions) * 100
-                              : 0
+                            ? (verdict.count / stats.totalSubmissions) * 100
+                            : 0
                             }%`,
                         }}
                       ></div>
@@ -256,10 +259,10 @@ export default function AdminDashboard() {
                       <td className="py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${problem.difficulty === "Easy"
-                              ? "bg-green-100 text-green-700"
-                              : problem.difficulty === "Medium"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
+                            ? "bg-green-100 text-green-700"
+                            : problem.difficulty === "Medium"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
                             }`}
                         >
                           {problem.difficulty}

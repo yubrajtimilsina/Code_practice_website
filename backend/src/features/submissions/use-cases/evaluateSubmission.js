@@ -140,6 +140,50 @@ export const getSubmissionHistory = async (userId, filters = {}) => {
     };
 };
 
+export const getAllSubmissionsHistory = async (filters = {}) => {
+    const {
+        problemId = null,
+        userId = null,
+        page = 1,
+        limit = 20,
+        verdict = null
+    } = filters;
+
+    const query = {};
+    if (userId) {
+        query.userId = userId;
+    }
+    if (problemId) {
+        query.problemId = problemId;
+    }
+    if (verdict && verdict !== "all") {
+        query.verdict = verdict;
+    }
+    const skip = (page - 1) * limit;
+
+    const total = await Submission.countDocuments(query);
+
+    const submissions = await Submission.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('problemId', 'title slug difficulty')
+        .populate('userId', 'name email')
+        .lean();
+
+    return {
+        submissions,
+        pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasNextPage: page * limit < total,
+            hasPrevPage: page > 1
+        }
+    };
+};
+
 export const getUserAcceptedProblems = async (userId) => {
     const acceptedSubmissions = await Submission.find({
         userId,

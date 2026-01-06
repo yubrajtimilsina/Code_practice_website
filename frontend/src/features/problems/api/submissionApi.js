@@ -2,7 +2,7 @@ import api from "../../../utils/api.js";
 
 
 export const submitSolutionApi = (payload) => {
-    return api.post("/submissions/submit", payload);
+  return api.post("/submissions/submit", payload);
 };
 
 export const runCodeApi = (payload) => {
@@ -22,6 +22,14 @@ export const getDraftApi = (problemId) => {
   return api.get(`/submissions/draft/${problemId}`);
 };
 
-export const getSubmissionHistoryApi = (params = {})=> {
-    return api.get("/submissions", {params});
+export const getSubmissionHistoryApi = (params = {}) => {
+  return api.get("/submissions", { params });
+};
+
+export const getAllSubmissionsApi = (params = {}) => {
+  return api.get("/submissions/admin/all", { params });
+};
+
+export const deleteSubmissionApi = (submissionId) => {
+  return api.delete(`/submissions/${submissionId}`);
 };

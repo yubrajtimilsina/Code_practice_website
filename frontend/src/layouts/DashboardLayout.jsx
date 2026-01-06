@@ -47,6 +47,7 @@ export default function DashboardLayout() {
         { path: "/discussion", icon: MessageSquare, label: "Discussions" },
         { path: "/playground", icon: Terminal, label: "Playground" },
         { path: "/manage-users", icon: Users, label: "Manage Users" },
+        { path: "/admin/total-submissions", icon: FileText, label: "Total Submissions" },
 
       ];
     }
@@ -58,6 +59,7 @@ export default function DashboardLayout() {
         { path: "/discussion", icon: MessageSquare, label: "Discussions" },
         { path: "/playground", icon: Terminal, label: "Playground" },
         { path: "/users", icon: Users, label: "Manage Users" },
+        { path: "/admin/total-submissions", icon: FileText, label: "Total Submissions" },
       ];
     }
 
@@ -137,8 +139,8 @@ export default function DashboardLayout() {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive(item.path)
-                  ? "bg-blue-50 text-blue-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -153,8 +155,8 @@ export default function DashboardLayout() {
             <Link
               to="/learner/profile"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/learner/profile")
-                  ? "bg-blue-50 text-blue-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <User className="w-5 h-5 flex-shrink-0" />
@@ -166,8 +168,8 @@ export default function DashboardLayout() {
             <Link
               to="/admin/profile"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/admin/profile")
-                  ? "bg-red-50 text-red-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-red-50 text-red-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <User className="w-5 h-5 flex-shrink-0" />
@@ -179,8 +181,8 @@ export default function DashboardLayout() {
             <Link
               to="/super-admin/profile"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/super-admin/profile")
-                  ? "bg-yellow-50 text-yellow-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-yellow-50 text-yellow-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <User className="w-5 h-5 flex-shrink-0" />
@@ -251,8 +253,8 @@ export default function DashboardLayout() {
               to={item.path}
               onClick={() => setIsMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive(item.path)
-                  ? "bg-blue-50 text-blue-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <item.icon className="w-5 h-5" />
@@ -268,8 +270,8 @@ export default function DashboardLayout() {
               to="/learner/profile"
               onClick={() => setIsMobileSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive("/learner/profile")
-                  ? "bg-blue-50 text-blue-600 font-medium"
-                  : "text-slate-700 hover:bg-slate-50"
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-slate-700 hover:bg-slate-50"
                 }`}
             >
               <User className="w-5 h-5" />

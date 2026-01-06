@@ -54,7 +54,7 @@ export const getSubmissionById = async (submissionId) => {
   return submission;
 };
 
-export const deleteSubmission = async (submissionId, userId) => {
+export const deleteSubmission = async (submissionId, userId, userRole) => {
   const submission = await Submission.findById(submissionId);
 
   if (!submission) {
@@ -63,7 +63,9 @@ export const deleteSubmission = async (submissionId, userId) => {
     throw error;
   }
 
-  if (submission.userId.toString() !== userId.toString()) {
+  const isAdmin = userRole === 'admin' || userRole === 'super-admin';
+
+  if (submission.userId.toString() !== userId.toString() && !isAdmin) {
     const error = new Error("Unauthorized to delete this submission");
     error.statusCode = 403;
     throw error;

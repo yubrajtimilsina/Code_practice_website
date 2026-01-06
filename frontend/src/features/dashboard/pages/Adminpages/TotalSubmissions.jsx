@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { RefreshCw, Filter, ChevronDown, Trash2 } from "lucide-react";
-import { getVerdictIcon, getVerdictColor } from "../../../utils/verdictHelpers.js";
-import Pagination from "../../../components/Pagination";
-import { TableSkeleton } from "../../../core/Skeleton";
-import { ErrorState, EmptyDataState } from "../../../components/StateComponents.jsx";
-import { getSubmissionHistoryApi, deleteSubmissionApi } from "../api/submissionApi";
-import AlertModal from "../../../components/AlertModal.jsx";
-import { useAlert } from "../../../hooks/useAlert.js";
+import { RefreshCw, Filter, ChevronDown, User, Code, Trash2 } from "lucide-react";
+import { getVerdictIcon, getVerdictColor } from "../../../../utils/verdictHelpers.js";
+import Pagination from "../../../../components/Pagination";
+import { TableSkeleton } from "../../../../core/Skeleton";
+import { ErrorState, EmptyDataState } from "../../../../components/StateComponents.jsx";
+import { getAllSubmissionsApi, deleteSubmissionApi } from "../../../problems/api/submissionApi";
+import AlertModal from "../../../../components/AlertModal.jsx";
+import { useAlert } from "../../../../hooks/useAlert.js";
 
-export default function SubmissionHistory() {
+export default function TotalSubmissions() {
     const [submissions, setSubmissions] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalSubmissions, setTotalSubmissions] = useState(0);
@@ -33,12 +33,12 @@ export default function SubmissionHistory() {
             const params = { page: currentPage, limit: itemsPerPage };
             if (verdictFilter !== "all") params.verdict = verdictFilter;
 
-            const response = await getSubmissionHistoryApi(params);
+            const response = await getAllSubmissionsApi(params);
             setSubmissions(response.data.submissions || []);
             setTotalSubmissions(response.data.total || 0);
             setError(null);
         } catch (err) {
-            setError(err.message || "Failed to load submissions");
+            setError(err.response?.data?.message || err.message || "Failed to load submissions");
         } finally {
             setLoading(false);
         }
@@ -57,7 +57,7 @@ export default function SubmissionHistory() {
                     await deleteSubmissionApi(submissionId);
                     fetchSubmissions(); // Refresh list
                 } catch (err) {
-                    alert("Failed to delete submission");
+                    console.error("Delete failed:", err);
                 }
             },
             "Delete Submission"
@@ -65,14 +65,12 @@ export default function SubmissionHistory() {
     };
 
     const totalPages = Math.ceil(totalSubmissions / itemsPerPage);
-    const acceptedCount = submissions.filter(s => s.verdict === "Accepted").length;
-    const wrongCount = submissions.filter(s => s.verdict === "Wrong Answer").length;
 
     if (loading && submissions.length === 0) {
         return (
             <div className="min-h-screen bg-slate-100 p-6 md:p-8">
                 <div className="max-w-7xl mx-auto">
-                    <TableSkeleton rows={10} columns={7} />
+                    <TableSkeleton rows={10} columns={8} />
                 </div>
             </div>
         );
@@ -95,8 +93,8 @@ export default function SubmissionHistory() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-slate-900 mb-2">Submission History</h1>
-                        <p className="text-slate-600">Track all your code submissions and results</p>
+                        <h1 className="text-4xl font-bold text-slate-900 mb-2">Total Submissions</h1>
+                        <p className="text-slate-600">Overview of all learner submissions across the platform</p>
                     </div>
                     <div className="flex gap-3">
                         <button
@@ -152,7 +150,7 @@ export default function SubmissionHistory() {
                                 <table className="w-full">
                                     <thead className="bg-slate-50 border-b border-slate-200">
                                         <tr>
-                                            {["Problem", "Language", "Verdict", "Time", "Memory", "Submitted", "Action"].map(header => (
+                                            {["Problem", "User", "Language", "Verdict", "Time", "Memory", "Submitted", "Action"].map(header => (
                                                 <th key={header} className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
                                                     {header}
                                                 </th>
@@ -172,6 +170,12 @@ export default function SubmissionHistory() {
                                                     >
                                                         {submission.problemId?.title || "Unknown Problem"}
                                                     </Link>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-slate-900">{submission.userId?.name || "Deleted User"}</span>
+                                                        <span className="text-xs text-slate-500">{submission.userId?.email || ""}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-medium">
@@ -229,50 +233,19 @@ export default function SubmissionHistory() {
                     </>
                 ) : (
                     <EmptyDataState
-                        title={verdictFilter === "all" ? "No submissions yet" : `No ${verdictFilter} submissions found`}
-                        description={verdictFilter === "all"
-                            ? "Start solving problems to see your submission history here"
-                            : "Try a different filter or solve more problems"}
+                        title={verdictFilter === "all" ? "No submissions found" : `No ${verdictFilter} submissions found`}
+                        description="There are no learner submissions matching your criteria."
                         action={
-                            verdictFilter !== "all" ? (
+                            verdictFilter !== "all" && (
                                 <button
                                     onClick={() => setVerdictFilter("all")}
                                     className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                                 >
                                     View All Submissions
                                 </button>
-                            ) : (
-                                <Link
-                                    to="/problems"
-                                    className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                                >
-                                    Browse Problems →
-                                </Link>
                             )
                         }
                     />
-                )}
-
-                {/* Stats */}
-                {submissions.length > 0 && (
-                    <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                            <p className="text-slate-600 text-sm mb-2">Total Submissions</p>
-                            <p className="text-3xl font-bold text-slate-900">{totalSubmissions}</p>
-                        </div>
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                            <p className="text-slate-600 text-sm mb-2">Accepted</p>
-                            <p className="text-3xl font-bold text-green-600">{acceptedCount}</p>
-                        </div>
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                            <p className="text-slate-600 text-sm mb-2">Wrong Answer</p>
-                            <p className="text-3xl font-bold text-red-600">{wrongCount}</p>
-                        </div>
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                            <p className="text-slate-600 text-sm mb-2">Current Page</p>
-                            <p className="text-3xl font-bold text-blue-600">{currentPage} / {totalPages}</p>
-                        </div>
-                    </div>
                 )}
             </div>
         </div>

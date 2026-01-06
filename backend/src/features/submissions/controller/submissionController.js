@@ -1,4 +1,4 @@
-import { evaluateSubmission, getSubmissionHistory, getUserAcceptedProblems, getProblemSubmissions } from "../use-cases/evaluateSubmission.js";
+import { evaluateSubmission, getSubmissionHistory, getUserAcceptedProblems, getProblemSubmissions, getAllSubmissionsHistory } from "../use-cases/evaluateSubmission.js";
 import { saveCodeDraft, getDraft, getSubmissionById, deleteSubmission, getLatestAcceptedSubmission, getUserStats } from "../use-cases/storeSubmission.js";
 import { errorHandler } from "../../../middlewares/errorMiddleware.js";
 
@@ -69,15 +69,40 @@ export const getSubmission = async (req, res) => {
 
 export const getHistory = async (req, res) => {
     const userId = req.user._id;
-    const { 
-        problemId, 
-        page = 1, 
+    const {
+        problemId,
+        page = 1,
         limit = 20,
-        verdict 
+        verdict
     } = req.query;
 
     const result = await getSubmissionHistory(userId, {
         problemId,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        verdict
+    });
+
+    res.status(200).json({
+        submissions: result.submissions,
+        total: result.pagination.total,
+        pagination: result.pagination,
+        count: result.submissions.length,
+    });
+};
+
+export const getAllSubmissions = async (req, res) => {
+    const {
+        problemId,
+        userId,
+        page = 1,
+        limit = 20,
+        verdict
+    } = req.query;
+
+    const result = await getAllSubmissionsHistory({
+        problemId,
+        userId,
         page: parseInt(page),
         limit: parseInt(limit),
         verdict
@@ -117,8 +142,9 @@ export const getProblemStats = async (req, res) => {
 export const removeSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const userId = req.user._id;
+    const userRole = req.user.role;
 
-    const result = await deleteSubmission(submissionId, userId);
+    const result = await deleteSubmission(submissionId, userId, userRole);
 
     res.status(200).json(result);
 };

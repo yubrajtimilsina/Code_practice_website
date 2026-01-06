@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { body } from "express-validator";
-import { submitSolution, runCode, saveDraft, getDraftCode, getSubmission, getHistory,getAccepted, getProblemStats, removeSubmission, getUserStatistics, getLatestAccepted } from "../controller/submissionController.js";
+import { submitSolution, runCode, saveDraft, getDraftCode, getSubmission, getHistory, getAccepted, getProblemStats, removeSubmission, getUserStatistics, getLatestAccepted, getAllSubmissions } from "../controller/submissionController.js";
 
 import { role } from "../../../middlewares/roleMiddleware.js";
-import {  handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
+import { handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 import { submissionLimiter } from "../../../middlewares/rateLimitMiddleware.js";
 
@@ -17,9 +17,9 @@ const submissionValidation = [
   body("problemId").notEmpty().withMessage("Problem ID is required"),
 ];
 
-router.post("/submit",submissionLimiter, submissionValidation, handleValidationErrors, submitSolution );
+router.post("/submit", submissionLimiter, submissionValidation, handleValidationErrors, submitSolution);
 
-router.post("/run",submissionLimiter, submissionValidation, handleValidationErrors, runCode );
+router.post("/run", submissionLimiter, submissionValidation, handleValidationErrors, runCode);
 
 router.put(
   "/draft/:problemId",
@@ -39,6 +39,12 @@ router.get(
 router.get(
   "/",
   getHistory
+);
+
+router.get(
+  "/admin/all",
+  role("admin", "super-admin"),
+  getAllSubmissions
 );
 
 router.get(

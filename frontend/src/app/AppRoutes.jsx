@@ -36,6 +36,7 @@ import CreateDiscussion from "../features/discussion/pages/CreateDiscussion.jsx"
 import DiscussionDetails from "../features/discussion/pages/DiscussionDetails.jsx";
 import Playground from "../features/playground/pages/Playground.jsx";
 import UserManagement from "../features/dashboard/pages/Adminpages/UserManagement.jsx";
+import TotalSubmissions from "../features/dashboard/pages/Adminpages/TotalSubmissions.jsx";
 
 // Smart Dashboard Redirector Component
 const DashboardRedirect = () => {
@@ -172,6 +173,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute requiredRoles={["super-admin"]}>
               <SuperAdminManageUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/total-submissions"
+          element={
+            <ProtectedRoute requiredRoles={["admin", "super-admin"]}>
+              <TotalSubmissions />
             </ProtectedRoute>
           }
         />
