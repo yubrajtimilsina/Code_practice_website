@@ -73,9 +73,8 @@ export default function SuperAdminManageUsers() {
   );
 }
 
-// Analytics Component
 function Analytics() {
-  // This would fetch data from your API
+  // Placeholder stats - replace with real data fetching logic
   const stats = {
     platformAccuracy: 75,
     problemEngagementRate: 68,

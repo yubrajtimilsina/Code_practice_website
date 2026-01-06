@@ -107,7 +107,7 @@ export default function Playground() {
     <>
       <AlertModal {...alert} onClose={hideAlert} />
 
-      <div className="min-h-screen bg-slate-100 p-6">
+      <div className="min-h-screen bg-slate-100 p-6 md:p-8">
         <div className="max-w-7xl mx-auto">
 
           {/* Header */}
@@ -151,9 +151,15 @@ export default function Playground() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             {/* Left Column - Code Editor */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden ">
               <div className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+                <div className="flex items-center gap-3">
                 <h3 className="font-semibold">Code Editor</h3>
+
+                <span className="px-2 py-0.5 text-xs bg-slate-700 rounded-full uppercase tracking-wide">
+                  {language}
+                </span>
+                </div>
 
                 <div className="flex items-center gap-2">
                   {/* Copy */}
@@ -205,7 +211,7 @@ export default function Playground() {
               </div>
 
 
-              <div className="h-[500px]">
+              <div className="h-[500px] ">
                 <Editor
                   height="100%"
                   language={language}
@@ -217,8 +223,9 @@ export default function Playground() {
                     fontSize: 14,
                     fontFamily: "Monaco, Menlo, 'Courier New', monospace",
                     lineNumbers: "on",
-                    scrollBeyondLastLine: false,
                     automaticLayout: true,
+                    scrollBeyondLastLine: false,
+        
                   }}
                   onMount={(editor) => {
                     editorRef.current = editor;

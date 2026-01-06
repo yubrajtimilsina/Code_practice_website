@@ -71,9 +71,12 @@ export default function AdminDashboard() {
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300">
+          <div
+            onClick={() => navigate("/users")}
+            className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-500"
+          >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-600 text-white rounded-lg">
+              <div className="p-3 bg-blue-500 text-white rounded-lg">
                 <Users className="w-6 h-6" />
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
@@ -82,6 +85,7 @@ export default function AdminDashboard() {
             <p className="text-4xl font-bold text-slate-900 mt-2">{stats.totalUsers || 0}</p>
             <p className="text-xs text-slate-500 mt-2">All registered users</p>
           </div>
+
 
           <div
             onClick={() => navigate("/problems")}
