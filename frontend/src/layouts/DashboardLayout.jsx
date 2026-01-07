@@ -45,10 +45,9 @@ export default function DashboardLayout() {
         { path: "/dashboard/super-admin", icon: Crown, label: "Super Admin Dashboard" },
         { path: "/admin/problems", icon: Code2, label: "Manage Problems" },
         { path: "/discussion", icon: MessageSquare, label: "Discussions" },
-        { path: "/playground", icon: Terminal, label: "Playground" },
         { path: "/manage-users", icon: Users, label: "Manage Users" },
         { path: "/admin/total-submissions", icon: FileText, label: "Total Submissions" },
-
+        { path: "/super-admin/settings", icon: Settings, label: "System Settings" },
       ];
     }
 
@@ -200,12 +199,14 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
+      {
+        isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )
+      }
 
       {/* Mobile Sidebar */}
       <aside
@@ -309,6 +310,6 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
-    </div>
+    </div >
   );
 }

@@ -6,17 +6,17 @@ import Pagination from "../../../components/Pagination";
 import { TableSkeleton } from "../../../core/Skeleton";
 import { LoadingState, ErrorState } from "../../../components/StateComponents";
 import { FilterPanel } from "../../../components/FilterPanel";
-import { 
-  getRankBadge, 
-  getRankBadgeColor, 
-  getRankIcon, 
+import {
+  getRankBadge,
+  getRankBadgeColor,
+  getRankIcon,
   isTopRank,
-  getRankText 
+  getRankText
 } from "../../../utils/rankHelpers.jsx";
-import { 
-  SORT_OPTIONS, 
+import {
+  SORT_OPTIONS,
   ITEMS_PER_PAGE_OPTIONS,
-  buildQueryParams 
+  buildQueryParams
 } from "../../../utils/filterHelpers.js";
 import { formatNumber } from "../../../utils/userHelper.js";
 
@@ -69,7 +69,7 @@ export default function Leaderboard() {
   const renderRankBadge = (rank) => {
     const Icon = getRankIcon(rank);
     const badge = getRankBadge(rank);
-    
+
     return (
       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getRankBadgeColor(rank)}`}>
         <Icon className="w-5 h-5" />
@@ -118,8 +118,11 @@ export default function Leaderboard() {
               <Trophy className="w-10 h-10 text-blue-600" />
               Global Leaderboard
             </h1>
-            <p className="text-slate-600">
+            <p className="text-slate-600 flex items-center gap-2">
               Compete with {formatNumber(pagination?.total || 0)} programmers worldwide
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full border border-blue-200 uppercase tracking-wider">
+                Learners Only
+              </span>
             </p>
           </div>
 
@@ -207,11 +210,10 @@ export default function Leaderboard() {
                 <button
                   key={option.value}
                   onClick={() => setSortBy(option.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                    sortBy === option.value
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${sortBy === option.value
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
                 >
                   {option.value === 'rankPoints' && <TrendingUp className="w-4 h-4" />}
                   {option.value === 'solved' && <Target className="w-4 h-4" />}
@@ -245,9 +247,8 @@ export default function Leaderboard() {
                   {leaderboard.map((userItem) => (
                     <tr
                       key={userItem._id}
-                      className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${
-                        !isAdmin && myRank && userItem._id === myRank.userId ? 'bg-blue-50' : ''
-                      }`}
+                      className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${!isAdmin && myRank && userItem._id === myRank.userId ? 'bg-blue-50' : ''
+                        }`}
                     >
                       <td className="px-6 py-4">
                         {renderRankBadge(userItem.rank)}

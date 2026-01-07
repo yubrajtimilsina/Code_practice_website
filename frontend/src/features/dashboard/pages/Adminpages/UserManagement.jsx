@@ -6,9 +6,9 @@ import { TableSkeleton } from "../../../../core/Skeleton.jsx";
 import AlertModal from "../../../../components/AlertModal.jsx";
 import { useAlert } from "../../../../hooks/useAlert.js";
 
-export default function UserManagement({ 
-  isAdmin = true, 
-  showRoleManagement = false 
+export default function UserManagement({
+  isAdmin = true,
+  showRoleManagement = false
 }) {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,13 +16,13 @@ export default function UserManagement({
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Filters
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  
+
   const { alert, showSuccess, showError, showConfirm, hideAlert } = useAlert();
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function UserManagement({
   const handleBlockUser = async (id) => {
     const user = users.find(u => u._id === id);
     const action = user?.isActive ? "block" : "unblock";
-    
+
     showConfirm(
       `Are you sure you want to ${action} this user?`,
       async () => {
@@ -99,13 +99,14 @@ export default function UserManagement({
 
   const handleDeleteUser = async (id) => {
     showConfirm(
-      "⚠️ This will permanently delete the user. Continue?",
+      "⚠️ This will permanently delete the user AND all their associated data (submissions, discussions, etc.). Continue?",
       async () => {
         try {
           setRefreshing(true);
-          await api.delete(`/users/${id}`);
-          showSuccess("User deleted successfully");
-          
+          const endpoint = showRoleManagement ? `/super-admin/users/${id}` : `/users/${id}`;
+          await api.delete(endpoint);
+          showSuccess("User and all data deleted successfully");
+
           // If last user on page, go to previous page
           if (users.length === 1 && currentPage > 1) {
             setCurrentPage(currentPage - 1);
@@ -169,7 +170,7 @@ export default function UserManagement({
   return (
     <>
       <AlertModal {...alert} onClose={hideAlert} />
-      
+
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
         {/* Header */}
         <div className="p-6 border-b border-slate-200">
@@ -307,24 +308,22 @@ export default function UserManagement({
                     <td className="px-6 py-4 text-slate-600">{user.email}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          user.role === "admin"
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === "admin"
                             ? "bg-red-100 text-red-700"
                             : user.role === "super-admin"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
                       >
                         {user.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          user.isActive
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${user.isActive
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         {user.isActive ? "Active" : "Blocked"}
                       </span>
@@ -338,11 +337,10 @@ export default function UserManagement({
                         <button
                           onClick={() => handleBlockUser(user._id)}
                           disabled={refreshing}
-                          className={`px-3 py-1 text-sm rounded-md font-medium transition-colors ${
-                            user.isActive
+                          className={`px-3 py-1 text-sm rounded-md font-medium transition-colors ${user.isActive
                               ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
                               : "bg-green-100 text-green-700 hover:bg-green-200"
-                          } disabled:opacity-50`}
+                            } disabled:opacity-50`}
                         >
                           {user.isActive ? "Block" : "Unblock"}
                         </button>

@@ -51,7 +51,7 @@ export default function LearnerDashboard() {
         <p className="text-red-500 text-xl font-semibold">Unable to load dashboard</p>
       </div>
     );
-  }  const { stats, learningPath, thisWeek, problemsByDifficulty, recentActivity, activityCalendar } = data.dashboard;
+  } const { stats, learningPath, thisWeek, problemsByDifficulty, recentActivity, activityCalendar } = data.dashboard;
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
@@ -67,7 +67,7 @@ export default function LearnerDashboard() {
         {/* Main Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Problems Solved */}
-          <div 
+          <div
             onClick={() => navigate("/problems")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
           >
@@ -82,8 +82,8 @@ export default function LearnerDashboard() {
           </div>
 
           {/* Total Submissions */}
-          <div 
-            onClick={() => navigate("/submissions")} 
+          <div
+            onClick={() => navigate("/submissions")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
           >
             <div className="flex items-center justify-between mb-3">
@@ -97,7 +97,7 @@ export default function LearnerDashboard() {
           </div>
 
           {/* Current Rank */}
-          <div 
+          <div
             onClick={() => navigate("/leaderboard")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
           >
@@ -112,7 +112,7 @@ export default function LearnerDashboard() {
           </div>
 
           {/* Accuracy */}
-          <div 
+          <div
             onClick={() => navigate("/progress")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
           >
@@ -148,7 +148,7 @@ export default function LearnerDashboard() {
           </div>
 
           {/* Daily Challenges */}
-          <div 
+          <div
             onClick={() => navigate("/daily-challenge")}
             className={`${CARD_BASE} ${CARD_HOVER} rounded-2xl p-6`}
           >
@@ -199,8 +199,8 @@ export default function LearnerDashboard() {
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-blue-500 h-full rounded-full transition-all" 
+                  <div
+                    className="bg-blue-500 h-full rounded-full transition-all"
                     style={{ width: `${learningPath.beginner.progress}%` }}
                   ></div>
                 </div>
@@ -214,8 +214,8 @@ export default function LearnerDashboard() {
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-purple-500 h-full rounded-full transition-all" 
+                  <div
+                    className="bg-purple-500 h-full rounded-full transition-all"
                     style={{ width: `${learningPath.intermediate.progress}%` }}
                   ></div>
                 </div>
@@ -229,8 +229,8 @@ export default function LearnerDashboard() {
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-yellow-500 h-full rounded-full transition-all" 
+                  <div
+                    className="bg-yellow-500 h-full rounded-full transition-all"
                     style={{ width: `${learningPath.advanced.progress}%` }}
                   ></div>
                 </div>
@@ -306,8 +306,8 @@ export default function LearnerDashboard() {
                 <Activity className="w-6 h-6 text-blue-600" />
                 <h3 className="text-xl font-semibold text-slate-900">Recent Activity</h3>
               </div>
-              <Link 
-                to="/submissions" 
+              <Link
+                to="/submissions"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
                 View All →
@@ -316,7 +316,7 @@ export default function LearnerDashboard() {
 
             <div className="space-y-3">
               {recentActivity.map((activity) => (
-                <div 
+                <div
                   key={activity._id}
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                   onClick={() => navigate(`/problems/${activity.problemSlug}`)}
@@ -334,11 +334,10 @@ export default function LearnerDashboard() {
                       </p>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    activity.isAccepted 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${activity.isAccepted
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                    }`}>
                     {activity.verdict}
                   </span>
                 </div>

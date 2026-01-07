@@ -17,9 +17,9 @@ const submissionValidation = [
   body("problemId").notEmpty().withMessage("Problem ID is required"),
 ];
 
-router.post("/submit", submissionLimiter, submissionValidation, handleValidationErrors, submitSolution);
+router.post("/submit", role("learner"), submissionLimiter, submissionValidation, handleValidationErrors, submitSolution);
 
-router.post("/run", submissionLimiter, submissionValidation, handleValidationErrors, runCode);
+router.post("/run", role("learner", "admin"), submissionLimiter, submissionValidation, handleValidationErrors, runCode);
 
 router.put(
   "/draft/:problemId",

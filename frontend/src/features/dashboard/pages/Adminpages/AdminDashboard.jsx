@@ -17,13 +17,16 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
+      setError(null);
       const dashRes = await getAdminDashboardApi();
       setData(dashRes.data);
     } catch (err) {
-      setError(err.message || "Failed to load dashboard");
+      console.error("Dashboard Fetch Error:", err);
+      setError(err.response?.data?.error || err.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -54,25 +57,24 @@ export default function AdminDashboard() {
               <h1 className="text-4xl font-bold text-slate-900">Admin Dashboard</h1>
             </div>
             <p className="text-slate-600">
-              Welcome back, <span className="font-semibold">{currentUser?.name}</span>
+              Welcome back, <span className="font-semibold text-slate-900">{currentUser?.name}</span>
             </p>
           </div>
 
           <button
             onClick={fetchDashboardData}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50"
+            disabled={loading || refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg disabled:opacity-50 transition-all active:scale-95"
             title="Refresh data"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-            {!loading && "Refresh"}
+            <RefreshCw className={`w-5 h-5 ${(loading || refreshing) ? "animate-spin" : ""}`} />
+            {!(loading || refreshing) ? "Refresh" : "Refreshing..."}
           </button>
         </div>
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div
-            onClick={() => navigate("/users")}
             className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-500"
           >
             <div className="flex items-center justify-between mb-4">
@@ -119,7 +121,9 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <div className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 transition-all duration-300">
+          <div
+            className="bg-white border border-blue-200 shadow-md hover:shadow-xl rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-500"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-500 text-white rounded-lg">
                 <UserCheck className="w-6 h-6" />

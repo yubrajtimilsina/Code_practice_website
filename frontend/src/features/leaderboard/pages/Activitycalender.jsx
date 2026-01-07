@@ -35,8 +35,8 @@ export function GitHubStyleCalendar({ activityCalendar = {} }) {
   }
 
   /* -------------------- MONTH LABELS -------------------- */
-  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const monthLabels = [];
   let lastMonth = -1;
@@ -59,11 +59,11 @@ export function GitHubStyleCalendar({ activityCalendar = {} }) {
   };
 
   const getColorClass = (count) => {
-    if (count === 0) return "bg-slate-100 dark:bg-slate-800";
-    if (count <= 2) return "bg-green-200 dark:bg-green-900";
-    if (count <= 5) return "bg-green-400 dark:bg-green-700";
-    if (count <= 10) return "bg-green-600 dark:bg-green-600";
-    return "bg-green-700 dark:bg-green-500";
+    if (count === 0) return "bg-slate-100";
+    if (count <= 2) return "bg-green-200";
+    if (count <= 5) return "bg-green-400";
+    if (count <= 10) return "bg-green-600";
+    return "bg-green-700";
   };
 
   const formatDate = (date) =>
@@ -78,43 +78,43 @@ export function GitHubStyleCalendar({ activityCalendar = {} }) {
   const totalSubmissions = Object.values(activityCalendar).reduce((sum, count) => sum + count, 0);
   const activeDays = Object.values(activityCalendar).filter(count => count > 0).length;
 
-  const CELL_SIZE = 12; 
-const CELL_GAP = 4; 
-const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
+  const CELL_SIZE = 12;
+  const CELL_GAP = 4;
+  const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
 
 
   /* -------------------- UI -------------------- */
   return (
-    <div className=" bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
+    <div className=" bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-slate-200">
           {/* Header */}
           <div className="flex flex-col gap-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-800">
                   Submission Activity
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-slate-500 mt-1">
                   Last 365 days
                 </p>
               </div>
 
               {/* Stats */}
               <div className="flex gap-4 text-sm">
-                <div className="bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2">
-                  <div className="text-slate-500 dark:text-slate-400 text-xs">Total</div>
-                  <div className="font-bold text-slate-800 dark:text-white">{totalSubmissions}</div>
+                <div className="bg-slate-50 rounded-lg px-3 py-2">
+                  <div className="text-slate-500 text-xs">Total</div>
+                  <div className="font-bold text-slate-800">{totalSubmissions}</div>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2">
-                  <div className="text-slate-500 dark:text-slate-400 text-xs">Active Days</div>
-                  <div className="font-bold text-slate-800 dark:text-white">{activeDays}</div>
+                <div className="bg-slate-50 rounded-lg px-3 py-2">
+                  <div className="text-slate-500 text-xs">Active Days</div>
+                  <div className="font-bold text-slate-800">{activeDays}</div>
                 </div>
               </div>
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between gap-4 text-xs text-slate-500 pt-4 border-t border-slate-200">
               <span className="hidden sm:inline">Contribution levels:</span>
               <div className="flex items-center gap-2">
                 <span>Less</span>
@@ -122,7 +122,7 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
                   {[0, 1, 3, 6, 11].map((v) => (
                     <div
                       key={v}
-                      className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm ${getColorClass(v)} border border-slate-300 dark:border-slate-600`}
+                      className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm ${getColorClass(v)} border border-slate-300`}
                     />
                   ))}
                 </div>
@@ -135,26 +135,23 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
             <div className="min-w-max py-2">
               {/* Month labels */}
-                  
-    
-    {/* Month labels */}
-    <div className="relative ml-8 sm:ml-10 mb-2 h-4">
-      {monthLabels.map(({ idx, month }) => (
-        <span
-          key={idx}
-          className="absolute text-xs font-semibold text-slate-600 dark:text-slate-300"
-          style={{
-            left: `${idx * WEEK_WIDTH}px`,
-          }}
-        >
-          {monthNames[month]}
-        </span>
-      ))}
-    </div>
+              <div className="relative ml-8 sm:ml-10 mb-2 h-4">
+                {monthLabels.map(({ idx, month }) => (
+                  <span
+                    key={idx}
+                    className="absolute text-xs font-semibold text-slate-600"
+                    style={{
+                      left: `${idx * WEEK_WIDTH}px`,
+                    }}
+                  >
+                    {monthNames[month]}
+                  </span>
+                ))}
+              </div>
 
               <div className="flex">
                 {/* Day labels */}
-                <div className="flex flex-col justify-between mr-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 py-4">
+                <div className="flex flex-col justify-between mr-2 text-[10px] sm:text-xs text-slate-500 py-4">
                   {[1, 3, 5].map((i) => (
                     <div key={i} className="h-[10px] sm:h-3 flex items-center">
                       <span className="hidden sm:inline">{dayNames[i]}</span>
@@ -177,8 +174,8 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
                               sm:w-3 sm:h-3
                               md:w-[13px] md:h-[13px]
                               ${date ? getColorClass(count) : "bg-transparent"}
-                              ${date ? "hover:ring-2 hover:ring-blue-400 dark:hover:ring-blue-500 hover:scale-110 cursor-pointer" : ""}
-                              ${date ? "border border-slate-200 dark:border-slate-600" : ""}
+                              ${date ? "hover:ring-2 hover:ring-blue-400 hover:scale-110 cursor-pointer" : ""}
+                              ${date ? "border border-slate-200" : ""}
                             `}
                             onMouseEnter={() => date && setHoveredCell({ date, count })}
                             onMouseLeave={() => setHoveredCell(null)}
@@ -186,15 +183,15 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
                           >
                             {hoveredCell?.date === date && (
                               <div className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3
-                                bg-slate-900 dark:bg-slate-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl 
-                                whitespace-nowrap pointer-events-none border border-slate-700 dark:border-slate-600">
+                                bg-slate-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl 
+                                whitespace-nowrap pointer-events-none border border-slate-700">
                                 <div className="font-bold text-sm">
                                   {count} {count === 1 ? "submission" : "submissions"}
                                 </div>
-                                <div className="text-slate-300 dark:text-slate-400 mt-1">
+                                <div className="text-slate-300 mt-1">
                                   {formatDate(date)}
                                 </div>
-                                <div className="absolute left-1/2 -translate-x-1/2 top-full border-[6px] border-transparent border-t-slate-900 dark:border-t-slate-700" />
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full border-[6px] border-transparent border-t-slate-900" />
                               </div>
                             )}
                           </div>
@@ -208,7 +205,7 @@ const WEEK_WIDTH = CELL_SIZE + CELL_GAP;
           </div>
 
           {/* Mobile hint */}
-          <div className="sm:hidden mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+          <div className="sm:hidden mt-4 text-center text-xs text-slate-400">
             Swipe to see full calendar
           </div>
         </div>

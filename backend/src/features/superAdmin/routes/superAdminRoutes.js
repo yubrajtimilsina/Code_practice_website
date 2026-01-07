@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 import { isSuperAdmin } from "../../../middlewares/roleMiddleware.js";
-import {getSuperAdminDashboard, manageAdmins, setAdmin, revokeAdmin, getAllUsersForSuperAdmin, deleteUserBySuperAdmin } from "../controller/superAdminController.js";
+import { getSuperAdminDashboard, manageAdmins, setAdmin, revokeAdmin, getAllUsersForSuperAdmin, deleteUserBySuperAdmin, getSystemSettings, updateSystemSettings } from "../controller/superAdminController.js";
 
 const router = Router();
 
@@ -17,5 +17,7 @@ router.get("/users", authMiddleware, isSuperAdmin, getAllUsersForSuperAdmin);
 router.delete("/users/:id", authMiddleware, isSuperAdmin, deleteUserBySuperAdmin);
 
 
+router.get("/settings", authMiddleware, isSuperAdmin, getSystemSettings);
+router.put("/settings", authMiddleware, isSuperAdmin, updateSystemSettings);
 
 export default router;
