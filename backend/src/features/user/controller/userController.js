@@ -8,35 +8,40 @@ export const getProfile = async (req, res) => {
 };
 
 export const listUsers = async (req, res) => {
-  const { page = 1, limit = 10, role, search, sortBy = 'createdAt', order = 'desc' } = req.query;
-  
+  const { page = 1, limit = 10, role, status, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+
   // Build query
   const query = {};
   if (role && role !== 'all') {
     query.role = role;
   }
+
+  if (status && status !== 'all') {
+    query.isActive = status === 'active';
+  }
+
   if (search && search.trim()) {
     query.$or = [
       { name: { $regex: search.trim(), $options: 'i' } },
       { email: { $regex: search.trim(), $options: 'i' } }
     ];
   }
- 
+
   const sortOptions = {};
   sortOptions[sortBy] = order === 'asc' ? 1 : -1;
-  
+
   // Calculate pagination
   const skip = (parseInt(page) - 1) * parseInt(limit);
-  
+
   // Get total count
   const total = await User.countDocuments(query);
- 
+
   const users = await User.find(query)
     .select("_id name email role isActive createdAt solvedProblemsCount totalSubmissionsCount acceptedSubmissionsCount rankPoints currentStreak longestStreak easyProblemsSolved mediumProblemsSolved hardProblemsSolved")
     .sort(sortOptions)
     .skip(skip)
     .limit(parseInt(limit));
-  
+
   res.json({
     users,
     total,
@@ -67,35 +72,35 @@ export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const { name, email, currentPassword, newPassword } = req.body;
-    
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     // If changing password, verify current password
     if (newPassword) {
       if (!currentPassword) {
         return res.status(400).json({ error: "Current password is required" });
       }
-      
+
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) {
         return res.status(400).json({ error: "Current password is incorrect" });
       }
-      
+
       if (newPassword.length < 6) {
         return res.status(400).json({ error: "New password must be at least 6 characters" });
       }
-      
+
       user.password = await bcrypt.hash(newPassword, 10);
     }
-    
+
     // Update name if provided
     if (name && name.trim()) {
       user.name = name.trim();
     }
-    
+
     // Check if email is being changed and if it's already taken
     if (email && email !== user.email) {
       const emailExists = await User.findOne({ email: email.toLowerCase() });
@@ -104,9 +109,9 @@ export const updateProfile = async (req, res) => {
       }
       user.email = email.toLowerCase();
     }
-    
+
     await user.save();
-    
+
     res.json({
       message: "Profile updated successfully",
       user: {

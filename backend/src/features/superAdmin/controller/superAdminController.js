@@ -204,10 +204,15 @@ export const revokeAdmin = async (req, res) => {
 };
 
 export const getAllUsersForSuperAdmin = async (req, res) => {
-  const { page = 1, limit = 20, role, search } = req.query;
+  const { page = 1, limit = 20, role, status, search } = req.query;
 
   const query = {};
   if (role && role !== 'all') query.role = role;
+
+  if (status && status !== 'all') {
+    query.isActive = status === 'active';
+  }
+
   if (search) {
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
