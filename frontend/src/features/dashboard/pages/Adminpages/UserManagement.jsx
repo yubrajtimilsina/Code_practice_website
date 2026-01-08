@@ -8,7 +8,8 @@ import { useAlert } from "../../../../hooks/useAlert.js";
 
 export default function UserManagement({
   isAdmin = true,
-  showRoleManagement = false
+  showRoleManagement = false,
+  fixedRole = null
 }) {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,7 +21,7 @@ export default function UserManagement({
   // Filters
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState(fixedRole || "all");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { alert, showSuccess, showError, showConfirm, hideAlert } = useAlert();
@@ -233,25 +234,27 @@ export default function UserManagement({
                 </div>
               </div>
 
-              {/* Role Filter */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Filter by Role
-                </label>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => {
-                    setRoleFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="learner">Learners</option>
-                  <option value="admin">Admins</option>
-                  {showRoleManagement && <option value="super-admin">Super Admins</option>}
-                </select>
-              </div>
+              {/* Role Filter - Hidden if fixedRole is provided */}
+              {!fixedRole && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Filter by Role
+                  </label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => {
+                      setRoleFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="learner">Learners</option>
+                    <option value="admin">Admins</option>
+                    {showRoleManagement && <option value="super-admin">Super Admins</option>}
+                  </select>
+                </div>
+              )}
 
               {/* Status Filter */}
               <div>
@@ -309,10 +312,10 @@ export default function UserManagement({
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${user.role === "admin"
-                            ? "bg-red-100 text-red-700"
-                            : user.role === "super-admin"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
+                          ? "bg-red-100 text-red-700"
+                          : user.role === "super-admin"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-blue-100 text-blue-700"
                           }`}
                       >
                         {user.role}
@@ -321,8 +324,8 @@ export default function UserManagement({
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${user.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
                           }`}
                       >
                         {user.isActive ? "Active" : "Blocked"}
@@ -338,8 +341,8 @@ export default function UserManagement({
                           onClick={() => handleBlockUser(user._id)}
                           disabled={refreshing}
                           className={`px-3 py-1 text-sm rounded-md font-medium transition-colors ${user.isActive
-                              ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                              : "bg-green-100 text-green-700 hover:bg-green-200"
+                            ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                            : "bg-green-100 text-green-700 hover:bg-green-200"
                             } disabled:opacity-50`}
                         >
                           {user.isActive ? "Block" : "Unblock"}

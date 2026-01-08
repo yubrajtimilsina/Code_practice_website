@@ -56,8 +56,8 @@ export default function SuperAdminManageUsers() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-6 py-4 font-semibold transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
-                  ? "border-blue-600 text-blue-600 bg-blue-50"
-                  : "border-transparent text-slate-500 hover:text-blue-600 hover:bg-slate-50"
+                ? "border-blue-600 text-blue-600 bg-blue-50"
+                : "border-transparent text-slate-500 hover:text-blue-600 hover:bg-slate-50"
                 }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -70,7 +70,7 @@ export default function SuperAdminManageUsers() {
         <div className="bg-white rounded-b-2xl shadow-sm">
           {activeTab === "users" && (
             <div className="p-6">
-              <UserManagement isAdmin={false} showRoleManagement={true} />
+              <UserManagement isAdmin={false} showRoleManagement={true} fixedRole="learner" />
             </div>
           )}
 
@@ -82,7 +82,7 @@ export default function SuperAdminManageUsers() {
                   View and manage admin accounts. You can promote learners to admins or revoke admin privileges.
                 </p>
               </div>
-              <UserManagement isAdmin={true} showRoleManagement={true} />
+              <UserManagement isAdmin={true} showRoleManagement={true} fixedRole="admin" />
             </div>
           )}
 
