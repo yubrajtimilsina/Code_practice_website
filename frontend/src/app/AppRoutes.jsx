@@ -6,6 +6,7 @@ import Login from "../features/auth/pages/Login.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import PublicRoute from "../components/PublicRoute.jsx";
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
+import MaintenancePage from "../pages/MaintenancePage.jsx";
 
 import LearnerDashboard from "../features/dashboard/pages/Learnerpages/LearnerDashboard.jsx";
 import AdminDashboard from "../features/dashboard/pages/Adminpages/AdminDashboard.jsx";
@@ -62,6 +63,7 @@ export default function AppRoutes() {
     <Routes>
       {/* ========== PUBLIC ROUTES (No Sidebar) ========== */}
       <Route path="/" element={<Home />} />
+      <Route path="/maintenance" element={<MaintenancePage />} />
 
       <Route
         path="/register"

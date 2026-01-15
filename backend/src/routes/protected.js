@@ -14,12 +14,10 @@ import playgroundRoutes from "../features/playground/routes/playgroundRoutes.js"
 
 const router = Router();
 
-router.use(authMiddleware);
-
 router.use("/dashboard", dashboardRoutes);
-router.use("/users", userRoutes); 
-router.use("/admin", adminRoutes); 
-router.use("/super-admin", superAdminRoutes); 
+router.use("/users", userRoutes);
+router.use("/admin", adminRoutes);
+router.use("/super-admin", superAdminRoutes);
 router.use("/problems", problemRoutes);
 router.use("/submissions", submissionRoutes);
 router.use("/leaderboard", leaderboardRoutes);

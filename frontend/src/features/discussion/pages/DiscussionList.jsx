@@ -5,60 +5,70 @@ import { DiscussionSkeleton } from "../../../core/Skeleton.jsx";
 
 import { getTimeSince, getCategoryColor } from "../../../utils/discussionHelpers.js";
 
-import { 
-  MessageSquare, 
-  ThumbsUp, 
-  Eye, 
-  Plus, 
-  Search, 
+import {
+  MessageSquare,
+  ThumbsUp,
+  Eye,
+  Plus,
+  Search,
   Pin
 } from "lucide-react";
 
 import Pagination from "../../../components/Pagination.jsx";
 
 export default function DiscussionList() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const [discussions, setDiscussions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [pagination, setPagination] = useState(null);
-    const [category, setCategory] = useState("all");
-    const [search, setSearch] = useState("");
-    const [sortBy, setSortBy] = useState("-lastActivityAt");
+  const [discussions, setDiscussions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [category, setCategory] = useState("all");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("-lastActivityAt");
 
-    const categories = [
-      { value: "all", label: "All Discussions" },
-      { value: "general", label: "General" },
-      { value: "problem-help", label: "Problem Help" },
-      { value: "algorithm", label: "Algorithms" },
-      { value: "interview", label: "Interview Prep" },
-      { value: "bug-report", label: "Bug Reports" },
-      { value: "feature-request", label: "Feature Requests" }
-    ];
+  const categories = [
+    { value: "all", label: "All Discussions" },
+    { value: "general", label: "General" },
+    { value: "problem-help", label: "Problem Help" },
+    { value: "algorithm", label: "Algorithms" },
+    { value: "interview", label: "Interview Prep" },
+    { value: "bug-report", label: "Bug Reports" },
+    { value: "feature-request", label: "Feature Requests" }
+  ];
 
-    const fetchDiscussions = useCallback(async() => {
-      setLoading(true);
-      const params = { page, limit: 20, sortBy };
-      if (category !== "all") params.category = category;
-      if (search.trim()) params.search = search.trim();
+  const fetchDiscussions = useCallback(async () => {
+    setLoading(true);
+    const params = { page, limit: 20, sortBy };
+    if (category !== "all") params.category = category;
+    if (search.trim()) params.search = search.trim();
 
-      const response = await getDiscussions(params);
-      setDiscussions(response.data.discussions);
-      setPagination(response.data.pagination);
-      setLoading(false);
-    }, [page, category, sortBy, search]);
+    const response = await getDiscussions(params);
+    setDiscussions(response.data.discussions);
+    setPagination(response.data.pagination);
+    setLoading(false);
+  }, [page, category, sortBy, search]);
 
-    useEffect(() => {
-      fetchDiscussions();
-    }, [fetchDiscussions]);
+  useEffect(() => {
+    const loadDiscussions = async () => {
+      try {
+        await fetchDiscussions();
+      } catch (err) {
+        if (err.response?.status === 403 && err.response?.data?.error === "Contest Mode Active") {
+          setDiscussions([]);
+          setPagination(null);
+        }
+      }
+    };
+    loadDiscussions();
+  }, [fetchDiscussions]);
 
 
   if (loading) {
     return <DiscussionSkeleton />;
   }
-  
-   return (
+
+  return (
     <div className="min-h-screen bg-slate-100 p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -207,14 +217,22 @@ export default function DiscussionList() {
         ) : (
           <div className="bg-white rounded-2xl p-12 text-center">
             <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No discussions found</h3>
-            <p className="text-slate-600 mb-6">Be the first to start a discussion!</p>
-            <button
-              onClick={() => navigate("/discussion/new")}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Create Discussion
-            </button>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              {discussions.length === 0 && !loading && category === 'all' ? "Contest Mode Active" : "No discussions found"}
+            </h3>
+            <p className="text-slate-600 mb-6">
+              {discussions.length === 0 && !loading && category === 'all'
+                ? "Discussions are temporarily hidden during contests to maintain competitive integrity."
+                : "Be the first to start a discussion!"}
+            </p>
+            {!(discussions.length === 0 && !loading && category === 'all') && (
+              <button
+                onClick={() => navigate("/discussion/new")}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Create Discussion
+              </button>
+            )}
           </div>
         )}
       </div>

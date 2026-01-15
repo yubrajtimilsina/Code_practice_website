@@ -1,10 +1,19 @@
 import bcrypt from 'bcryptjs';
 import { createUser, findUserByEmail } from '../repository/userRepository.js';
 import generateToken from '../../../utils/token.js';
+import SystemSettings from '../../superAdmin/models/SystemSettingsModel.js';
 
 const validRoles = ["learner", "admin", "super-admin"];
 
 export const registerUser = async ({ name, email, password, role = "learner" }) => {
+    // Check if registration is allowed
+    const settings = await SystemSettings.findOne();
+    if (settings && !settings.allowRegistration) {
+        const error = new Error('Registration is currently disabled by the administrator');
+        error.statusCode = 403;
+        throw error;
+    }
+
     // Validate required fields
     if (!name || !email || !password) {
         const error = new Error('Name, email, and password are required');

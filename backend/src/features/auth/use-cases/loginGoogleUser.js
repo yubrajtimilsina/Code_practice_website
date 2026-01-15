@@ -1,6 +1,7 @@
 import { verifyGoogleToken } from '../../../utils/googleAuth.js';
 import User from '../models/UserModels.js';
 import generateToken from '../../../utils/token.js';
+import SystemSettings from '../../superAdmin/models/SystemSettingsModel.js';
 
 export const loginGoogleUser = async (credential) => {
     const payload = await verifyGoogleToken(credential);
@@ -9,17 +10,21 @@ export const loginGoogleUser = async (credential) => {
     let user = await User.findOne({ email });
 
     if (user) {
-        // Build link googleId if not present (optional, but good practice)
         if (!user.googleId) {
             user.googleId = googleId;
-            // If user was local, we *could* switch provider or allow both. 
-            // For now, let's just save the googleId.
-            // If we want to support multiple providers, we might need array. 
-            // Simplified: update avatar if missing
+            
             if (!user.avatar) user.avatar = avatar;
             await user.save();
         }
     } else {
+      
+        const settings = await SystemSettings.findOne();
+        if (settings && !settings.allowRegistration) {
+            const error = new Error('New account creation is currently disabled');
+            error.statusCode = 403;
+            throw error;
+        }
+
         // Create new user
         user = await User.create({
             name,

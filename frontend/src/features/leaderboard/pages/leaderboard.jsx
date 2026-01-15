@@ -49,6 +49,11 @@ export default function Leaderboard() {
       if (rankRes && !isAdmin) setMyRank(rankRes.data);
     } catch (err) {
       console.error("Failed to fetch leaderboard:", err);
+      if (err.response?.status === 403 && err.response?.data?.error === "Contest Mode Active") {
+        setLeaderboard([]);
+        setPagination({ total: 0 }); // To clear any existing pagination
+        // Optionally show an alert or state
+      }
     } finally {
       setLoading(false);
     }
@@ -310,6 +315,12 @@ export default function Leaderboard() {
                   ))}
                 </tbody>
               </table>
+            ) : leaderboard.length === 0 && !loading && sortBy === 'rankPoints' ? (
+              <div className="p-12 text-center text-slate-500">
+                <Trophy className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Contest Mode Active</h3>
+                <p className="font-medium text-slate-600">Global leaderboard is temporarily hidden during contests to maintain competitive integrity.</p>
+              </div>
             ) : (
               <div className="p-12 text-center text-slate-500">
                 <Trophy className="w-12 h-12 mx-auto mb-3 opacity-40" />

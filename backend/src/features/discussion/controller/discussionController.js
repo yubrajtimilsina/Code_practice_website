@@ -1,4 +1,5 @@
 import * as repo from "../repository/discussionRepository.js";
+import SystemSettings from "../../superAdmin/models/SystemSettingsModel.js";
 
 export const createDiscussion = async (req, res) => {
   const { title, content, category, tags, problemId } = req.body;
@@ -26,11 +27,20 @@ export const createDiscussion = async (req, res) => {
 };
 
 export const getAllDiscussions = async (req, res) => {
-  const { 
-    page = 1, 
-    limit = 20, 
-    category, 
-    tags, 
+  // Check for contest mode
+  const settings = await SystemSettings.findOne();
+  if (settings && settings.contestMode && (req.user && req.user.role === 'learner')) {
+    return res.status(403).json({
+      error: "Contest Mode Active",
+      message: "Discussions are temporarily hidden during contests."
+    });
+  }
+
+  const {
+    page = 1,
+    limit = 20,
+    category,
+    tags,
     search,
     sortBy = '-lastActivityAt',
     problemId
@@ -146,7 +156,7 @@ export const voteDiscussion = async (req, res) => {
 export const addComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, parentCommentId } = req.body; 
+    const { content, parentCommentId } = req.body;
     const userId = req.user._id;
 
     if (!content || !content.trim()) {
@@ -159,7 +169,7 @@ export const addComment = async (req, res) => {
       const parentExists = discussion?.comments?.some(
         c => c._id.toString() === parentCommentId
       );
-      
+
       if (!parentExists) {
         return res.status(404).json({ error: 'Parent comment not found' });
       }

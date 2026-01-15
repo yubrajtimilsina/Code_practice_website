@@ -3,6 +3,8 @@ import cors from "cors";
 import protectedRoutes from "./routes/protected.js";
 import publicRoutes from "./routes/public.js";
 import healthRoutes from "./routes/healthRoutes.js";
+import { optionalAuthMiddleware, authMiddleware } from "./middlewares/authMiddleware.js";
+import { maintenanceMiddleware } from "./middlewares/maintenanceMiddleware.js";
 
 const app = express();
 
@@ -10,8 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);
-app.use("/api", publicRoutes);
-app.use("/api", protectedRoutes);
+app.use("/api", optionalAuthMiddleware, maintenanceMiddleware, publicRoutes);
+app.use("/api", authMiddleware, maintenanceMiddleware, protectedRoutes);
 
 
 app.use((req, res) => {
@@ -20,8 +22,8 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
-  res.status(err.status || 500).json({ 
-    error: err.message || "Internal Server Error" 
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error"
   });
 });
 
