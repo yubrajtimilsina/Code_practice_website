@@ -10,15 +10,31 @@ export const loginGoogleUser = async (credential) => {
     let user = await User.findOne({ email });
 
     if (user) {
+        // Check for maintenance mode for existing users
+        const settings = await SystemSettings.findOne();
+        if (settings?.maintenanceMode && user.role !== "super-admin") {
+            const error = new Error("Maintenance");
+            error.statusCode = 503;
+            throw error;
+        }
+
         if (!user.googleId) {
             user.googleId = googleId;
-            
+
             if (!user.avatar) user.avatar = avatar;
             await user.save();
         }
     } else {
-      
+
         const settings = await SystemSettings.findOne();
+
+        // Maintenance mode check for new users
+        if (settings?.maintenanceMode) {
+            const error = new Error("Maintenance");
+            error.statusCode = 503;
+            throw error;
+        }
+
         if (settings && !settings.allowRegistration) {
             const error = new Error('New account creation is currently disabled');
             error.statusCode = 403;

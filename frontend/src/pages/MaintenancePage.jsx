@@ -31,7 +31,14 @@ export default function MaintenancePage() {
                             Return Home
                         </Link>
 
-                        
+                        <Link
+                            to="/login"
+                            className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                            Admin Login
+                        </Link>
+
+
                     </div>
                 </div>
             </div>

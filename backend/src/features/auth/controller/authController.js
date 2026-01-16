@@ -1,4 +1,3 @@
-
 import { registerUser } from '../use-cases/registerUser.js';
 import { loginUser } from '../use-cases/loginUser.js';
 import { loginGoogleUser } from '../use-cases/loginGoogleUser.js';
@@ -52,7 +51,8 @@ export const login = async (req, res) => {
             },
         });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        const statusCode = error.statusCode || 400;
+        res.status(statusCode).json({ error: error.message });
     }
 };
 
@@ -67,7 +67,8 @@ export const googleLogin = async (req, res) => {
         });
     } catch (error) {
         console.error("Google Login Controller Error:", error);
-        res.status(400).json({ error: "Google login failed" });
+        const statusCode = error.statusCode || 400;
+        res.status(statusCode).json({ error: error.message || "Google login failed" });
     }
 };
 

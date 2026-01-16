@@ -6,20 +6,18 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "20d";
 
-// ✅ CRITICAL FIX: Add validation
 if (!JWT_SECRET) {
-  console.error("❌ FATAL ERROR: JWT_SECRET is not defined in environment variables!");
+  console.error(" FATAL ERROR: JWT_SECRET is not defined in environment variables!");
   process.exit(1);
 }
 
 const generateToken = (id) => {
   try {
-    // ✅ CRITICAL FIX: Validate input
+    
     if (!id) {
       throw new Error("User ID is required for token generation");
     }
 
-    // ✅ Generate token with proper error handling
     const token = jwt.sign(
       { id: id.toString() }, // Ensure ID is string
       JWT_SECRET,
@@ -30,16 +28,15 @@ const generateToken = (id) => {
       }
     );
 
-    console.log(`✅ Token generated successfully for user: ${id}`);
+    console.log(` Token generated successfully for user: ${id}`);
     return token;
     
   } catch (error) {
-    console.error("❌ Token generation error:", error.message);
+    console.error(" Token generation error:", error.message);
     throw new Error("Failed to generate authentication token");
   }
 };
 
-// ✅ NEW: Token verification utility
 export const verifyToken = (token) => {
   try {
     if (!token) {
@@ -54,7 +51,7 @@ export const verifyToken = (token) => {
     return decoded;
     
   } catch (error) {
-    console.error("❌ Token verification error:", error.message);
+    console.error(" Token verification error:", error.message);
     
     // Handle specific JWT errors
     if (error.name === 'TokenExpiredError') {
@@ -67,7 +64,7 @@ export const verifyToken = (token) => {
   }
 };
 
-// ✅ NEW: Token refresh utility
+
 export const refreshToken = (oldToken) => {
   try {
     const decoded = verifyToken(oldToken);

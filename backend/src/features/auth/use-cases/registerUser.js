@@ -6,8 +6,15 @@ import SystemSettings from '../../superAdmin/models/SystemSettingsModel.js';
 const validRoles = ["learner", "admin", "super-admin"];
 
 export const registerUser = async ({ name, email, password, role = "learner" }) => {
-    // Check if registration is allowed
+    // Check if registration is allowed or if site is in maintenance
     const settings = await SystemSettings.findOne();
+
+    if (settings?.maintenanceMode) {
+        const error = new Error("Maintenance");
+        error.statusCode = 503;
+        throw error;
+    }
+
     if (settings && !settings.allowRegistration) {
         const error = new Error('Registration is currently disabled by the administrator');
         error.statusCode = 403;

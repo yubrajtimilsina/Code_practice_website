@@ -4,20 +4,20 @@ export const maintenanceMiddleware = async (req, res, next) => {
     try {
         const settings = await SystemSettings.findOne();
 
-       
+
         if (settings?.maintenanceMode) {
 
-            const isAdmin = req.user && (req.user.role === "admin" || req.user.role === "super-admin");
+            const isSuperAdmin = req.user && req.user.role === "super-admin";
 
-            if (!isAdmin) {
+            if (!isSuperAdmin) {
 
-                const publicPaths = ["/api/auth/login", "/api/super-admin/settings"];
-                const isPublicPath = publicPaths.some(path => req.path.startsWith(path));
+                const publicPaths = ["/api/auth", "/api/super-admin/settings"];
+                const isPublicPath = publicPaths.some(path => req.originalUrl.startsWith(path));
 
                 if (!isPublicPath) {
                     return res.status(503).json({
                         error: "Maintenance",
-                        message: "The site is currently undergoing maintenance. Please try again later.",
+                        message: "The site is currently undergoing maintenance. Only Super Admins can access at this time.",
                         maintenanceMode: true
                     });
                 }
