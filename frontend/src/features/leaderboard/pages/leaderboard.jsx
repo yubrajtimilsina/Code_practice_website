@@ -68,7 +68,7 @@ export default function Leaderboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const totalPages = Math.ceil(pagination?.total || 0 / limit);
+  const totalPages = Math.ceil((pagination?.total || 0) / limit);
 
   // Render rank badge with icon
   const renderRankBadge = (rank) => {

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { body } from "express-validator";
 
-import { register, login, me, googleLogin } from "../controller/authController.js";
+import { register, login, me, googleLogin, forgotPassword, resetPassword } from "../controller/authController.js";
 import { authMiddleware } from "../../../middlewares/authMiddleware.js";
 import { handleValidationErrors } from "../../../middlewares/errorMiddleware.js";
 const router = Router();
@@ -26,6 +26,9 @@ router.post(
   handleValidationErrors,
   login
 );
+
+router.post("/forgot-password", forgotPassword);
+router.put("/reset-password/:token", resetPassword);
 
 router.post("/google", googleLogin);
 
