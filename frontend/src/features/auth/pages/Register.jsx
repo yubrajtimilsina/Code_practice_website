@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { register, googleLogin } from "../slice/authSlice.js";
 import { GoogleLogin } from '@react-oauth/google';
-import { Mail, Lock, User, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, CheckCircle2, AlertCircle, Check, X, Eye, EyeOff } from "lucide-react";
 
 
 export default function Register() {
@@ -19,12 +19,62 @@ export default function Register() {
     });
 
     const [focused, setFocused] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [passwordErrors, setPasswordErrors] = useState([]);
+    const [passwordStrength, setPasswordStrength] = useState(null);
+
+    // Validate password in real-time
+    const validatePassword = (password) => {
+        const errors = [];
+        if (password.length < 6) errors.push("Password must be at least 6 characters long");
+        if (!/[A-Z]/.test(password)) errors.push("Password must contain at least one uppercase letter");
+        if (!/[a-z]/.test(password)) errors.push("Password must contain at least one lowercase letter");
+        if (!/[0-9]/.test(password)) errors.push("Password must contain at least one number");
+        return errors;
+    };
+
+    // Calculate password strength
+    const getPasswordStrength = (password) => {
+        let strength = 0;
+        if (password.length >= 6) strength++;
+        if (password.length >= 10) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+        if (strength <= 2) return { label: "Weak", color: "bg-red-500", width: "33%" };
+        if (strength <= 4) return { label: "Medium", color: "bg-yellow-500", width: "66%" };
+        return { label: "Strong", color: "bg-green-500", width: "100%" };
+    };
+
+    // Check password requirements
+    const checkRequirements = (password) => {
+        return {
+            hasLength: password.length >= 6,
+            hasUppercase: /[A-Z]/.test(password),
+            hasLowercase: /[a-z]/.test(password),
+            hasNumber: /[0-9]/.test(password),
+        };
+    };
 
     const onChange = (e) => {
+        const { name, value } = e.target;
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
+
+        // Real-time password validation
+        if (name === "password") {
+            const errors = validatePassword(value);
+            setPasswordErrors(errors);
+            if (value.length > 0) {
+                setPasswordStrength(getPasswordStrength(value));
+            } else {
+                setPasswordStrength(null);
+            }
+        }
     };
 
     const onSubmit = (e) => {
@@ -103,17 +153,99 @@ export default function Register() {
                             <div className={`relative ${focused === "password" ? "ring-2 ring-blue-500" : ""}`}>
                                 <Lock className="absolute left-4 top-3.5 w-5 h-5 text-blue-500" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     name="password"
                                     value={formData.password}
                                     onChange={onChange}
                                     onFocus={() => setFocused("password")}
                                     onBlur={() => setFocused(null)}
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all duration-300 hover:border-slate-400"
+                                    className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all duration-300 hover:border-slate-400"
                                     placeholder="Create a strong password"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-3.5 w-5 h-5 text-slate-500 hover:text-slate-700 focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
+
+                            {/* Password Strength Indicator */}
+                            {formData.password && passwordStrength && (
+                                <div className="mt-3 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-medium text-slate-600">Password strength:</span>
+                                        <span className={`text-xs font-semibold ${
+                                            passwordStrength.label === "Weak" ? "text-red-600" :
+                                            passwordStrength.label === "Medium" ? "text-yellow-600" :
+                                            "text-green-600"
+                                        }`}>
+                                            {passwordStrength.label}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                        <div
+                                            className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                                            style={{ width: passwordStrength.width }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Password Requirements Checklist */}
+                            {formData.password && (
+                                <div className="mt-3 space-y-1 text-sm">
+                                    {checkRequirements(formData.password).hasLength ? (
+                                        <div className="flex items-center gap-2 text-green-600">
+                                            <Check size={16} className="flex-shrink-0" />
+                                            <span>At least 6 characters</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-red-600">
+                                            <X size={16} className="flex-shrink-0" />
+                                            <span>At least 6 characters</span>
+                                        </div>
+                                    )}
+
+                                    {checkRequirements(formData.password).hasUppercase ? (
+                                        <div className="flex items-center gap-2 text-green-600">
+                                            <Check size={16} className="flex-shrink-0" />
+                                            <span>One uppercase letter (A-Z)</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-red-600">
+                                            <X size={16} className="flex-shrink-0" />
+                                            <span>One uppercase letter (A-Z)</span>
+                                        </div>
+                                    )}
+
+                                    {checkRequirements(formData.password).hasLowercase ? (
+                                        <div className="flex items-center gap-2 text-green-600">
+                                            <Check size={16} className="flex-shrink-0" />
+                                            <span>One lowercase letter (a-z)</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-red-600">
+                                            <X size={16} className="flex-shrink-0" />
+                                            <span>One lowercase letter (a-z)</span>
+                                        </div>
+                                    )}
+
+                                    {checkRequirements(formData.password).hasNumber ? (
+                                        <div className="flex items-center gap-2 text-green-600">
+                                            <Check size={16} className="flex-shrink-0" />
+                                            <span>One number (0-9)</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-red-600">
+                                            <X size={16} className="flex-shrink-0" />
+                                            <span>One number (0-9)</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
 
